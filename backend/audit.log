@@ -1,0 +1,9 @@
+{"level":"info","message":{"email":"teststrong@example.com","eventType":"USER_REGISTRATION","role":"customer","timestamp":"2025-06-30T18:53:26.316Z","userId":6},"timestamp":"2025-06-30T18:53:26.316Z"}
+{"level":"info","message":{"email":"teststrong@example.com","eventType":"LOGIN_FAILED","failedAttempts":1,"timestamp":"2025-06-30T18:53:26.705Z","userId":6},"timestamp":"2025-06-30T18:53:26.705Z"}
+{"level":"info","message":{"email":"teststrong@example.com","eventType":"LOGIN_FAILED","failedAttempts":2,"timestamp":"2025-06-30T18:53:26.794Z","userId":6},"timestamp":"2025-06-30T18:53:26.794Z"}
+{"level":"info","message":{"email":"teststrong@example.com","eventType":"LOGIN_FAILED","failedAttempts":3,"timestamp":"2025-06-30T18:53:26.882Z","userId":6},"timestamp":"2025-06-30T18:53:26.882Z"}
+{"level":"info","message":{"email":"teststrong@example.com","eventType":"LOGIN_FAILED","failedAttempts":4,"timestamp":"2025-06-30T18:53:26.969Z","userId":6},"timestamp":"2025-06-30T18:53:26.969Z"}
+{"level":"info","message":{"email":"teststrong@example.com","eventType":"ACCOUNT_LOCKED","failedAttempts":5,"timestamp":"2025-06-30T18:53:27.056Z","userId":6},"timestamp":"2025-06-30T18:53:27.056Z"}
+{"level":"info","message":{"email":"teststrong@example.com","eventType":"LOGIN_BLOCKED","reason":"Account locked","timestamp":"2025-06-30T18:53:27.434Z","userId":6},"timestamp":"2025-06-30T18:53:27.434Z"}
+{"level":"info","message":{"email":"john@example.com","eventType":"LOGIN_FAILED","failedAttempts":1,"timestamp":"2025-06-30T18:53:39.103Z","userId":1},"timestamp":"2025-06-30T18:53:39.103Z"}
+{"level":"info","message":{"email":"nonexistent@example.com","eventType":"LOGIN_FAILED","reason":"User not found","timestamp":"2025-06-30T18:53:39.427Z","userId":null},"timestamp":"2025-06-30T18:53:39.427Z"}
