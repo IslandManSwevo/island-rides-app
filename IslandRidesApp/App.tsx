@@ -7,6 +7,7 @@ import { RegistrationScreen } from './src/screens/RegistrationScreen';
 import { IslandSelectionScreen } from './src/screens/IslandSelectionScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { SearchResultsScreen } from './src/screens/SearchResultsScreen';
+import { VehicleDetailScreen } from './src/screens/VehicleDetailScreen';
 import { colors } from './src/styles/theme';
 
 const Stack = createStackNavigator();
@@ -32,6 +33,7 @@ export default function App() {
         <Stack.Screen name="IslandSelection" component={IslandSelectionScreen} options={{ title: 'Select Island' }} />
         <Stack.Screen name="Search" component={SearchScreen} options={{ title: 'Search Vehicles' }} />
         <Stack.Screen name="SearchResults" component={SearchResultsScreen} options={{ title: 'Available Vehicles' }} />
+        <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} options={{ title: 'Vehicle Details' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
