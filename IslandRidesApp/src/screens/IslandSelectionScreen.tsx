@@ -37,7 +37,7 @@ const islands: IslandOption[] = [
 
 export const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({ navigation }) => {
   const handleIslandSelect = (island: Island) => {
-    navigation.navigate('Search', { island });
+    navigation.navigate('SearchResults', { island });
   };
 
   return (
