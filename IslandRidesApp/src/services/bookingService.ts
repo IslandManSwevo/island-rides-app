@@ -1,17 +1,9 @@
 import { BookingRequest, BookingResponse } from '../types';
-
-const API_BASE_URL = 'http://localhost:3000/api';
+import { ApiService } from './apiService';
 
 export class BookingService {
-  static async createBooking(bookingData: BookingRequest, token: string): Promise<BookingResponse> {
-    const response = await fetch(`${API_BASE_URL}/bookings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(bookingData),
-    });
+  static async createBooking(bookingData: BookingRequest): Promise<BookingResponse> {
+    const response = await ApiService.post('/bookings', bookingData);
 
     if (!response.ok) {
       const error = await response.json();

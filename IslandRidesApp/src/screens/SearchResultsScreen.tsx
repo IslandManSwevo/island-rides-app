@@ -22,18 +22,15 @@ export const SearchResultsScreen = ({ navigation, route }: any) => {
       setLoading(true);
       setError(null);
       
-      const token = await AsyncStorage.getItem('authToken');
-      if (!token) {
-        Alert.alert('Error', 'Please log in to view vehicles');
-        navigation.navigate('Login');
-        return;
-      }
-
-      const vehicleRecommendations = await VehicleService.getVehiclesByIsland(island, token);
+      const vehicleRecommendations = await VehicleService.getVehiclesByIsland(island);
       setVehicles(vehicleRecommendations);
     } catch (err) {
       console.error('Error fetching vehicles:', err);
       setError(err instanceof Error ? err.message : 'Failed to load vehicles');
+      
+      if (err instanceof Error && err.message.includes('token')) {
+        navigation.navigate('Login');
+      }
     } finally {
       setLoading(false);
     }

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthResponse, LoginRequest, RegisterRequest } from '../types';
 
 const API_BASE_URL = 'http://localhost:3000/api';
@@ -17,7 +18,16 @@ export class AuthService {
       throw new Error(error.error || 'Login failed');
     }
 
-    return response.json();
+    const authResponse = await response.json();
+    
+    console.log('🔐 DEBUG: Login successful, received token:', authResponse.token ? 'TOKEN_RECEIVED' : 'NO_TOKEN');
+    
+    if (authResponse.token) {
+      await AsyncStorage.setItem('authToken', authResponse.token);
+      console.log('🔐 DEBUG: Token stored in AsyncStorage');
+    }
+
+    return authResponse;
   }
 
   static async register(userData: RegisterRequest): Promise<AuthResponse> {
@@ -34,7 +44,27 @@ export class AuthService {
       throw new Error(error.error || 'Registration failed');
     }
 
-    return response.json();
+    const authResponse = await response.json();
+    
+    console.log('🔐 DEBUG: Registration successful, received token:', authResponse.token ? 'TOKEN_RECEIVED' : 'NO_TOKEN');
+    
+    if (authResponse.token) {
+      await AsyncStorage.setItem('authToken', authResponse.token);
+      console.log('🔐 DEBUG: Token stored in AsyncStorage after registration');
+    }
+
+    return authResponse;
+  }
+
+  static async logout(): Promise<void> {
+    await AsyncStorage.removeItem('authToken');
+    console.log('🔐 DEBUG: Token removed from AsyncStorage');
+  }
+
+  static async getToken(): Promise<string | null> {
+    const token = await AsyncStorage.getItem('authToken');
+    console.log('🔐 DEBUG: Retrieved token from AsyncStorage:', token ? 'TOKEN_FOUND' : 'NO_TOKEN');
+    return token;
   }
 
   static validatePassword(password: string): { valid: boolean; message?: string } {

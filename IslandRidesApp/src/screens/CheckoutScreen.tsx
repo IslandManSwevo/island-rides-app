@@ -50,20 +50,13 @@ export const CheckoutScreen = ({ navigation, route }: any) => {
     try {
       setLoading(true);
       
-      const token = await AsyncStorage.getItem('authToken');
-      if (!token) {
-        Alert.alert('Error', 'Please log in to continue');
-        navigation.navigate('Login');
-        return;
-      }
-
       const bookingData = {
         vehicleId: vehicle.id,
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
       };
 
-      const response = await BookingService.createBooking(bookingData, token);
+      const response = await BookingService.createBooking(bookingData);
       
       Alert.alert(
         `${method.charAt(0).toUpperCase() + method.slice(1)} Payment`,
@@ -74,12 +67,16 @@ export const CheckoutScreen = ({ navigation, route }: any) => {
             onPress: () => navigation.navigate('BookingConfirmed', { 
               booking: response.booking,
               vehicle: vehicle 
-            })
+            } as any)
           }
         ]
       );
     } catch (error) {
       Alert.alert('Booking Error', error instanceof Error ? error.message : 'Failed to create booking');
+      
+      if (error instanceof Error && error.message.includes('token')) {
+        navigation.navigate('Login');
+      }
     } finally {
       setLoading(false);
     }

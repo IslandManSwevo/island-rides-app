@@ -1,16 +1,9 @@
 import { VehicleRecommendation, Island } from '../types';
-
-const API_BASE_URL = 'http://localhost:3000/api';
+import { ApiService } from './apiService';
 
 export class VehicleService {
-  static async getVehiclesByIsland(island: Island, token: string): Promise<VehicleRecommendation[]> {
-    const response = await fetch(`${API_BASE_URL}/recommendations/${island}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+  static async getVehiclesByIsland(island: Island): Promise<VehicleRecommendation[]> {
+    const response = await ApiService.get(`/recommendations/${island}`);
 
     if (!response.ok) {
       const error = await response.json();

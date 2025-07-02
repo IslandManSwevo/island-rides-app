@@ -526,16 +526,22 @@ function generateRecommendations(userId, island) {
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
+  console.log('🔐 DEBUG: Incoming Authorization header:', authHeader || 'NONE');
+  
   const token = authHeader && authHeader.split(' ')[1];
+  console.log('🔐 DEBUG: Extracted token:', token ? `${token.substring(0, 20)}...` : 'NONE');
 
   if (!token) {
+    console.log('🔐 DEBUG: No token provided, returning 401');
     return res.status(401).json({ error: 'Access token required' });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
+      console.log('🔐 DEBUG: Token verification failed:', err.message);
       return res.status(403).json({ error: 'Invalid token' });
     }
+    console.log('🔐 DEBUG: Token verified successfully for user:', user.id);
     req.user = user;
     next();
   });
