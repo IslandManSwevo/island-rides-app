@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Island } from '../types';
 
@@ -35,13 +36,25 @@ const islands: IslandOption[] = [
   },
 ];
 
+const getIslandImageUrl = (islandName: string): string => {
+  const imageMap: { [key: string]: string } = {
+    'Nassau': 'https://placehold.co/400x200/00B8D4/FFFFFF?text=Nassau+Paradise',
+    'Freeport': 'https://placehold.co/400x200/0097A7/FFFFFF?text=Freeport+Beach',
+    'Exuma': 'https://placehold.co/400x200/00ACC1/FFFFFF?text=Exuma+Waters',
+  };
+  return imageMap[islandName] || 'https://placehold.co/400x200/00B8D4/FFFFFF?text=Island+Paradise';
+};
+
 export const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({ navigation }) => {
   const handleIslandSelect = (island: Island) => {
     navigation.navigate('Search', { island });
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[colors.primary, colors.gradientLight]}
+      style={styles.container}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>🏝️ Choose Your Island</Text>
         <Text style={styles.subtitle}>Select where you'd like to explore</Text>
@@ -54,40 +67,48 @@ export const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({ na
             style={styles.islandCard}
             onPress={() => handleIslandSelect(island.id)}
           >
-            <View style={styles.cardContent}>
-              <Text style={styles.islandEmoji}>{island.emoji}</Text>
-              <View style={styles.islandInfo}>
-                <Text style={styles.islandName}>{island.name}</Text>
-                <Text style={styles.islandDescription}>{island.description}</Text>
+            <ImageBackground
+              source={{ uri: getIslandImageUrl(island.id) }}
+              style={styles.imageBackground}
+              imageStyle={styles.backgroundImage}
+            >
+              <View style={styles.overlay}>
+                <View style={styles.cardContent}>
+                  <Text style={styles.islandEmoji}>{island.emoji}</Text>
+                  <View style={styles.islandInfo}>
+                    <Text style={styles.islandName}>{island.name}</Text>
+                    <Text style={styles.islandDescription}>{island.description}</Text>
+                  </View>
+                  <Text style={styles.arrow}>→</Text>
+                </View>
               </View>
-              <Text style={styles.arrow}>→</Text>
-            </View>
+            </ImageBackground>
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.offWhite,
   },
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
-    backgroundColor: colors.white,
   },
   title: {
     ...typography.heading1,
     textAlign: 'center',
     marginBottom: spacing.sm,
+    color: colors.white,
   },
   subtitle: {
     ...typography.body,
     textAlign: 'center',
+    color: colors.white,
   },
   content: {
     flex: 1,
@@ -95,14 +116,27 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
   islandCard: {
-    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.md,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
+  },
+  imageBackground: {
+    width: '100%',
+    height: 120,
+    justifyContent: 'center',
+  },
+  backgroundImage: {
+    borderRadius: borderRadius.lg,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
   },
   cardContent: {
     flexDirection: 'row',
@@ -117,18 +151,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   islandName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.darkGrey,
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.white,
     marginBottom: spacing.xs,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   islandDescription: {
-    ...typography.body,
     fontSize: 14,
+    fontWeight: '400',
+    color: colors.white,
+    lineHeight: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   arrow: {
-    fontSize: 20,
-    color: colors.primary,
-    fontWeight: '600',
+    fontSize: 24,
+    color: colors.white,
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
 });

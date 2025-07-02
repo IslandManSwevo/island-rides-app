@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { Card } from '../components/Card';
 import { AuthService } from '../services/authService';
 import { colors, typography, spacing } from '../styles/theme';
 
@@ -47,55 +49,66 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <LinearGradient
+      colors={[colors.primary, colors.gradientLight]}
+      style={styles.container}
     >
-      <View style={styles.content}>
-        <Text style={styles.title}>🏝️ Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
-        
-        <View style={styles.form}>
-          <Input
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            error={errors.email}
-          />
+      <KeyboardAvoidingView 
+        style={styles.keyboardContainer} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.content}>
+          <Text style={styles.title}>🏝️ Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to your account</Text>
           
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Enter your password"
-            secureTextEntry
-            error={errors.password}
-          />
-          
-          <Button
-            title="Login"
-            onPress={handleLogin}
-            loading={loading}
-          />
-          
-          <Button
-            title="Don't have an account? Sign up"
-            onPress={() => navigation.navigate('Registration')}
-            variant="secondary"
-          />
+          <Card style={styles.cardContainer}>
+            <View style={styles.form}>
+              <Input
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Enter your email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                iconName="mail"
+                error={errors.email}
+              />
+              
+              <Input
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter your password"
+                secureTextEntry
+                iconName="lock"
+                error={errors.password}
+              />
+              
+              <Button
+                title="Login"
+                onPress={handleLogin}
+                loading={loading}
+              />
+              
+              <Button
+                title="Don't have an account? Sign up"
+                onPress={() => navigation.navigate('Registration')}
+                variant="secondary"
+              />
+            </View>
+          </Card>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.offWhite,
+  },
+  keyboardContainer: {
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -106,11 +119,16 @@ const styles = StyleSheet.create({
     ...typography.heading1,
     textAlign: 'center',
     marginBottom: spacing.sm,
+    color: colors.white,
   },
   subtitle: {
     ...typography.body,
     textAlign: 'center',
     marginBottom: spacing.xxl,
+    color: colors.white,
+  },
+  cardContainer: {
+    marginTop: spacing.lg,
   },
   form: {
     gap: spacing.md,

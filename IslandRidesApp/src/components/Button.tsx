@@ -1,5 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useRef } from 'react';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, Animated } from 'react-native';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 
 interface ButtonProps {
@@ -17,27 +17,47 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   loading = false,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.button,
-        variant === 'primary' ? styles.primaryButton : styles.secondaryButton,
-        (disabled || loading) && styles.disabledButton,
-      ]}
-      onPress={onPress}
-      disabled={disabled || loading}
-    >
-      {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? colors.white : colors.primary} />
-      ) : (
-        <Text style={[
-          styles.buttonText,
-          variant === 'primary' ? styles.primaryButtonText : styles.secondaryButtonText,
-        ]}>
-          {title}
-        </Text>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        style={[
+          styles.button,
+          variant === 'primary' ? styles.primaryButton : styles.secondaryButton,
+          (disabled || loading) && styles.disabledButton,
+        ]}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading}
+      >
+        {loading ? (
+          <ActivityIndicator color={variant === 'primary' ? colors.white : colors.primary} />
+        ) : (
+          <Text style={[
+            styles.buttonText,
+            variant === 'primary' ? styles.primaryButtonText : styles.secondaryButtonText,
+          ]}>
+            {title}
+          </Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 

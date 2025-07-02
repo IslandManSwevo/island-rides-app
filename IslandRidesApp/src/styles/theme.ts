@@ -1,11 +1,14 @@
 export const colors = {
   primary: '#00B8D4',
   primaryHover: '#0097A7',
+  gradientLight: '#A0E6F0',
   darkGrey: '#2C3E50',
   lightGrey: '#6C757D',
+  iconGrey: '#9CA3AF',
   offWhite: '#F8F9FA',
   white: '#FFFFFF',
   error: '#E74C3C',
+  overlay: 'rgba(0, 0, 0, 0.4)',
 };
 
 export const typography = {
