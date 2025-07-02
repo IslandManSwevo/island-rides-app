@@ -8,6 +8,8 @@ import { IslandSelectionScreen } from './src/screens/IslandSelectionScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { SearchResultsScreen } from './src/screens/SearchResultsScreen';
 import { VehicleDetailScreen } from './src/screens/VehicleDetailScreen';
+import { CheckoutScreen } from './src/screens/CheckoutScreen';
+import { BookingConfirmedScreen } from './src/screens/BookingConfirmedScreen';
 import { colors } from './src/styles/theme';
 
 const Stack = createStackNavigator();
@@ -34,6 +36,8 @@ export default function App() {
         <Stack.Screen name="Search" component={SearchScreen} options={{ title: 'Search Vehicles' }} />
         <Stack.Screen name="SearchResults" component={SearchResultsScreen} options={{ title: 'Available Vehicles' }} />
         <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} options={{ title: 'Vehicle Details' }} />
+        <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: 'Checkout' }} />
+        <Stack.Screen name="BookingConfirmed" component={BookingConfirmedScreen} options={{ title: 'Booking Confirmed' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
