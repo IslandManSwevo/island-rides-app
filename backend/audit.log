@@ -9,3 +9,15 @@
 {"level":"info","message":{"email":"nonexistent@example.com","eventType":"LOGIN_FAILED","reason":"User not found","timestamp":"2025-06-30T18:53:39.427Z","userId":null},"timestamp":"2025-06-30T18:53:39.427Z"}
 {"level":"info","message":{"bookingId":8,"endDate":"2025-12-05","eventType":"BOOKING_CREATED","startDate":"2025-12-01","timestamp":"2025-07-02T01:49:06.579Z","totalAmount":480,"userId":1,"vehicleId":3},"timestamp":"2025-07-02T01:49:06.579Z"}
 {"level":"info","message":{"bookingId":9,"endDate":"2025-08-20","eventType":"BOOKING_CREATED","startDate":"2025-08-18","timestamp":"2025-07-02T01:49:06.610Z","totalAmount":130,"userId":1,"vehicleId":2},"timestamp":"2025-07-02T01:49:06.610Z"}
+{"level":"info","message":{"email":"nonexistent@example.com","eventType":"LOGIN_FAILED","reason":"User not found","timestamp":"2025-07-02T02:04:53.232Z","userId":null},"timestamp":"2025-07-02T02:04:53.233Z"}
+{"level":"info","message":{"email":"newuser@example.com","eventType":"USER_REGISTRATION","role":"customer","timestamp":"2025-07-02T02:07:20.149Z","userId":6},"timestamp":"2025-07-02T02:07:20.149Z"}
+{"level":"info","message":{"email":"logintest@example.com","eventType":"USER_REGISTRATION","role":"customer","timestamp":"2025-07-02T02:07:20.257Z","userId":7},"timestamp":"2025-07-02T02:07:20.257Z"}
+{"level":"info","message":{"email":"logintest@example.com","eventType":"LOGIN_SUCCESS","timestamp":"2025-07-02T02:07:20.341Z","userId":7},"timestamp":"2025-07-02T02:07:20.341Z"}
+{"level":"info","message":{"email":"testlogin2@example.com","eventType":"USER_REGISTRATION","role":"host","timestamp":"2025-07-02T02:07:20.430Z","userId":8},"timestamp":"2025-07-02T02:07:20.430Z"}
+{"level":"info","message":{"email":"testlogin2@example.com","eventType":"LOGIN_SUCCESS","timestamp":"2025-07-02T02:07:20.515Z","userId":8},"timestamp":"2025-07-02T02:07:20.516Z"}
+{"level":"info","message":{"email":"wrongpass@example.com","eventType":"USER_REGISTRATION","role":"customer","timestamp":"2025-07-02T02:07:20.604Z","userId":9},"timestamp":"2025-07-02T02:07:20.604Z"}
+{"level":"info","message":{"email":"testuser@example.com","eventType":"USER_REGISTRATION","role":"customer","timestamp":"2025-07-02T02:11:22.834Z","userId":6},"timestamp":"2025-07-02T02:11:22.834Z"}
+{"level":"info","message":{"email":"newuser2@example.com","eventType":"USER_REGISTRATION","role":"customer","timestamp":"2025-07-02T02:11:22.924Z","userId":7},"timestamp":"2025-07-02T02:11:22.924Z"}
+{"level":"info","message":{"email":"testuser@example.com","eventType":"LOGIN_SUCCESS","timestamp":"2025-07-02T02:11:23.018Z","userId":6},"timestamp":"2025-07-02T02:11:23.018Z"}
+{"level":"info","message":{"email":"testuser@example.com","eventType":"LOGIN_FAILED","failedAttempts":1,"timestamp":"2025-07-02T02:11:23.098Z","userId":6},"timestamp":"2025-07-02T02:11:23.099Z"}
+{"level":"info","message":{"email":"nonexistent@example.com","eventType":"LOGIN_FAILED","reason":"User not found","timestamp":"2025-07-02T02:11:23.103Z","userId":null},"timestamp":"2025-07-02T02:11:23.103Z"}
