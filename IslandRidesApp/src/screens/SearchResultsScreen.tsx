@@ -49,7 +49,7 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ naviga
   };
 
   const handleVehiclePress = (vehicle: VehicleRecommendation) => {
-    console.log('Vehicle selected:', vehicle.vehicle.id);
+    navigation.navigate('VehicleDetail', { vehicle: vehicle.vehicle });
   };
 
   const renderVehicleItem = ({ item }: { item: VehicleRecommendation }) => (
