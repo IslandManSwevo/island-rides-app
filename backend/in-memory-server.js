@@ -14,7 +14,7 @@ let users = [
   {
     id: 1,
     email: 'john@example.com',
-    password_hash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
+    password_hash: '$2b$10$72jAEFxRs8dBM2MMLBCQxurBym13lr2WE7lcEeF3Lav.mfMhGJ9Oe', // password123
     first_name: 'John',
     last_name: 'Doe',
     role: 'customer'
@@ -22,7 +22,7 @@ let users = [
   {
     id: 2,
     email: 'jane@example.com',
-    password_hash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
+    password_hash: '$2b$10$72jAEFxRs8dBM2MMLBCQxurBym13lr2WE7lcEeF3Lav.mfMhGJ9Oe', // password123
     first_name: 'Jane',
     last_name: 'Smith',
     role: 'owner'

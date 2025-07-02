@@ -35,7 +35,7 @@ let users = [
   {
     id: 1,
     email: 'john@example.com',
-    password_hash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
+    password_hash: '$2b$10$72jAEFxRs8dBM2MMLBCQxurBym13lr2WE7lcEeF3Lav.mfMhGJ9Oe', // password123
     first_name: 'John',
     last_name: 'Doe',
     role: 'customer',
@@ -45,7 +45,7 @@ let users = [
   {
     id: 2,
     email: 'jane@example.com',
-    password_hash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
+    password_hash: '$2b$10$72jAEFxRs8dBM2MMLBCQxurBym13lr2WE7lcEeF3Lav.mfMhGJ9Oe', // password123
     first_name: 'Jane',
     last_name: 'Smith',
     role: 'owner',
@@ -55,7 +55,7 @@ let users = [
   {
     id: 3,
     email: 'mike@example.com',
-    password_hash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
+    password_hash: '$2b$10$72jAEFxRs8dBM2MMLBCQxurBym13lr2WE7lcEeF3Lav.mfMhGJ9Oe', // password123
     first_name: 'Mike',
     last_name: 'Johnson',
     role: 'customer',
@@ -65,7 +65,7 @@ let users = [
   {
     id: 4,
     email: 'sarah@example.com',
-    password_hash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
+    password_hash: '$2b$10$72jAEFxRs8dBM2MMLBCQxurBym13lr2WE7lcEeF3Lav.mfMhGJ9Oe', // password123
     first_name: 'Sarah',
     last_name: 'Wilson',
     role: 'owner',
@@ -75,7 +75,7 @@ let users = [
   {
     id: 5,
     email: 'alex@example.com',
-    password_hash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
+    password_hash: '$2b$10$72jAEFxRs8dBM2MMLBCQxurBym13lr2WE7lcEeF3Lav.mfMhGJ9Oe', // password123
     first_name: 'Alex',
     last_name: 'Brown',
     role: 'owner',
