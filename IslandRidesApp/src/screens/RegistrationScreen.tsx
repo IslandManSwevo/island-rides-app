@@ -5,6 +5,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Card } from '../components/Card';
 import { AuthService } from '../services/authService';
+import { StorageService } from '../utils/storage';
 import { colors, typography, spacing } from '../styles/theme';
 
 interface RegistrationScreenProps {
@@ -59,6 +60,8 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
         password: formData.password,
         role: 'customer',
       });
+      await StorageService.storeToken(response.token);
+      await StorageService.storeUser(response.user);
       navigation.navigate('IslandSelection');
     } catch (error) {
       Alert.alert('Registration Failed', error instanceof Error ? error.message : 'An error occurred');

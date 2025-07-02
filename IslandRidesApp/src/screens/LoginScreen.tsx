@@ -5,6 +5,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Card } from '../components/Card';
 import { AuthService } from '../services/authService';
+import { StorageService } from '../utils/storage';
 import { colors, typography, spacing } from '../styles/theme';
 
 interface LoginScreenProps {
@@ -40,6 +41,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     setLoading(true);
     try {
       const response = await AuthService.login({ email: email.trim(), password });
+      await StorageService.storeToken(response.token);
+      await StorageService.storeUser(response.user);
       navigation.navigate('IslandSelection');
     } catch (error) {
       Alert.alert('Login Failed', error instanceof Error ? error.message : 'An error occurred');
