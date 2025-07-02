@@ -96,6 +96,7 @@ let vehicles = [
     location: 'Nassau',
     daily_rate: 75,
     available: true,
+    drive_side: 'LHD',
     created_at: new Date().toISOString()
   },
   {
@@ -107,6 +108,7 @@ let vehicles = [
     location: 'Freeport',
     daily_rate: 65,
     available: true,
+    drive_side: 'RHD',
     created_at: new Date().toISOString()
   },
   {
@@ -118,6 +120,7 @@ let vehicles = [
     location: 'Nassau',
     daily_rate: 120,
     available: true,
+    drive_side: 'LHD',
     created_at: new Date().toISOString()
   },
   {
@@ -129,6 +132,7 @@ let vehicles = [
     location: 'Nassau',
     daily_rate: 70,
     available: true,
+    drive_side: 'RHD',
     created_at: new Date().toISOString()
   },
   {
@@ -140,6 +144,7 @@ let vehicles = [
     location: 'Freeport',
     daily_rate: 95,
     available: true,
+    drive_side: 'LHD',
     created_at: new Date().toISOString()
   },
   {
@@ -151,6 +156,7 @@ let vehicles = [
     location: 'Exuma',
     daily_rate: 85,
     available: true,
+    drive_side: 'RHD',
     created_at: new Date().toISOString()
   }
 ];
@@ -498,7 +504,10 @@ function generateRecommendations(userId, island) {
         model: vehicle.model,
         year: vehicle.year,
         location: vehicle.location,
-        daily_rate: vehicle.daily_rate
+        daily_rate: vehicle.daily_rate,
+        drive_side: vehicle.drive_side,
+        available: vehicle.available,
+        created_at: vehicle.created_at
       },
       recommendationScore: Math.round(finalScore * 100) / 100,
       scoreBreakdown: {
