@@ -5,16 +5,7 @@ import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Button } from '../components/Button';
 import { Vehicle } from '../types';
 
-interface VehicleDetailScreenProps {
-  navigation: any;
-  route: {
-    params: {
-      vehicle: Vehicle;
-    };
-  };
-}
-
-export const VehicleDetailScreen: React.FC<VehicleDetailScreenProps> = ({ navigation, route }) => {
+export const VehicleDetailScreen = ({ navigation, route }: any) => {
   const { vehicle } = route.params;
 
   const features = [
@@ -27,11 +18,7 @@ export const VehicleDetailScreen: React.FC<VehicleDetailScreenProps> = ({ naviga
   ];
 
   const handleBookNow = () => {
-    Alert.alert(
-      'Book Vehicle',
-      `Booking functionality coming soon for ${vehicle.make} ${vehicle.model}`,
-      [{ text: 'OK' }]
-    );
+    navigation.navigate('Checkout', { vehicle });
   };
 
   return (

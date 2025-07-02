@@ -49,3 +49,41 @@ export interface VehicleRecommendation {
     hostPopularity: number;
   };
 }
+
+export interface Booking {
+  id: number;
+  user_id: number;
+  vehicle_id: number;
+  start_date: string;
+  end_date: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BookingRequest {
+  vehicleId: number;
+  startDate: string;
+  endDate: string;
+}
+
+export interface BookingResponse {
+  message: string;
+  booking: {
+    id: number;
+    vehicle: {
+      id: number;
+      make: string;
+      model: string;
+      year: number;
+      location: string;
+      daily_rate: number;
+    };
+    start_date: string;
+    end_date: string;
+    status: string;
+    total_amount: number;
+    created_at: string;
+  };
+}
