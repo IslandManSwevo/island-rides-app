@@ -95,6 +95,7 @@ let vehicles = [
     owner_id: 2,
     location: 'Nassau',
     daily_rate: 75,
+    drive_side: 'LHD',
     available: true,
     created_at: new Date().toISOString()
   },
@@ -106,6 +107,7 @@ let vehicles = [
     owner_id: 2,
     location: 'Freeport',
     daily_rate: 65,
+    drive_side: 'LHD',
     available: true,
     created_at: new Date().toISOString()
   },
@@ -117,6 +119,7 @@ let vehicles = [
     owner_id: 4,
     location: 'Nassau',
     daily_rate: 120,
+    drive_side: 'RHD',
     available: true,
     created_at: new Date().toISOString()
   },
@@ -128,6 +131,7 @@ let vehicles = [
     owner_id: 4,
     location: 'Nassau',
     daily_rate: 70,
+    drive_side: 'LHD',
     available: true,
     created_at: new Date().toISOString()
   },
@@ -139,6 +143,7 @@ let vehicles = [
     owner_id: 5,
     location: 'Freeport',
     daily_rate: 95,
+    drive_side: 'RHD',
     available: true,
     created_at: new Date().toISOString()
   },
@@ -150,6 +155,7 @@ let vehicles = [
     owner_id: 5,
     location: 'Exuma',
     daily_rate: 85,
+    drive_side: 'LHD',
     available: true,
     created_at: new Date().toISOString()
   }
@@ -1026,7 +1032,80 @@ app.get('/api/vehicles', authenticateToken, async (req, res) => {
   try {
     res.json(vehicles);
   } catch (error) {
-    console.error('Get vehicles error:', error.message);
+    logError('Get vehicles error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/vehicles', authenticateToken, checkRole(['owner']), async (req, res) => {
+  try {
+    const { make, model, year, location, daily_rate, drive_side, description, features } = req.body;
+    
+    if (!make || !model || !year || !location || !daily_rate || !drive_side) {
+      return res.status(400).json({ error: 'Make, model, year, location, daily_rate, and drive_side are required' });
+    }
+    
+    if (!['LHD', 'RHD'].includes(drive_side)) {
+      return res.status(400).json({ error: 'drive_side must be either LHD or RHD' });
+    }
+    
+    const newVehicle = {
+      id: Math.max(...vehicles.map(v => v.id)) + 1,
+      make: make.trim(),
+      model: model.trim(),
+      year: parseInt(year),
+      owner_id: req.user.userId,
+      location: location.trim(),
+      daily_rate: parseFloat(daily_rate),
+      drive_side,
+      description: description?.trim(),
+      features: features || [],
+      available: true,
+      created_at: new Date().toISOString()
+    };
+    
+    vehicles.push(newVehicle);
+    logAuditEvent(req.user.userId, 'vehicle_created', { vehicleId: newVehicle.id });
+    res.status(201).json(newVehicle);
+  } catch (error) {
+    logError('Create vehicle error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/vehicles/:id', authenticateToken, checkRole(['owner']), async (req, res) => {
+  try {
+    const vehicleId = parseInt(req.params.id);
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    
+    if (!vehicle) {
+      return res.status(404).json({ error: 'Vehicle not found' });
+    }
+    
+    if (vehicle.owner_id !== req.user.userId) {
+      return res.status(403).json({ error: 'Access denied. You can only update your own vehicles.' });
+    }
+    
+    const { make, model, year, location, daily_rate, drive_side, description, features, available } = req.body;
+    
+    if (drive_side && !['LHD', 'RHD'].includes(drive_side)) {
+      return res.status(400).json({ error: 'drive_side must be either LHD or RHD' });
+    }
+    
+    if (make) vehicle.make = make.trim();
+    if (model) vehicle.model = model.trim();
+    if (year) vehicle.year = parseInt(year);
+    if (location) vehicle.location = location.trim();
+    if (daily_rate) vehicle.daily_rate = parseFloat(daily_rate);
+    if (drive_side) vehicle.drive_side = drive_side;
+    if (description !== undefined) vehicle.description = description?.trim();
+    if (features) vehicle.features = features;
+    if (available !== undefined) vehicle.available = available;
+    
+    logAuditEvent(req.user.userId, 'vehicle_updated', { vehicleId: vehicle.id });
+    res.json(vehicle);
+  } catch (error) {
+    logError('Update vehicle error', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

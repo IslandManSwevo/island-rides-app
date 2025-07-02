@@ -35,6 +35,9 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPress }) =>
           </Text>
           <Text style={styles.price}>${vehicle.daily_rate}/day</Text>
         </View>
+        <Text style={styles.driveSide}>
+          {vehicle.drive_side === 'LHD' ? '🚗 Left-Hand Drive' : '🚙 Right-Hand Drive'}
+        </Text>
         <Text style={styles.location}>📍 {vehicle.location}</Text>
         {vehicle.description && (
           <Text style={styles.description} numberOfLines={2}>
@@ -88,6 +91,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.lightGrey,
     marginBottom: spacing.sm,
+  },
+  driveSide: {
+    fontSize: 12,
+    color: colors.darkGrey,
+    marginTop: spacing.xs,
+    fontWeight: '500',
   },
   description: {
     fontSize: 14,

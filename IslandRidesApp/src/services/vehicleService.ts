@@ -69,4 +69,78 @@ export class VehicleService {
       throw new Error('Network error. Please check your connection.');
     }
   }
+
+  static async createVehicle(vehicleData: {
+    make: string;
+    model: string;
+    year: number;
+    location: string;
+    daily_rate: number;
+    drive_side: 'LHD' | 'RHD';
+    description?: string;
+  }, token: string): Promise<Vehicle> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/vehicles`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(vehicleData),
+      });
+
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please log in again.');
+      }
+
+      if (response.status === 403) {
+        throw new Error('Access denied. Only vehicle owners can list vehicles.');
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Network error' }));
+        throw new Error(error.error || `Failed to create vehicle (${response.status})`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error. Please check your connection.');
+    }
+  }
+
+  static async updateVehicle(vehicleId: number, vehicleData: Partial<Vehicle>, token: string): Promise<Vehicle> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/vehicles/${vehicleId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(vehicleData),
+      });
+
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please log in again.');
+      }
+
+      if (response.status === 403) {
+        throw new Error('Access denied. You can only update your own vehicles.');
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Network error' }));
+        throw new Error(error.error || `Failed to update vehicle (${response.status})`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error. Please check your connection.');
+    }
+  }
 }

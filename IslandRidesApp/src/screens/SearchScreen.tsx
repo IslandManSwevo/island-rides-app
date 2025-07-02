@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { VehicleCard } from '../components/VehicleCard';
+import { Picker } from '../components/Picker';
 import { VehicleService } from '../services/vehicleService';
 import { StorageService } from '../utils/storage';
 import { Vehicle } from '../types';
@@ -12,15 +13,27 @@ interface SearchScreenProps {
   navigation: any;
 }
 
+const DRIVE_SIDE_FILTER_OPTIONS = [
+  { label: 'Any', value: 'Any' },
+  { label: 'Left-Hand', value: 'LHD' },
+  { label: 'Right-Hand', value: 'RHD' }
+];
+
 export const SearchScreen: React.FC<SearchScreenProps> = ({ route, navigation }) => {
   const { island } = route.params || {};
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [allVehicles, setAllVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [driveSideFilter, setDriveSideFilter] = useState<string>('Any');
 
   useEffect(() => {
     fetchVehicles();
   }, [island]);
+
+  useEffect(() => {
+    filterVehicles();
+  }, [driveSideFilter, allVehicles]);
 
   const fetchVehicles = async () => {
     try {
@@ -35,13 +48,21 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ route, navigation })
       }
 
       const vehicleData = await VehicleService.getVehiclesByIsland(island, token);
-      setVehicles(vehicleData);
+      setAllVehicles(vehicleData);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
       setError(error instanceof Error ? error.message : 'Failed to load vehicles');
     } finally {
       setLoading(false);
     }
+  };
+
+  const filterVehicles = () => {
+    const filteredVehicles = allVehicles.filter((vehicle: Vehicle) => {
+      const matchesDriveSide = driveSideFilter === 'Any' || vehicle.drive_side === driveSideFilter;
+      return matchesDriveSide;
+    });
+    setVehicles(filteredVehicles);
   };
 
   const handleVehiclePress = (vehicle: Vehicle) => {
@@ -97,6 +118,16 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ route, navigation })
         </Text>
       </View>
 
+      <View style={styles.filterContainer}>
+        <Picker
+          label="Drive Side"
+          value={driveSideFilter}
+          options={DRIVE_SIDE_FILTER_OPTIONS}
+          onValueChange={setDriveSideFilter}
+          placeholder="Any"
+        />
+      </View>
+
       {error ? (
         renderErrorState()
       ) : (
@@ -130,6 +161,10 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     color: colors.white,
+  },
+  filterContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
   },
   listContainer: {
     paddingBottom: spacing.xl,

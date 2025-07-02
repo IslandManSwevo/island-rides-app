@@ -163,6 +163,12 @@ export const VehicleDetailScreen: React.FC<VehicleDetailScreenProps> = ({ route,
               <Text style={styles.detailLabel}>Location:</Text>
               <Text style={styles.detailValue}>{vehicle.location}</Text>
             </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Drive Side:</Text>
+              <Text style={styles.detailValue}>
+                {vehicle.drive_side === 'LHD' ? 'Left-Hand Drive' : 'Right-Hand Drive'}
+              </Text>
+            </View>
           </View>
         </View>
       </ScrollView>

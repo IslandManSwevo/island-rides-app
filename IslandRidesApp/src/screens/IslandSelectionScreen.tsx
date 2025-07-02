@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Button } from '../components/Button';
+import { StorageService } from '../utils/storage';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
-import { Island } from '../types';
+import { Island, User } from '../types';
 
 interface IslandSelectionScreenProps {
   navigation: any;
@@ -46,6 +48,16 @@ const getIslandImageUrl = (islandName: string): string => {
 };
 
 export const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({ navigation }) => {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const userData = await StorageService.getUser();
+      setUser(userData);
+    };
+    loadUser();
+  }, []);
+
   const handleIslandSelect = (island: Island) => {
     navigation.navigate('Search', { island });
   };
@@ -59,6 +71,16 @@ export const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({ na
         <Text style={styles.title}>🏝️ Choose Your Island</Text>
         <Text style={styles.subtitle}>Select where you'd like to explore</Text>
       </View>
+
+      {user?.role === 'owner' && (
+        <View style={styles.ownerSection}>
+          <Button
+            title="+ List Your Car"
+            onPress={() => navigation.navigate('ListVehicle')}
+            variant="secondary"
+          />
+        </View>
+      )}
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {islands.map((island) => (
@@ -98,6 +120,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
+  },
+  ownerSection: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
   },
   title: {
     ...typography.heading1,

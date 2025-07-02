@@ -33,6 +33,7 @@ export interface Vehicle {
   daily_rate: number;
   location: string;
   owner_id: number;
+  drive_side: 'LHD' | 'RHD';
   description?: string;
   features?: string[];
   photos?: string[];

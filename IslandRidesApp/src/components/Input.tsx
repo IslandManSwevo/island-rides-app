@@ -13,6 +13,8 @@ interface InputProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   iconName?: 'mail' | 'lock' | 'user';
+  multiline?: boolean;
+  numberOfLines?: number;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -25,6 +27,8 @@ export const Input: React.FC<InputProps> = ({
   autoCapitalize = 'none',
   keyboardType = 'default',
   iconName,
+  multiline = false,
+  numberOfLines = 1,
 }) => {
   return (
     <View style={styles.container}>
@@ -42,7 +46,8 @@ export const Input: React.FC<InputProps> = ({
           style={[
             styles.input, 
             error && styles.inputError,
-            iconName && styles.inputWithIcon
+            iconName && styles.inputWithIcon,
+            multiline && styles.multilineInput
           ]}
           value={value}
           onChangeText={onChangeText}
@@ -51,6 +56,9 @@ export const Input: React.FC<InputProps> = ({
           autoCapitalize={autoCapitalize}
           keyboardType={keyboardType}
           placeholderTextColor={colors.lightGrey}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          textAlignVertical={multiline ? 'top' : 'center'}
         />
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
@@ -89,6 +97,10 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: colors.error,
+  },
+  multilineInput: {
+    height: 80,
+    paddingTop: spacing.md,
   },
   icon: {
     position: 'absolute',
