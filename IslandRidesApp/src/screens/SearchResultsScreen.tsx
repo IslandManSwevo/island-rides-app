@@ -6,16 +6,7 @@ import { VehicleCard } from '../components/VehicleCard';
 import { VehicleService } from '../services/vehicleService';
 import { VehicleRecommendation, Island } from '../types';
 
-interface SearchResultsScreenProps {
-  navigation: any;
-  route: {
-    params: {
-      island: Island;
-    };
-  };
-}
-
-export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ navigation, route }) => {
+export const SearchResultsScreen = ({ navigation, route }: any) => {
   const [vehicles, setVehicles] = useState<VehicleRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
