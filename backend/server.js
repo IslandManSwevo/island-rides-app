@@ -905,6 +905,123 @@ app.get('/api/bookings', authenticateToken, async (req, res) => {
   }
 });
 
+app.post('/api/bookings', authenticateToken, async (req, res) => {
+  try {
+    const { vehicleId, startDate, endDate } = req.body;
+    const userId = req.user.userId;
+
+    if (!vehicleId || !startDate || !endDate) {
+      return res.status(400).json({ error: 'Vehicle ID, start date, and end date are required' });
+    }
+
+    const vehicleIdNum = parseInt(vehicleId);
+    if (isNaN(vehicleIdNum)) {
+      return res.status(400).json({ error: 'Vehicle ID must be a valid number' });
+    }
+
+    const vehicle = vehicles.find(v => v.id === vehicleIdNum);
+    if (!vehicle) {
+      return res.status(404).json({ error: 'Vehicle not found' });
+    }
+
+    if (!vehicle.available) {
+      return res.status(400).json({ error: 'Vehicle is not available' });
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+      return res.status(400).json({ error: 'Dates must be in YYYY-MM-DD format' });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+
+    if (start < today) {
+      return res.status(400).json({ error: 'Start date cannot be in the past' });
+    }
+
+    if (end <= start) {
+      return res.status(400).json({ error: 'End date must be after start date' });
+    }
+
+    const conflictingBooking = bookings.find(booking => {
+      if (booking.vehicle_id !== vehicleIdNum) return false;
+      if (booking.status === 'cancelled') return false;
+      
+      const bookingStart = new Date(booking.start_date);
+      const bookingEnd = new Date(booking.end_date);
+      
+      return start < bookingEnd && end > bookingStart;
+    });
+
+    if (conflictingBooking) {
+      return res.status(409).json({ 
+        error: 'Vehicle is not available for the selected dates due to existing booking',
+        conflictingBooking: {
+          id: conflictingBooking.id,
+          start_date: conflictingBooking.start_date,
+          end_date: conflictingBooking.end_date
+        }
+      });
+    }
+
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const totalAmount = days * vehicle.daily_rate;
+
+    const booking = {
+      id: nextBookingId++,
+      user_id: userId,
+      vehicle_id: vehicleIdNum,
+      start_date: startDate,
+      end_date: endDate,
+      status: 'pending',
+      total_amount: totalAmount,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    bookings.push(booking);
+
+    logAuditEvent('BOOKING_CREATED', userId, {
+      bookingId: booking.id,
+      vehicleId: vehicleIdNum,
+      startDate,
+      endDate,
+      totalAmount
+    });
+
+    res.status(201).json({
+      message: 'Booking created successfully',
+      booking: {
+        id: booking.id,
+        vehicle: {
+          id: vehicle.id,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          location: vehicle.location,
+          daily_rate: vehicle.daily_rate
+        },
+        start_date: booking.start_date,
+        end_date: booking.end_date,
+        status: booking.status,
+        total_amount: booking.total_amount,
+        created_at: booking.created_at
+      }
+    });
+
+  } catch (error) {
+    logError('Create booking error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/api/vehicles', authenticateToken, async (req, res) => {
   try {
     res.json(vehicles);
