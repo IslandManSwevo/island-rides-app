@@ -1,1 +1,13 @@
-{"mcpServers":{}}
+{
+  "mcpServers": {
+    "custom-gemini-assistant": {
+      "command": "node",
+      "args": [
+        "mcp_server/server.js"
+      ],
+      "disabled": true,
+      "alwaysAllow": [],
+      "disabledTools": []
+    }
+  }
+}

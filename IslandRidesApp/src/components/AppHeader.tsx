@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { colors, typography, spacing } from '../styles/theme';
 import { NavigationProp } from '@react-navigation/native';
@@ -59,7 +59,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             style={styles.iconButton}
             accessibilityLabel="Back"
           >
-            <Icon name="arrow-back" size={24} color={colors.white} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.white} />
           </TouchableOpacity>
         )}
       </View>
@@ -77,7 +77,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             style={styles.iconButton}
             accessibilityLabel="Profile"
           >
-            <Icon name="person" size={24} color={colors.white} />
+            <MaterialIcons name="person" size={24} color={colors.white} />
           </TouchableOpacity>
         )}
         <TouchableOpacity 
@@ -85,7 +85,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           style={styles.iconButton}
           accessibilityLabel="Logout"
         >
-          <Icon name="logout" size={24} color={colors.white} />
+          <MaterialIcons name="logout" size={24} color={colors.white} />
         </TouchableOpacity>
       </View>
     </View>

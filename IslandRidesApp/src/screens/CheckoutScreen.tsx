@@ -51,7 +51,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
     setShowEndPicker(false);
   };
 
-  const handlePayment = async (method: 'stripe' | 'paypal' | 'googlepay') => {
+  const handlePayment = async () => {
     try {
       setLoading(true);
       
@@ -73,32 +73,27 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
 
       const response = await BookingService.createBooking(bookingData);
       
-      notificationService.success(
-        `Your booking has been created with ID: ${response.booking.id}`,
-        {
-          title: `${method.charAt(0).toUpperCase() + method.slice(1)} Payment Successful`,
-          duration: 4000,
-          action: {
-            label: 'View Booking',
-            handler: () => navigation.navigate('BookingConfirmed', {
-              bookingId: response.booking.id
-            })
-          }
+      navigation.navigate('Payment', {
+        booking: {
+          ...response.booking,
+          total_amount: total,
+          vehicle: vehicle
         }
-      );
+      });
+      
     } catch (error) {
       notificationService.error(error instanceof Error ? error.message : 'Failed to create booking', {
         title: 'Booking Error',
-        duration: 5000,
-        action: {
-          label: 'Try Again',
-          handler: () => handlePayment(method)
-        }
+        duration: 5000
       });
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    notificationService.setupNotificationListeners(navigation);
+  }, []);
 
   return (
     <ScrollView style={styles.container}>
@@ -195,20 +190,20 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
         <View style={styles.paymentButtons}>
           <Button
             title="Pay with Card (Stripe)"
-            onPress={() => handlePayment('stripe')}
+            onPress={handlePayment}
             loading={loading}
           />
           
           <Button
             title="PayPal"
-            onPress={() => handlePayment('paypal')}
+            onPress={handlePayment}
             loading={loading}
             variant="secondary"
           />
           
           <Button
             title="Google Pay"
-            onPress={() => handlePayment('googlepay')}
+            onPress={handlePayment}
             loading={loading}
             variant="secondary"
           />

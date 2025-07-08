@@ -215,6 +215,8 @@ export interface ChatMessage {
     name: string;
     avatar?: string;
   };
+  image?: string;
+  audio?: string;
 }
 
 export interface ChatUser {

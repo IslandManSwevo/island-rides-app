@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Island Rides AI Assistant - Full File Access</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1400px;
+            height: 90vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 380px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .workspace-selector {
+            padding: 16px;
+            background: #e9ecef;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .workspace-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .workspace-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s ease;
+            flex: 1;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .sidebar-tabs {
+            display: flex;
+            background: #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+
+        .tab-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .file-browser {
+            display: none;
+        }
+
+        .file-browser.active,
+        .tools-panel.active,
+        .context-panel.active {
+            display: block;
+        }
+
+        .tools-panel {
+            display: none;
+        }
+
+        .context-panel {
+            display: none;
+        }
+
+        .current-path {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .file-tree {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .file-item {
+            padding: 6px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 2px 0;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-item:hover {
+            background: #e9ecef;
+        }
+
+        .file-item.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .file-item.directory {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .file-actions {
+            margin-left: auto;
+            display: none;
+            gap: 4px;
+        }
+
+        .file-item:hover .file-actions {
+            display: flex;
+        }
+
+        .file-action {
+            background: rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            color: inherit;
+        }
+
+        .tool-section {
+            margin-bottom: 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tool-header {
+            background: #e9ecef;
+            padding: 12px 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tool-content {
+            padding: 12px;
+            background: white;
+        }
+
+        .tool-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tool-input {
+            padding: 6px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .tool-result {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 8px;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .context-section {
+            margin-bottom: 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .context-header {
+            background: #e9ecef;
+            padding: 12px 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .context-content {
+            padding: 16px;
+            background: white;
+        }
+
+        .context-textarea {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .suggestions {
+            display: flex;
+            gap: 8px;
+            padding: 10px 20px;
+            overflow-x: auto;
+            background: #f8f9fa;
+            flex-wrap: wrap;
+        }
+
+        .suggestion {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            padding: 6px 12px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        .suggestion:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.assistant {
+            text-align: left;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: #f8f9fa;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .input-area {
+            padding: 16px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .context-indicator {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .context-tag {
+            background: #667eea;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .context-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .input-field {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 22px;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .send-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 20px;
+            color: #666;
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 20px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1000px) {
+            .main-container {
+                flex-direction: column;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 250px;
+            }
+            
+            .suggestions {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Enhanced Sidebar -->
+        <div class="sidebar">
+            <!-- Dynamic Workspace Selector -->
+            <div class="workspace-selector">
+                <input type="text" class="workspace-input" id="workspaceInput" 
+                       placeholder="Enter project directory path (e.g., C:\Users\Name\MyProject)">
+                <div class="workspace-buttons">
+                    <button class="btn" onclick="setWorkspace()">📁 Set Directory</button>
+                    <button class="btn btn-success" onclick="quickSet('current')">📍 Current Dir</button>
+                </div>
+            </div>
+            
+            <div class="sidebar-header">
+                <h3>🏝️ AI Project Navigator</h3>
+                <p style="font-size: 12px; opacity: 0.9;">Full file system access</p>
+            </div>
+            
+            <div class="sidebar-tabs">
+                <button class="tab active" onclick="switchTab('files')">📁 Files</button>
+                <button class="tab" onclick="switchTab('tools')">🛠️ Tools</button>
+                <button class="tab" onclick="switchTab('context')">📋 Context</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Enhanced File Browser -->
+                <div class="file-browser active" id="fileTab">
+                    <div class="current-path" id="currentPath">
+                        Working Directory: Not Set
+                    </div>
+                    
+                    <button class="btn" onclick="loadProjectStructure()" style="width: 100%; margin-bottom: 12px;">
+                        🔄 Refresh Files
+                    </button>
+                    
+                    <div class="file-tree" id="fileTree">
+                        <div class="file-item">
+                            📁 Set a workspace directory above to browse files
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Direct Tools Panel -->
+                <div class="tools-panel" id="toolsTab">
+                    <div class="tool-section">
+                        <div class="tool-header" onclick="toggleSection(this)">
+                            📄 File Operations
+                            <span>▼</span>
+                        </div>
+                        <div class="tool-content">
+                            <div class="tool-form">
+                                <input type="text" class="tool-input" id="fileReadPath" placeholder="File path to read">
+                                <button class="btn" onclick="executeDirectTool('read_file', {path: document.getElementById('fileReadPath').value})">Read File</button>
+                                
+                                <input type="text" class="tool-input" id="fileWritePath" placeholder="File path to write" style="margin-top: 8px;">
+                                <textarea class="tool-input" id="fileWriteContent" placeholder="Content to write" rows="3"></textarea>
+                                <button class="btn" onclick="executeDirectTool('write_file', {path: document.getElementById('fileWritePath').value, content: document.getElementById('fileWriteContent').value})">Write File</button>
+                            </div>
+                            <div class="tool-result" id="fileResult"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-section">
+                        <div class="tool-header" onclick="toggleSection(this)">
+                            🌐 Web Search
+                            <span>▼</span>
+                        </div>
+                        <div class="tool-content" style="display: none;">
+                            <div class="tool-form">
+                                <input type="text" class="tool-input" id="searchQuery" placeholder="Search query">
+                                <input type="number" class="tool-input" id="searchCount" placeholder="Number of results (default: 5)" value="5">
+                                <button class="btn" onclick="executeDirectTool('search_web', {query: document.getElementById('searchQuery').value, count: parseInt(document.getElementById('searchCount').value) || 5})">Search Web</button>
+                            </div>
+                            <div class="tool-result" id="searchResult"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-section">
+                        <div class="tool-header" onclick="toggleSection(this)">
+                            📋 Git Operations
+                            <span>▼</span>
+                        </div>
+                        <div class="tool-content" style="display: none;">
+                            <div class="tool-form">
+                                <select class="tool-input" id="gitOperation">
+                                    <option value="status">Status</option>
+                                    <option value="log">Log</option>
+                                    <option value="diff">Diff</option>
+                                    <option value="branch">Branch</option>
+                                </select>
+                                <input type="text" class="tool-input" id="gitArgs" placeholder="Additional arguments (optional)">
+                                <button class="btn" onclick="executeDirectTool('git_operation', {operation: document.getElementById('gitOperation').value, args: document.getElementById('gitArgs').value})">Execute Git</button>
+                            </div>
+                            <div class="tool-result" id="gitResult"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-section">
+                        <div class="tool-header" onclick="toggleSection(this)">
+                            ⚡ Command Execution
+                            <span>▼</span>
+                        </div>
+                        <div class="tool-content" style="display: none;">
+                            <div class="tool-form">
+                                <input type="text" class="tool-input" id="commandInput" placeholder="Command to execute">
+                                <button class="btn" onclick="executeDirectTool('run_command', {command: document.getElementById('commandInput').value})">Run Command</button>
+                            </div>
+                            <div class="tool-result" id="commandResult"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Context Panel -->
+                <div class="context-panel" id="contextTab">
+                    <div class="context-section">
+                        <div class="context-header" onclick="toggleSection(this)">
+                            🏝️ Project Information
+                            <span>▼</span>
+                        </div>
+                        <div class="context-content">
+                            <textarea class="context-textarea" id="projectInfoText" placeholder="Describe your project...">
+Island Rides - Transportation App
+
+Tech Stack: React Native + Tamagui + TypeScript
+Purpose: Ride booking for the Caribbean/Bahamas
+Theme: Island-inspired UI with glassmorphic design
+Colors: Bahamian blues, turquoise, coral accents
+                            </textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="context-section">
+                        <div class="context-header" onclick="toggleSection(this)">
+                            💻 Development Guidelines
+                            <span>▼</span>
+                        </div>
+                        <div class="context-content" style="display: none;">
+                            <textarea class="context-textarea" id="devGuidelinesText" placeholder="Add your coding standards...">
+Code Standards:
+- Use TypeScript with strict mode
+- Functional components with hooks
+- Tamagui for styling consistency
+- ESLint + Prettier formatting
+- Meaningful component names (PascalCase)
+- Clear folder structure (/src/components, /src/screens)
+                            </textarea>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" onclick="saveContext()" style="width: 100%; margin-top: 12px;">
+                        💾 Save Context
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="main-chat">
+            <div class="header">
+                <div class="status" id="status"></div>
+                <h1>🏝️ Island Rides AI Assistant</h1>
+                <p>Full file system access • Dynamic workspace • 11 powerful tools</p>
+            </div>
+
+            <div class="suggestions">
+                <div class="suggestion" onclick="useSuggestion('Analyze my project structure and files')">🔍 Analyze Project</div>
+                <div class="suggestion" onclick="useSuggestion('Read my package.json and suggest improvements')">📦 Review Package</div>
+                <div class="suggestion" onclick="useSuggestion('Create a new component following my guidelines')">🎨 Create Component</div>
+                <div class="suggestion" onclick="useSuggestion('Check git status and help me commit changes')">📋 Git Status</div>
+                <div class="suggestion" onclick="useSuggestion('Search for best practices and apply them to my code')">🌐 Best Practices</div>
+                <div class="suggestion" onclick="useSuggestion('Run tests and analyze the results')">🧪 Run Tests</div>
+            </div>
+
+            <div class="chat-container">
+                <div class="messages" id="messages">
+                    <div class="message assistant">
+                        <div class="message-content">
+🏝️ **Enhanced Island Rides AI Assistant Ready!**
+
+**New Capabilities:**
+• 📁 **Dynamic Workspace** - Work with ANY project directory
+• 🔍 **Full File Access** - Read and write files anywhere on your system
+• 🛠️ **Direct Tool Access** - Use all 11 tools manually or via chat
+• 💻 **Real Project Analysis** - I can actually see and modify your code
+• 🌐 **Web Research** - Search for solutions and best practices
+• 📋 **Git Integration** - Check status, commit, manage version control
+
+**Getting Started:**
+1. **Set your workspace** using the directory input above
+2. **Browse your files** in the Files tab  
+3. **Ask me anything** - I can now read your actual code!
+
+Try: *"Set my workspace to [your project path] and analyze my project structure"*
+                        </div>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    AI is working with your files...
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="context-indicator" id="contextIndicator"></div>
+                
+                <div class="input-container">
+                    <textarea 
+                        id="messageInput" 
+                        class="input-field" 
+                        placeholder="Ask me to read/write files, analyze code, or help with any development task..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button" id="sendButton" onclick="sendMessage()">
+                        ➤
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        let conversationHistory = [];
+        let selectedFiles = [];
+        let currentWorkspace = '';
+        let projectContext = {};
+
+        // Enhanced workspace management
+        async function setWorkspace() {
+            const path = document.getElementById('workspaceInput').value.trim();
+            if (!path) {
+                alert('Please enter a directory path');
+                return;
+            }
+            
+            try {
+                // Test if the directory exists by trying to list it
+                const response = await fetch(`${API_BASE}/api/tools/list_directory`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: path })
+                });
+                
+                const data = await response.json();
+                if (data.result && !data.result.includes('Error')) {
+                    currentWorkspace = path;
+                    document.getElementById('currentPath').textContent = `Working Directory: ${path}`;
+                    displayFileTree(data.result);
+                    
+                    // Inform the AI about the workspace change
+                    addMessage('assistant', `✅ Workspace set to: ${path}\n\nI can now read and write files in this directory. What would you like me to help you with?`);
+                    
+                    // Save to localStorage
+                    localStorage.setItem('currentWorkspace', path);
+                } else {
+                    alert('Directory not found or not accessible: ' + path);
+                }
+            } catch (error) {
+                alert('Error accessing directory: ' + error.message);
+            }
+        }
+
+        function quickSet(type) {
+            if (type === 'current') {
+                document.getElementById('workspaceInput').value = '.';
+                setWorkspace();
+            }
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.file-browser, .tools-panel, .context-panel').forEach(p => p.classList.remove('active'));
+            
+            const tabs = document.querySelectorAll('.tab');
+            if (tab === 'files') {
+                tabs[0].classList.add('active');
+                document.getElementById('fileTab').classList.add('active');
+            } else if (tab === 'tools') {
+                tabs[1].classList.add('active');
+                document.getElementById('toolsTab').classList.add('active');
+            } else {
+                tabs[2].classList.add('active');
+                document.getElementById('contextTab').classList.add('active');
+            }
+        }
+
+        // Section toggling
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('span');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                arrow.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '▶';
+            }
+        }
+
+        // Load project structure
+        async function loadProjectStructure() {
+            if (!currentWorkspace) {
+                alert('Please set a workspace directory first');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/tools/list_directory`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: currentWorkspace })
+                });
+                
+                const data = await response.json();
+                displayFileTree(data.result);
+            } catch (error) {
+                console.error('Error loading project structure:', error);
+                document.getElementById('fileTree').innerHTML = '<div class="file-item">❌ Error loading files</div>';
+            }
+        }
+
+        // Display file tree
+        function displayFileTree(fileList) {
+            const lines = fileList.split('\n').filter(line => line.trim());
+            const fileTree = document.getElementById('fileTree');
+            
+            fileTree.innerHTML = lines.map(line => {
+                const isDir = line.includes('[DIR]');
+                const fileName = line.replace(/^\[.*?\]\s*/, '');
+                const className = isDir ? 'directory' : 'file';
+                const icon = isDir ? '📁' : '📄';
+                
+                return `<div class="file-item ${className}" onclick="selectFile('${fileName}', ${isDir})">
+                    ${icon} ${fileName}
+                    <div class="file-actions">
+                        ${!isDir ? '<button class="file-action" onclick="event.stopPropagation(); readFileContent(\'' + fileName + '\')">👁️</button>' : ''}
+                        <button class="file-action" onclick="event.stopPropagation(); addToContext('${fileName}')">➕</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // Select file/directory
+        async function selectFile(fileName, isDir) {
+            if (isDir) {
+                // Navigate into directory
+                const newPath = currentWorkspace === '.' ? fileName : `${currentWorkspace}/${fileName}`;
+                try {
+                    const response = await fetch(`${API_BASE}/api/tools/list_directory`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ path: newPath })
+                    });
+                    const data = await response.json();
+                    displayFileTree(data.result);
+                    document.getElementById('currentPath').textContent = `Working Directory: ${newPath}`;
+                } catch (error) {
+                    console.error('Error navigating to directory:', error);
+                }
+                return;
+            }
+
+            // Visual feedback
+            document.querySelectorAll('.file-item').forEach(item => item.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        // Read file content for preview
+        async function readFileContent(fileName) {
+            try {
+                const filePath = currentWorkspace === '.' ? fileName : `${currentWorkspace}/${fileName}`;
+                const response = await fetch(`${API_BASE}/api/tools/read_file`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: filePath })
+                });
+                const data = await response.json();
+                
+                const preview = data.result.length > 500 ? data.result.substring(0, 500) + '...' : data.result;
+                addMessage('assistant', `📄 **File: ${fileName}**\n\n\`\`\`\n${preview}\n\`\`\``);
+            } catch (error) {
+                addMessage('assistant', `❌ Error reading ${fileName}: ${error.message}`);
+            }
+        }
+
+        // Add file to context
+        function addToContext(fileName) {
+            if (!selectedFiles.includes(fileName)) {
+                selectedFiles.push(fileName);
+                updateContextIndicator();
+                addMessage('assistant', `✅ Added ${fileName} to conversation context`);
+            }
+        }
+
+        // Update context indicator
+        function updateContextIndicator() {
+            const indicator = document.getElementById('contextIndicator');
+            indicator.innerHTML = selectedFiles.map(file => 
+                `<div class="context-tag">
+                    📄 ${file}
+                    <span class="remove" onclick="removeFileContext('${file}')">×</span>
+                </div>`
+            ).join('');
+        }
+
+        // Remove file from context
+        function removeFileContext(fileName) {
+            selectedFiles = selectedFiles.filter(f => f !== fileName);
+            delete projectContext[fileName];
+            updateContextIndicator();
+        }
+
+        // Execute tools directly
+        async function executeDirectTool(toolName, args) {
+            try {
+                const response = await fetch(`${API_BASE}/api/tools/${toolName}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(args)
+                });
+                
+                const data = await response.json();
+                const resultElement = document.getElementById(toolName.includes('file') ? 'fileResult' : 
+                                                            toolName.includes('search') ? 'searchResult' :
+                                                            toolName.includes('git') ? 'gitResult' : 'commandResult');
+                
+                if (resultElement) {
+                    resultElement.textContent = data.result || JSON.stringify(data, null, 2);
+                }
+                
+                // Also add to chat
+                addMessage('assistant', `🛠️ **Tool: ${toolName}**\n\n${data.result || 'Operation completed'}`);
+            } catch (error) {
+                console.error('Error executing tool:', error);
+                addMessage('assistant', `❌ Error executing ${toolName}: ${error.message}`);
+            }
+        }
+
+        // Enhanced send message with workspace awareness
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+
+            const prompt = input.value.trim();
+            if (!prompt) return;
+
+            input.disabled = true;
+            sendButton.disabled = true;
+            input.value = '';
+            input.style.height = 'auto';
+
+            addMessage('user', prompt);
+            showTypingIndicator();
+
+            try {
+                // Enhanced context with workspace info
+                const enhancedContext = {
+                    history: conversationHistory,
+                    currentWorkspace: currentWorkspace,
+                    selectedFiles: selectedFiles,
+                    projectInfo: document.getElementById('projectInfoText').value,
+                    devGuidelines: document.getElementById('devGuidelinesText').value,
+                    availableTools: [
+                        'read_file', 'write_file', 'list_directory', 'create_file', 'get_file_info',
+                        'run_command', 'search_web', 'git_operation', 'package_manager', 
+                        'run_tests', 'analyze_code'
+                    ]
+                };
+
+                // Create workspace-aware prompt
+                let contextualPrompt = prompt;
+                if (currentWorkspace) {
+                    contextualPrompt = `Current workspace: ${currentWorkspace}
+
+Available tools: ${enhancedContext.availableTools.join(', ')}
+
+Project context: ${enhancedContext.projectInfo}
+
+Development guidelines: ${enhancedContext.devGuidelines}
+
+User request: ${prompt}
+
+Note: You have full access to read and write files in the current workspace. Use the tools actively to examine files, analyze code, and make changes as requested.`;
+                }
+
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        prompt: contextualPrompt,
+                        context: enhancedContext
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                hideTypingIndicator();
+                addMessage('assistant', data.response);
+
+                conversationHistory.push(
+                    { role: 'user', parts: [{ text: prompt }] },
+                    { role: 'model', parts: [{ text: data.response }] }
+                );
+
+                if (conversationHistory.length > 20) {
+                    conversationHistory = conversationHistory.slice(-20);
+                }
+
+            } catch (error) {
+                hideTypingIndicator();
+                addErrorMessage(`Error: ${error.message}`);
+                console.error('Chat error:', error);
+            } finally {
+                input.disabled = false;
+                sendButton.disabled = false;
+                input.focus();
+            }
+        }
+
+        function useSuggestion(text) {
+            document.getElementById('messageInput').value = text;
+            sendMessage();
+        }
+
+        function saveContext() {
+            const context = {
+                currentWorkspace,
+                projectInfo: document.getElementById('projectInfoText').value,
+                devGuidelines: document.getElementById('devGuidelinesText').value,
+                selectedFiles
+            };
+            
+            localStorage.setItem('islandRidesContext', JSON.stringify(context));
+            alert('✅ Context saved!');
+        }
+
+        function loadSavedContext() {
+            const saved = localStorage.getItem('islandRidesContext');
+            if (saved) {
+                const context = JSON.parse(saved);
+                currentWorkspace = context.currentWorkspace || '';
+                document.getElementById('workspaceInput').value = currentWorkspace;
+                document.getElementById('projectInfoText').value = context.projectInfo || '';
+                document.getElementById('devGuidelinesText').value = context.devGuidelines || '';
+                selectedFiles = context.selectedFiles || [];
+                
+                if (currentWorkspace) {
+                    document.getElementById('currentPath').textContent = `Working Directory: ${currentWorkspace}`;
+                }
+                updateContextIndicator();
+            }
+        }
+
+        // Helper functions
+        function addMessage(sender, content) {
+            const messages = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(contentDiv);
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function addErrorMessage(content) {
+            const messages = document.getElementById('messages');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = content;
+            messages.appendChild(errorDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'block';
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        // Auto-resize textarea
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Send on Enter
+        document.getElementById('messageInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Server status check
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                const status = document.getElementById('status');
+                if (data.status === 'ok' && data.mcpConnected) {
+                    status.style.background = '#00ff88';
+                    status.title = 'Connected - All tools ready';
+                } else {
+                    status.style.background = '#ff6b6b';
+                    status.title = 'Server issues detected';
+                }
+            } catch (error) {
+                const status = document.getElementById('status');
+                status.style.background = '#ff6b6b';
+                status.title = 'Cannot reach server';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkServerStatus();
+            loadSavedContext();
+            document.getElementById('messageInput').focus();
+            
+            setInterval(checkServerStatus, 30000);
+        });
+    </script>
+</body>
+</html>

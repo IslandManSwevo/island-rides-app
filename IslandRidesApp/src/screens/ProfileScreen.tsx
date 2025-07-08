@@ -10,6 +10,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ProfileService } from '../services/profileService';
 import { useAuth } from '../context/AuthContext';
 import { ProfileData, ProfileBooking } from '../types';
@@ -132,6 +133,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         )}
         <Text style={styles.detailText}>💰 {formatCurrency(item.totalAmount)}</Text>
       </View>
+
+      {item.status === 'completed' && item.vehicle && (
+        <View style={styles.bookingActions}>
+          <TouchableOpacity
+            style={styles.reviewButton}
+            onPress={() => navigation.navigate('WriteReview', { 
+              booking: {
+                id: item.id,
+                vehicle: {
+                  id: item.vehicle!.id,
+                  make: item.vehicle!.make,
+                  model: item.vehicle!.model,
+                  year: item.vehicle!.year,
+                },
+                start_date: item.startDate,
+                end_date: item.endDate,
+              }
+            })}
+          >
+            <Ionicons name="star-outline" size={16} color={colors.primary} />
+            <Text style={styles.reviewButtonText}>Write Review</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 
@@ -413,6 +438,27 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 14,
     color: colors.lightGrey,
+  },
+  bookingActions: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.offWhite,
+  },
+  reviewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.offWhite,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    alignSelf: 'flex-start',
+  },
+  reviewButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+    marginLeft: spacing.xs,
   },
   emptyContainer: {
     padding: spacing.xl,

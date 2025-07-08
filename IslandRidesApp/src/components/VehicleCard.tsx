@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Vehicle } from '../types';
+import { FavoriteButton } from './FavoriteButton';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -12,6 +13,9 @@ interface VehicleCardProps {
 export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPress }) => {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
+      <View style={styles.favoriteButton}>
+        <FavoriteButton vehicleId={vehicle.id} />
+      </View>
       <View style={styles.cardContent}>
         <View style={styles.vehicleInfo}>
           <View style={styles.headerRow}>
@@ -128,5 +132,18 @@ const styles = StyleSheet.create({
   },
   arrowContainer: {
     marginLeft: spacing.md,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });

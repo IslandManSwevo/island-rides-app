@@ -8,6 +8,11 @@ const helmet = require('helmet');
 const winston = require('winston');
 require('dotenv').config();
 const db = require('./db');
+const transfiService = require('./services/transfiService');
+const pushNotificationService = require('./services/pushNotificationService');
+const favoritesService = require('./services/favoritesService');
+const priceMonitoringService = require('./services/priceMonitoringService');
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 3003;
@@ -935,6 +940,17 @@ app.get('/api/owner/revenue-report', authenticateToken, checkRole(['owner']), as
   }
 });
 
+app.post('/api/chat', (req, res) => {
+  const { prompt } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ error: 'Prompt is required' });
+  }
+  res.json({
+    message: 'Chat request received successfully',
+    prompt,
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
@@ -951,10 +967,328 @@ const io = socketIo(server, {
   }
 });
 
+// Create payment intent
+app.post('/api/payments/create-intent', authenticateToken, async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+    
+    const bookingResult = await db.query(
+      `SELECT b.*, u.email as user_email, u.first_name as user_first_name, 
+              u.last_name as user_last_name
+       FROM bookings b
+       JOIN users u ON b.user_id = u.id
+       WHERE b.id = $1 AND b.user_id = $2`,
+      [bookingId, req.user.userId]
+    );
+    
+    if (bookingResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    const booking = bookingResult.rows[0];
+    const paymentIntent = await transfiService.createPaymentIntent(booking);
+    
+    await db.query(
+      'UPDATE bookings SET payment_intent_id = $1, payment_status = $2 WHERE id = $3',
+      [paymentIntent.paymentIntentId, 'pending', bookingId]
+    );
+    
+    res.json(paymentIntent);
+  } catch (error) {
+    console.error('Payment creation error:', error);
+    res.status(500).json({ error: 'Failed to create payment' });
+  }
+});
+
+// TransFi webhook handler
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const signature = req.headers['x-transfi-signature'];
+    const payload = JSON.parse(req.body);
+    
+    if (!transfiService.verifyWebhookSignature(payload, signature)) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    switch (payload.event_type) {
+      case 'payment.completed':
+        const { reference_id, payment_intent_id, amount, payment_method } = payload.data;
+        const bookingId = reference_id.replace('booking-', '');
+        
+        await db.query(
+          `UPDATE bookings 
+           SET status = 'confirmed', 
+               payment_status = 'completed',
+               payment_method = $1,
+               paid_at = NOW()
+           WHERE id = $2`,
+          [payment_method, bookingId]
+        );
+        
+        console.log(`Payment completed for booking ${bookingId}`);
+        break;
+        
+      case 'payment.failed':
+        console.log('Payment failed:', payload.data);
+        break;
+        
+      default:
+        console.log('Unhandled webhook event:', payload.event_type);
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// Get payment methods
+app.get('/api/payments/methods', authenticateToken, async (req, res) => {
+  const methods = [
+    {
+      id: 'card',
+      name: 'Credit/Debit Card',
+      icon: 'credit-card',
+      currencies: ['USD', 'BSD'],
+      processingTime: 'Instant'
+    },
+    {
+      id: 'bank_transfer',
+      name: 'Bank Transfer',
+      icon: 'building-columns',
+      currencies: ['USD', 'BSD'],
+      processingTime: '1-2 business days'
+    },
+    {
+      id: 'crypto',
+      name: 'Cryptocurrency',
+      icon: 'bitcoin',
+      currencies: ['USDC', 'USDT', 'BTC', 'ETH'],
+      processingTime: '10-30 minutes'
+    }
+  ];
+  
+  res.json({ methods });
+});
+
+// Push Notification Endpoints
+app.post('/api/notifications/register-token', authenticateToken, async (req, res) => {
+  try {
+    const { token, platform, deviceId } = req.body;
+    await pushNotificationService.registerPushToken(req.user.userId, token, platform, deviceId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Token registration error:', error);
+    res.status(500).json({ error: 'Failed to register token' });
+  }
+});
+
+app.get('/api/notifications/preferences', authenticateToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT * FROM notification_preferences WHERE user_id = $1',
+      [req.user.userId]
+    );
+    
+    const preferences = result.rows[0] || {
+      pushEnabled: true,
+      bookingConfirmations: true,
+      bookingReminders: true,
+      reviewRequests: true,
+      priceAlerts: true,
+      newMessages: true,
+      promotional: false
+    };
+    
+    res.json({ preferences });
+  } catch (error) {
+    console.error('Get preferences error:', error);
+    res.status(500).json({ error: 'Failed to get preferences' });
+  }
+});
+
+app.put('/api/notifications/preferences', authenticateToken, async (req, res) => {
+  try {
+    const updates = req.body;
+    const setClause = Object.keys(updates)
+      .map((key, index) => `${key} = $${index + 2}`)
+      .join(', ');
+    
+    await db.query(
+      `INSERT INTO notification_preferences (user_id, ${Object.keys(updates).join(', ')})
+       VALUES ($1, ${Object.keys(updates).map((_, i) => `$${i + 2}`).join(', ')})
+       ON CONFLICT (user_id) 
+       DO UPDATE SET ${setClause}`,
+      [req.user.userId, ...Object.values(updates)]
+    );
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update preferences error:', error);
+    res.status(500).json({ error: 'Failed to update preferences' });
+  }
+});
+
+// Favorites Endpoints
+app.post('/api/favorites', authenticateToken, async (req, res) => {
+  try {
+    const { vehicleId, notes } = req.body;
+    const result = await favoritesService.addFavorite(req.user.userId, vehicleId, notes);
+    res.json(result);
+  } catch (error) {
+    console.error('Add favorite error:', error);
+    res.status(500).json({ error: 'Failed to add favorite' });
+  }
+});
+
+app.delete('/api/favorites/:vehicleId', authenticateToken, async (req, res) => {
+  try {
+    const result = await favoritesService.removeFavorite(req.user.userId, req.params.vehicleId);
+    res.json(result);
+  } catch (error) {
+    console.error('Remove favorite error:', error);
+    res.status(500).json({ error: 'Failed to remove favorite' });
+  }
+});
+
+app.get('/api/favorites', authenticateToken, async (req, res) => {
+  try {
+    const result = await favoritesService.getUserFavorites(req.user.userId, req.query);
+    res.json(result);
+  } catch (error) {
+    console.error('Get favorites error:', error);
+    res.status(500).json({ error: 'Failed to get favorites' });
+  }
+});
+
+app.get('/api/favorites/check/:vehicleId', authenticateToken, async (req, res) => {
+  try {
+    const isFavorited = await favoritesService.isFavorited(req.user.userId, req.params.vehicleId);
+    res.json({ isFavorited });
+  } catch (error) {
+    console.error('Check favorite error:', error);
+    res.status(500).json({ error: 'Failed to check favorite' });
+  }
+});
+
+// Schedule notification tasks (add before server.listen)
+cron.schedule('0 9 * * *', async () => {
+  console.log('Running daily notification tasks...');
+  
+  // Schedule booking reminders
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  const dayAfter = new Date(tomorrow);
+  dayAfter.setDate(dayAfter.getDate() + 1);
+
+  const bookings = await db.query(
+    `SELECT b.*, v.make, v.model
+     FROM bookings b
+     JOIN vehicles v ON b.vehicle_id = v.id
+     WHERE b.start_date >= $1 AND b.start_date < $2
+     AND b.status = 'confirmed'`,
+    [tomorrow, dayAfter]
+  );
+
+  for (const booking of bookings.rows) {
+    await pushNotificationService.sendBookingReminder(booking);
+  }
+});
+
+// Schedule price monitoring - run every hour
+cron.schedule('0 * * * *', async () => {
+  console.log('🔄 Running hourly price monitoring check...');
+  try {
+    await priceMonitoringService.checkPriceChanges();
+  } catch (error) {
+    console.error('❌ Price monitoring cron job failed:', error);
+  }
+});
+
+// Price monitoring API endpoints
+app.get('/api/admin/price-monitoring/status', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    const status = priceMonitoringService.getStatus();
+    const stats = await priceMonitoringService.getMonitoringStats();
+    res.json({ status, stats });
+  } catch (error) {
+    console.error('Price monitoring status error:', error);
+    res.status(500).json({ error: 'Failed to get price monitoring status' });
+  }
+});
+
+app.post('/api/admin/price-monitoring/start', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    const { intervalMinutes = 60 } = req.body;
+    priceMonitoringService.start(intervalMinutes);
+    res.json({ message: 'Price monitoring started', interval: intervalMinutes });
+  } catch (error) {
+    console.error('Start price monitoring error:', error);
+    res.status(500).json({ error: 'Failed to start price monitoring' });
+  }
+});
+
+app.post('/api/admin/price-monitoring/stop', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    priceMonitoringService.stop();
+    res.json({ message: 'Price monitoring stopped' });
+  } catch (error) {
+    console.error('Stop price monitoring error:', error);
+    res.status(500).json({ error: 'Failed to stop price monitoring' });
+  }
+});
+
+app.post('/api/admin/price-monitoring/force-check', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    await priceMonitoringService.forceCheck();
+    res.json({ message: 'Price check completed' });
+  } catch (error) {
+    console.error('Force price check error:', error);
+    res.status(500).json({ error: 'Failed to force price check' });
+  }
+});
+
+// User price notification preferences
+app.put('/api/favorites/:vehicleId/price-notifications', authenticateToken, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    const result = await priceMonitoringService.updateUserPriceNotifications(
+      req.user.userId, 
+      req.params.vehicleId, 
+      enabled
+    );
+    res.json(result);
+  } catch (error) {
+    console.error('Update price notifications error:', error);
+    res.status(500).json({ error: 'Failed to update price notifications' });
+  }
+});
+
+// Vehicle price history
+app.get('/api/vehicles/:vehicleId/price-history', async (req, res) => {
+  try {
+    const { limit = 30 } = req.query;
+    const history = await priceMonitoringService.getVehiclePriceHistory(req.params.vehicleId, limit);
+    const stats = await priceMonitoringService.getVehiclePriceStats(req.params.vehicleId);
+    res.json({ history, stats });
+  } catch (error) {
+    console.error('Get price history error:', error);
+    res.status(500).json({ error: 'Failed to get price history' });
+  }
+});
+
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📡 Socket.io ready on ws://localhost:${PORT}`);
+    
+    // Start price monitoring service
+    const monitoringInterval = process.env.PRICE_MONITORING_INTERVAL_MINUTES || 60;
+    priceMonitoringService.start(parseInt(monitoringInterval));
+    console.log(`💰 Price monitoring started (interval: ${monitoringInterval} minutes)`);
   });
 }
 

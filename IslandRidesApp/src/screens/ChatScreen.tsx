@@ -10,7 +10,7 @@ import {
   Text,
 } from 'react-native';
 import { GiftedChat, IMessage, User, Send } from 'react-native-gifted-chat';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { apiService } from '../services/apiService';
 import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '../types';
@@ -211,7 +211,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   const renderSend = (props: any) => (
     <Send {...props}>
       <View style={styles.sendButton}>
-        <Icon name="send" size={24} color="#007AFF" />
+        <MaterialIcons name="send" size={24} color="#007AFF" />
       </View>
     </Send>
   );

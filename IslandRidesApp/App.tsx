@@ -10,6 +10,7 @@ import { storageService } from './src/services/storageService';
 import { webSocketService } from './src/services/webSocketService';
 import { serviceRegistry } from './src/services/ServiceRegistry';
 import { loggingService } from './src/services/LoggingService';
+import { navigationRef } from './src/navigation/navigationRef';
 
 const App: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -19,7 +20,10 @@ const App: React.FC = () => {
       try {
         await serviceRegistry.initializeServices();
         setIsInitialized(true);
-        
+
+        // Register for push notifications
+        await notificationService.registerForPushNotifications();
+
         notificationService.info('Welcome to Island Rides! 🏝️', {
           duration: 3000,
           action: {
@@ -44,6 +48,9 @@ const App: React.FC = () => {
     initializeApp();
   }, []);
 
+  useEffect(() => {
+    notificationService.setupNotificationListeners(navigationRef);
+  }, []);
 
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
     console.error('App Error:', error, errorInfo);
@@ -59,7 +66,7 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary onError={handleError}>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <AuthProvider>
           <NotificationContainer />
           <AppNavigator />

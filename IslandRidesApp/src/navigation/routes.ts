@@ -17,10 +17,14 @@ export const ROUTES = {
   VEHICLE_DETAIL: 'VehicleDetail',
   CHECKOUT: 'Checkout',
   BOOKING_CONFIRMED: 'BookingConfirmed',
+  PAYMENT: 'Payment',
   
   // User routes
   PROFILE: 'Profile',
   CHAT: 'Chat',
+  FAVORITES: 'Favorites',
+  NOTIFICATION_PREFERENCES: 'NotificationPreferences',
+  WRITE_REVIEW: 'WriteReview',
 } as const;
 
 export type RouteNames = typeof ROUTES[keyof typeof ROUTES];
@@ -54,5 +58,21 @@ export type RootStackParamList = {
     context: ChatContext;
     title?: string;
   };
+  [ROUTES.FAVORITES]: undefined;
+  [ROUTES.NOTIFICATION_PREFERENCES]: undefined;
+  [ROUTES.WRITE_REVIEW]: {
+    booking: {
+      id: number;
+      vehicle: {
+        id: number;
+        make: string;
+        model: string;
+        year: number;
+      };
+      start_date: string;
+      end_date: string;
+    };
+  };
+  Payment: { booking: any };
 };
 

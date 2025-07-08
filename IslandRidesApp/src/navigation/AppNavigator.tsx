@@ -10,6 +10,10 @@ import { LoginScreen } from '../screens/LoginScreen';
 import { RegistrationScreen } from '../screens/RegistrationScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import ChatConversationScreen from '../screens/ChatConversationScreen';
+import { PaymentScreen } from '../screens/PaymentScreen';
+import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { NotificationPreferencesScreen } from '../screens/NotificationPreferencesScreen';
+import { WriteReviewScreen } from '../screens/WriteReviewScreen';
 import { ROUTES, RootStackParamList } from './routes';
 import { useAuth } from '../context/AuthContext';
 
@@ -37,6 +41,10 @@ const AppNavigator: React.FC = () => {
           <Stack.Screen name={ROUTES.BOOKING_CONFIRMED} component={BookingConfirmedScreen} options={{ title: 'Booking Confirmed' }} />
           <Stack.Screen name={ROUTES.PROFILE} component={ProfileScreen} options={{ title: 'Profile' }} />
           <Stack.Screen name={ROUTES.CHAT} component={ChatConversationScreen} options={{ title: 'Chat' }} />
+          <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Payment' }} />
+          <Stack.Screen name={ROUTES.FAVORITES} component={FavoritesScreen} options={{ title: 'Favorites' }} />
+          <Stack.Screen name={ROUTES.NOTIFICATION_PREFERENCES} component={NotificationPreferencesScreen} options={{ title: 'Notification Preferences' }} />
+          <Stack.Screen name={ROUTES.WRITE_REVIEW} component={WriteReviewScreen} options={{ title: 'Write Review' }} />
         </>
       ) : (
         <>

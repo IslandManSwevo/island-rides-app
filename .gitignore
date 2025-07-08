@@ -25,3 +25,7 @@ dist/
 *.p12
 *.key
 *.mobileprovision
+
+# Roo
+.roo/
+node_modules
