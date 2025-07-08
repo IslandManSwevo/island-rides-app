@@ -189,24 +189,14 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
         
         <View style={styles.paymentButtons}>
           <Button
-            title="Pay with Card (Stripe)"
+            title="Pay Securely with Transfi"
             onPress={handlePayment}
             loading={loading}
           />
           
-          <Button
-            title="PayPal"
-            onPress={handlePayment}
-            loading={loading}
-            variant="secondary"
-          />
-          
-          <Button
-            title="Google Pay"
-            onPress={handlePayment}
-            loading={loading}
-            variant="secondary"
-          />
+          <Text style={styles.paymentNote}>
+            Secure payment powered by Transfi - accepts cards, bank transfers, and crypto
+          </Text>
         </View>
       </View>
     </ScrollView>
@@ -295,5 +285,9 @@ const styles = StyleSheet.create({
   },
   paymentButtons: {
     gap: spacing.md,
+  },
+  paymentNote: {
+    ...typography.body,
+    textAlign: 'center',
   },
 });

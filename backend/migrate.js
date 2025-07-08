@@ -1,5 +1,6 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 
 const dbPath = path.join(__dirname, 'island-rides.db');
 const db = new Database(dbPath);
@@ -119,6 +120,9 @@ CREATE INDEX IF NOT EXISTS idx_favorites_user_vehicle ON favorites(user_id, vehi
 CREATE INDEX IF NOT EXISTS idx_vehicle_price_history ON vehicle_price_history(vehicle_id, changed_at DESC);
 `;
 
+// Owner Dashboard Migration
+const ownerDashboardMigration = fs.readFileSync(path.join(__dirname, 'migrations', '009_owner_dashboard.sql'), 'utf8');
+
 try {
   console.log('Running payment migration...');
   db.exec(paymentMigration);
@@ -127,6 +131,10 @@ try {
   console.log('Running phase 2 migration...');
   db.exec(phase2Migration);
   console.log('✅ Phase 2 migration completed');
+
+  console.log('Running owner dashboard migration...');
+  db.exec(ownerDashboardMigration);
+  console.log('✅ Owner dashboard migration completed');
 
   console.log('🎉 All migrations completed successfully!');
 } catch (error) {

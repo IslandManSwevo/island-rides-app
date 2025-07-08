@@ -15,6 +15,7 @@ import { StackScreenProps } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
+import { reviewPromptService } from '../services/reviewPromptService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
@@ -74,6 +75,9 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({ navigation
       };
 
       await apiService.post('/reviews', reviewData);
+      
+      // Mark review as completed in the prompt service
+      await reviewPromptService.markReviewCompleted(booking.id);
       
       notificationService.success('Review submitted successfully!', {
         duration: 4000,

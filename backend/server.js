@@ -6,16 +6,204 @@ const rateLimit = require('express-rate-limit');
 const validator = require('validator');
 const helmet = require('helmet');
 const winston = require('winston');
+const net = require('net');
 require('dotenv').config();
 const db = require('./db');
 const transfiService = require('./services/transfiService');
 const pushNotificationService = require('./services/pushNotificationService');
 const favoritesService = require('./services/favoritesService');
 const priceMonitoringService = require('./services/priceMonitoringService');
+const reviewModerationService = require('./services/reviewModerationService');
+const ownerDashboardService = require('./services/ownerDashboardService');
 const cron = require('node-cron');
 
 const app = express();
-const PORT = process.env.PORT || 3003;
+
+// Smart Port Management System
+class PortManager {
+  constructor() {
+    this.preferredPorts = [
+      parseInt(process.env.PORT) || 3003,  // Primary preference
+      3003, 3005, 3006, 3007, 3008,       // Backend range (skipping 3004 for WebSocket)
+      8000, 8003, 8004, 8005, 8006        // Alternative range
+    ];
+    this.reservedPorts = new Set([
+      3001, // MCP Server
+      3002, // Gemini Bridge  
+      3004, // WebSocket Server
+      19006, 19001, // Expo ports
+      8081, 8082    // Common React Native ports
+    ]);
+    this.maxRetries = 10;
+    this.currentPort = null;
+  }
+
+  async isPortAvailable(port) {
+    return new Promise((resolve) => {
+      const server = net.createServer();
+      
+      server.listen(port, '127.0.0.1', () => {
+        server.once('close', () => resolve(true));
+        server.close();
+      });
+      
+      server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          resolve(false);
+        } else {
+          resolve(false);
+        }
+      });
+    });
+  }
+
+  async findAvailablePort() {
+    console.log('🔍 Scanning for available ports...');
+    
+    // Remove reserved ports from preferred list
+    const availablePorts = this.preferredPorts.filter(port => !this.reservedPorts.has(port));
+    
+    // Try preferred ports first
+    for (const port of availablePorts) {
+      const isAvailable = await this.isPortAvailable(port);
+      if (isAvailable) {
+        console.log(`✅ Found available preferred port: ${port}`);
+        return port;
+      } else {
+        console.log(`⚠️ Port ${port} is busy`);
+      }
+    }
+    
+    // If all preferred ports are busy, find any available port in a safe range
+    console.log('🔧 Trying fallback port range...');
+    for (let port = 3010; port <= 3020; port++) {
+      if (!this.reservedPorts.has(port)) {
+        const isAvailable = await this.isPortAvailable(port);
+        if (isAvailable) {
+          console.log(`🆘 Using fallback port: ${port}`);
+          return port;
+        }
+      }
+    }
+    
+    throw new Error('❌ No available ports found in safe range (3003-3020)');
+  }
+
+  async startServerWithRetry(server) {
+    let attempts = 0;
+    
+    while (attempts < this.maxRetries) {
+      try {
+        const port = await this.findAvailablePort();
+        
+        return new Promise((resolve, reject) => {
+          const serverInstance = server.listen(port, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              this.currentPort = port;
+              process.env.CURRENT_SERVER_PORT = port.toString();
+              
+              console.log(`🚀 Server successfully started on port ${port}`);
+              console.log(`📡 Socket.io ready on ws://localhost:${port}`);
+              console.log(`🔗 API Health: http://localhost:${port}/api/health`);
+              console.log(`📊 Port Status: http://localhost:${port}/api/port-status`);
+              
+              this.startAdditionalServices();
+              this.updateRuntimeConfig(port);
+              
+              resolve({ port, server: serverInstance });
+            }
+          });
+          
+          serverInstance.on('error', (error) => {
+            if (error.code === 'EADDRINUSE') {
+              console.log(`❌ Port ${port} became busy during startup, retrying...`);
+              reject(error);
+            } else {
+              reject(error);
+            }
+          });
+        });
+        
+      } catch (error) {
+        attempts++;
+        console.log(`🔄 Attempt ${attempts}/${this.maxRetries} failed: ${error.message}`);
+        
+        if (attempts >= this.maxRetries) {
+          throw new Error(`💥 Failed to start server after ${this.maxRetries} attempts`);
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000 + (attempts * 500)));
+      }
+    }
+  }
+
+  startAdditionalServices() {
+    try {
+      // Start price monitoring service
+      const monitoringInterval = process.env.PRICE_MONITORING_INTERVAL_MINUTES || 60;
+      priceMonitoringService.start(parseInt(monitoringInterval));
+      console.log(`💰 Price monitoring started (interval: ${monitoringInterval} minutes)`);
+    } catch (error) {
+      console.warn('⚠️ Failed to start price monitoring:', error.message);
+    }
+  }
+
+  updateRuntimeConfig(port) {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      const configPath = path.join(__dirname, 'runtime-config.json');
+      const runtimeConfig = {
+        serverPort: port,
+        websocketPort: process.env.WEBSOCKET_PORT || 3004,
+        apiBaseUrl: `http://localhost:${port}`,
+        websocketUrl: `ws://localhost:${process.env.WEBSOCKET_PORT || 3004}`,
+        updatedAt: new Date().toISOString(),
+        portStatus: this.getPortStatus()
+      };
+      
+      fs.writeFileSync(configPath, JSON.stringify(runtimeConfig, null, 2));
+      console.log(`📝 Runtime config updated: ${configPath}`);
+      
+    } catch (error) {
+      console.warn('⚠️ Could not update runtime config:', error.message);
+    }
+  }
+
+  getPortStatus() {
+    return {
+      currentPort: this.currentPort,
+      preferredPorts: this.preferredPorts,
+      reservedPorts: Array.from(this.reservedPorts),
+      lastUpdated: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0',
+      services: {
+        webSocket: 3004,
+        main: this.currentPort
+      }
+    };
+  }
+
+  async handlePortConflict() {
+    console.log('🔧 Detecting port conflict, attempting to resolve...');
+    try {
+      const newPort = await this.findAvailablePort();
+      console.log(`✅ Found alternative port: ${newPort}`);
+      return newPort;
+    } catch (error) {
+      console.error('❌ Could not resolve port conflict:', error.message);
+      throw error;
+    }
+  }
+}
+
+const portManager = new PortManager();
 
 const toCamel = (s) => {
   return s.replace(/([-_][a-z])/ig, ($1) => {
@@ -94,6 +282,65 @@ app.use((req, res, next) => {
   next();
 });
 
+// Enhanced Health check endpoints
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: '1.0.0',
+    service: 'island-rides-api',
+    port: portManager.currentPort || process.env.CURRENT_SERVER_PORT,
+    portStatus: portManager.getPortStatus()
+  });
+});
+
+// Port status endpoint for debugging
+app.get('/api/port-status', (req, res) => {
+  res.status(200).json({
+    ...portManager.getPortStatus(),
+    serverInfo: {
+      pid: process.pid,
+      platform: process.platform,
+      nodeVersion: process.version,
+      uptime: process.uptime()
+    }
+  });
+});
+
+// Port conflict resolution endpoint
+app.post('/api/port-resolve', async (req, res) => {
+  try {
+    const newPort = await portManager.handlePortConflict();
+    res.json({
+      success: true,
+      message: `Alternative port found: ${newPort}`,
+      suggestedPort: newPort
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Could not resolve port conflict',
+      error: error.message
+    });
+  }
+});
+
+// Basic root endpoint with enhanced info
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: 'Island Rides API Server',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    port: portManager.currentPort || process.env.CURRENT_SERVER_PORT,
+    endpoints: {
+      health: '/api/health',
+      portStatus: '/api/port-status',
+      documentation: 'https://github.com/your-repo/island-rides-app'
+    }
+  });
+});
 
 const auditLogger = winston.createLogger({
   level: 'info',
@@ -336,7 +583,7 @@ const authenticateToken = (req, res, next) => {
       return res.status(403).json({ error: 'Invalid token' });
     }
     
-    console.log('✅ Backend: Token valid for user:', user.id);
+    console.log('✅ Backend: Token valid for user:', user.userId);
     req.user = user;
     next();
   });
@@ -477,6 +724,25 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
   }
 });
 
+// Logout endpoint - mainly for client-side token clearing
+app.post('/api/auth/logout', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    logAuditEvent('USER_LOGOUT', userId, { 
+      email: req.user.email,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json({
+      message: 'Logout successful'
+    });
+  } catch (error) {
+    logError('Logout error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/api/users', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(
@@ -553,6 +819,135 @@ app.get('/api/users/me/profile', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// ========== PUBLIC PROFILE API ENDPOINTS ==========
+const publicProfileService = require('./services/publicProfileService');
+
+// Get public profile by user ID
+app.get('/api/profiles/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const viewerId = req.user?.userId || null; // Optional authentication
+    
+    const profile = await publicProfileService.getPublicProfile(userId, viewerId);
+    
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found or private' });
+    }
+    
+    res.json(profile);
+  } catch (error) {
+    logError('Get public profile error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update current user's public profile
+app.put('/api/profiles/me', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const profileData = req.body;
+    
+    const result = await publicProfileService.updatePublicProfile(userId, profileData);
+    res.json(result);
+  } catch (error) {
+    logError('Update public profile error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Upload profile photo
+app.post('/api/profiles/me/photo', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { photoUrl } = req.body;
+    
+    if (!photoUrl) {
+      return res.status(400).json({ error: 'Photo URL is required' });
+    }
+    
+    const result = await publicProfileService.uploadProfilePhoto(userId, photoUrl);
+    res.json(result);
+  } catch (error) {
+    logError('Upload profile photo error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get verification status
+app.get('/api/profiles/me/verification', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const verification = await publicProfileService.getVerificationStatus(userId);
+    res.json(verification);
+  } catch (error) {
+    logError('Get verification status error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update verification status (admin or system use)
+app.put('/api/profiles/:userId/verification', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { verificationType, isVerified, documentUrl } = req.body;
+    
+    if (!verificationType || typeof isVerified !== 'boolean') {
+      return res.status(400).json({ error: 'Verification type and status are required' });
+    }
+    
+    const result = await publicProfileService.updateVerification(userId, verificationType, isVerified, documentUrl);
+    res.json(result);
+  } catch (error) {
+    logError('Update verification error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Award badge to user (admin use)
+app.post('/api/profiles/:userId/badges', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { badgeType } = req.body;
+    
+    if (!badgeType) {
+      return res.status(400).json({ error: 'Badge type is required' });
+    }
+    
+    const result = await publicProfileService.awardBadge(userId, badgeType);
+    res.json(result);
+  } catch (error) {
+    logError('Award badge error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Search public profiles
+app.get('/api/profiles/search', async (req, res) => {
+  try {
+    const { q: searchTerm, location, verificationLevel, hasBadges, languages, page = 1, limit = 10 } = req.query;
+    
+    const filters = {
+      location,
+      verificationLevel,
+      hasBadges: hasBadges === 'true',
+      languages
+    };
+    
+    const result = await publicProfileService.searchPublicProfiles(
+      searchTerm, 
+      filters, 
+      parseInt(page), 
+      parseInt(limit)
+    );
+    
+    res.json(result);
+  } catch (error) {
+    logError('Search profiles error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+// ========== END PUBLIC PROFILE API ENDPOINTS ==========
 
 app.get('/api/conversations', authenticateToken, async (req, res) => {
   try {
@@ -659,73 +1054,75 @@ app.get('/api/conversations/:conversationId/messages', authenticateToken, async 
 
 app.post('/api/reviews', authenticateToken, async (req, res) => {
   try {
-    const { bookingId, rating, comment } = req.body;
+    const { bookingId, rating, comment, photos = [] } = req.body;
     const userId = req.user.userId;
 
-    if (!bookingId || !rating || !comment) {
-      return res.status(400).json({ error: 'Booking ID, rating, and comment are required' });
+    if (!bookingId || !rating) {
+      return res.status(400).json({ error: 'Booking ID and rating are required' });
     }
 
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be an integer between 1 and 5' });
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
     }
 
-    if (typeof comment !== 'string' || comment.trim().length < 10 || comment.trim().length > 1000) {
-      return res.status(400).json({ error: 'Comment must be between 10 and 1000 characters' });
-    }
+    // Verify booking exists and belongs to user
+    const bookingResult = await db.query(
+      `SELECT b.*, v.id as vehicle_id FROM bookings b 
+       JOIN vehicles v ON b.vehicle_id = v.id 
+       WHERE b.id = $1 AND b.renter_id = $2 AND b.status = 'completed'`,
+      [bookingId, userId]
+    );
 
-    const bookingResult = await db.query('SELECT * FROM bookings WHERE id = $1', [bookingId]);
     if (bookingResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Booking not found' });
+      return res.status(404).json({ 
+        error: 'Booking not found or not completed, or you are not authorized to review this booking' 
+      });
     }
+
     const booking = bookingResult.rows[0];
 
-    if (booking.user_id !== userId) {
-      return res.status(403).json({ error: 'Access denied to this booking' });
-    }
+    // Check if review already exists
+    const existingReviewResult = await db.query(
+      'SELECT id FROM reviews WHERE booking_id = $1 AND renter_id = $2',
+      [bookingId, userId]
+    );
 
-    if (booking.status !== 'completed') {
-      return res.status(400).json({ error: 'Reviews can only be submitted for completed bookings' });
-    }
-
-    const existingReviewResult = await db.query('SELECT id FROM reviews WHERE booking_id = $1', [bookingId]);
     if (existingReviewResult.rows.length > 0) {
-      return res.status(400).json({ error: 'Review already exists for this booking' });
+      return res.status(409).json({ error: 'Review already exists for this booking' });
     }
 
-    const insertReviewQuery = `
-      INSERT INTO reviews (booking_id, user_id, vehicle_id, rating, comment)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, booking_id, user_id, vehicle_id, rating, comment, created_at
+    // Insert review
+    const reviewQuery = `
+      INSERT INTO reviews (booking_id, renter_id, vehicle_id, rating, comment, moderation_status)
+      VALUES ($1, $2, $3, $4, $5, 'approved')
+      RETURNING id, created_at
     `;
-    const reviewResult = await db.query(insertReviewQuery, [bookingId, userId, booking.vehicle_id, rating, validator.escape(comment.trim())]);
-    const newReview = reviewResult.rows[0];
+    
+    const reviewResult = await db.query(reviewQuery, [
+      bookingId, 
+      userId, 
+      booking.vehicle_id, 
+      rating, 
+      comment || null
+    ]);
 
-    const vehicleResult = await db.query('SELECT id, make, model, year FROM vehicles WHERE id = $1', [newReview.vehicle_id]);
-    const vehicle = vehicleResult.rows[0];
+    const review = reviewResult.rows[0];
 
-    const userResult = await db.query('SELECT id, first_name, last_name FROM users WHERE id = $1', [userId]);
-    const user = userResult.rows[0];
+    logAuditEvent('REVIEW_SUBMITTED', userId, {
+      reviewId: review.id,
+      bookingId,
+      vehicleId: booking.vehicle_id,
+      rating
+    });
 
     res.status(201).json({
       message: 'Review submitted successfully',
       review: {
-        id: newReview.id,
-        booking_id: newReview.booking_id,
-        vehicle: {
-          id: vehicle.id,
-          make: vehicle.make,
-          model: vehicle.model,
-          year: vehicle.year
-        },
-        rating: newReview.rating,
-        comment: newReview.comment,
-        reviewer: {
-          id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name
-        },
-        created_at: newReview.created_at
+        id: review.id,
+        bookingId,
+        rating,
+        comment,
+        createdAt: review.created_at
       }
     });
 
@@ -737,29 +1134,149 @@ app.post('/api/reviews', authenticateToken, async (req, res) => {
 
 app.get('/api/bookings', authenticateToken, async (req, res) => {
   try {
+    console.log('🔍 Backend: Fetching bookings for user ID:', req.user.userId);
     const query = `
       SELECT 
-        b.*,
+        b.id,
+        b.start_date as "startDate",
+        b.end_date as "endDate",
+        b.status,
+        b.total_amount as "totalAmount",
+        b.created_at as "createdAt",
+        v.id as vehicle_id,
+        v.make,
+        v.model,
+        v.year,
+        v.location,
+        v.daily_rate as "dailyRate"
+      FROM bookings b
+      JOIN vehicles v ON b.vehicle_id = v.id
+      WHERE b.renter_id = $1
+      ORDER BY b.created_at DESC;
+    `;
+    
+    const result = await db.query(query, [req.user.userId]);
+    const bookings = result.rows.map(b => ({
+      id: b.id,
+      startDate: b.startDate,
+      endDate: b.endDate,
+      status: b.status,
+      totalAmount: b.totalAmount,
+      createdAt: b.createdAt,
+      vehicle: {
+        id: b.vehicle_id,
+        make: b.make,
+        model: b.model,
+        year: b.year,
+        location: b.location,
+        dailyRate: b.dailyRate
+      }
+    }));
+    
+    console.log('✅ Backend: Found', bookings.length, 'bookings for user');
+    res.json(bookings);
+  } catch (error) {
+    logError('Get bookings error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get completed bookings without reviews (for review prompts)
+app.get('/api/bookings/completed-without-reviews', authenticateToken, async (req, res) => {
+  try {
+    console.log('🔍 Backend: Auth check for: /api/bookings/completed-without-reviews');
+    console.log('🔍 Backend: Auth header exists:', !!req.headers.authorization);
+    console.log('🔍 Backend: Token extracted:', !!req.user);
+    console.log('✅ Backend: Token valid for user:', req.user ? req.user.userId : null);
+
+    const query = `
+      SELECT 
+        b.id,
+        b.start_date as "startDate",
+        b.end_date as "endDate",
+        b.status,
+        v.id as vehicle_id,
         v.make,
         v.model,
         v.year
       FROM bookings b
       JOIN vehicles v ON b.vehicle_id = v.id
-      WHERE b.user_id = $1
-      ORDER BY b.created_at DESC;
+      LEFT JOIN reviews r ON b.id = r.booking_id
+      WHERE b.renter_id = $1 
+        AND b.status = 'completed'
+        AND b.end_date < CURRENT_DATE
+        AND r.id IS NULL
+      ORDER BY b.end_date DESC
+      LIMIT 10;
     `;
+    
     const result = await db.query(query, [req.user.userId]);
-    const userBookings = result.rows.map(b => ({
-      ...b,
+    const bookings = result.rows.map(b => ({
+      id: b.id,
+      startDate: b.startDate,
+      endDate: b.endDate,
+      status: b.status,
       vehicle: {
+        id: b.vehicle_id,
         make: b.make,
         model: b.model,
         year: b.year
       }
     }));
-    res.json(userBookings);
+    
+    res.json({ bookings });
   } catch (error) {
-    logError('Get bookings error', error);
+    logError('Get completed bookings without reviews error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get specific booking details
+app.get('/api/bookings/:id', authenticateToken, async (req, res) => {
+  try {
+    const bookingId = parseInt(req.params.id);
+    if (isNaN(bookingId)) {
+      return res.status(400).json({ error: 'Invalid booking ID' });
+    }
+
+    const query = `
+      SELECT 
+        b.id,
+        b.start_date as "startDate",
+        b.end_date as "endDate",
+        b.status,
+        v.id as vehicle_id,
+        v.make,
+        v.model,
+        v.year
+      FROM bookings b
+      JOIN vehicles v ON b.vehicle_id = v.id
+      WHERE b.id = $1 AND b.renter_id = $2;
+    `;
+    
+    const result = await db.query(query, [bookingId, req.user.userId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    const booking = result.rows[0];
+    res.json({
+      booking: {
+        id: booking.id,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        status: booking.status,
+        vehicle: {
+          id: booking.vehicle_id,
+          make: booking.make,
+          model: booking.model,
+          year: booking.year
+        }
+      }
+    });
+  } catch (error) {
+    logError('Get booking details error', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -827,9 +1344,9 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
     const totalAmount = days * vehicle.daily_rate;
 
     const insertBookingQuery = `
-      INSERT INTO bookings (user_id, vehicle_id, start_date, end_date, status, total_amount)
+      INSERT INTO bookings (renter_id, vehicle_id, start_date, end_date, status, total_amount)
       VALUES ($1, $2, $3, $4, 'pending', $5)
-      RETURNING id, user_id, vehicle_id, start_date, end_date, status, total_amount, created_at
+      RETURNING id, renter_id, vehicle_id, start_date, end_date, status, total_amount, created_at
     `;
     const newBookingResult = await db.query(insertBookingQuery, [userId, vehicleIdNum, startDate, endDate, totalAmount]);
     const newBooking = newBookingResult.rows[0];
@@ -940,6 +1457,239 @@ app.get('/api/owner/revenue-report', authenticateToken, checkRole(['owner']), as
   }
 });
 
+// === OWNER DASHBOARD ENDPOINTS ===
+
+// Get comprehensive dashboard overview
+app.get('/api/owner/dashboard', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    const timeframe = req.query.timeframe || '30';
+    
+    console.log(`🏠 Owner dashboard requested for user ${ownerId}, timeframe: ${timeframe} days`);
+    
+    const dashboardData = await ownerDashboardService.getDashboardOverview(ownerId, timeframe);
+    
+    res.json({
+      success: true,
+      data: dashboardData
+    });
+  } catch (error) {
+    logError('Owner dashboard error', error);
+    res.status(500).json({ error: 'Failed to load dashboard data' });
+  }
+});
+
+// Get detailed revenue analytics
+app.get('/api/owner/analytics/revenue', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    const timeframe = req.query.timeframe || '30';
+    
+    const revenueData = await ownerDashboardService.getRevenueAnalytics(ownerId, timeframe);
+    
+    res.json({
+      success: true,
+      data: revenueData
+    });
+  } catch (error) {
+    logError('Revenue analytics error', error);
+    res.status(500).json({ error: 'Failed to load revenue analytics' });
+  }
+});
+
+// Get booking analytics
+app.get('/api/owner/analytics/bookings', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    const timeframe = req.query.timeframe || '30';
+    
+    const bookingData = await ownerDashboardService.getBookingAnalytics(ownerId, timeframe);
+    
+    res.json({
+      success: true,
+      data: bookingData
+    });
+  } catch (error) {
+    logError('Booking analytics error', error);
+    res.status(500).json({ error: 'Failed to load booking analytics' });
+  }
+});
+
+// Get vehicle performance metrics
+app.get('/api/owner/vehicles/performance', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    
+    const vehicleData = await ownerDashboardService.getVehiclePerformance(ownerId);
+    
+    res.json({
+      success: true,
+      data: vehicleData
+    });
+  } catch (error) {
+    logError('Vehicle performance error', error);
+    res.status(500).json({ error: 'Failed to load vehicle performance data' });
+  }
+});
+
+// Get owner goals
+app.get('/api/owner/goals', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    
+    const goals = await ownerDashboardService.getOwnerGoals(ownerId);
+    
+    res.json({
+      success: true,
+      data: goals
+    });
+  } catch (error) {
+    logError('Owner goals error', error);
+    res.status(500).json({ error: 'Failed to load goals' });
+  }
+});
+
+// Create new owner goal
+app.post('/api/owner/goals', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    const goalData = req.body;
+    
+    // Validate required fields
+    if (!goalData.goal_type || !goalData.target_value || !goalData.target_period) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: goal_type, target_value, target_period' 
+      });
+    }
+    
+    const goal = await ownerDashboardService.createOwnerGoal(ownerId, goalData);
+    
+    res.json({
+      success: true,
+      data: goal,
+      message: 'Goal created successfully'
+    });
+  } catch (error) {
+    logError('Create goal error', error);
+    res.status(500).json({ error: 'Failed to create goal' });
+  }
+});
+
+// Get financial reports
+app.get('/api/owner/reports/financial', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    const { start_date, end_date } = req.query;
+    
+    if (!start_date || !end_date) {
+      return res.status(400).json({ 
+        error: 'Missing required parameters: start_date, end_date' 
+      });
+    }
+    
+    const financialData = await ownerDashboardService.getFinancialReports(ownerId, start_date, end_date);
+    
+    res.json({
+      success: true,
+      data: financialData
+    });
+  } catch (error) {
+    logError('Financial reports error', error);
+    res.status(500).json({ error: 'Failed to load financial reports' });
+  }
+});
+
+// Add vehicle expense
+app.post('/api/owner/vehicles/:vehicleId/expenses', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    const vehicleId = parseInt(req.params.vehicleId);
+    const expenseData = { ...req.body, vehicle_id: vehicleId };
+    
+    // Validate required fields
+    if (!expenseData.expense_type || !expenseData.amount || !expenseData.expense_date) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: expense_type, amount, expense_date' 
+      });
+    }
+    
+    // Verify vehicle ownership
+    const vehicleCheck = await db.query(
+      'SELECT id FROM vehicles WHERE id = ? AND owner_id = ?',
+      [vehicleId, ownerId]
+    );
+    
+    if (vehicleCheck.length === 0) {
+      return res.status(403).json({ error: 'Vehicle not found or access denied' });
+    }
+    
+    const expense = await ownerDashboardService.addVehicleExpense(ownerId, expenseData);
+    
+    res.json({
+      success: true,
+      data: expense,
+      message: 'Expense added successfully'
+    });
+  } catch (error) {
+    logError('Add expense error', error);
+    res.status(500).json({ error: 'Failed to add expense' });
+  }
+});
+
+// Get vehicle expenses
+app.get('/api/owner/vehicles/:vehicleId/expenses', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    const vehicleId = parseInt(req.params.vehicleId);
+    const { start_date, end_date, expense_type } = req.query;
+    
+    // Verify vehicle ownership
+    const vehicleCheck = await db.query(
+      'SELECT id FROM vehicles WHERE id = ? AND owner_id = ?',
+      [vehicleId, ownerId]
+    );
+    
+    if (vehicleCheck.length === 0) {
+      return res.status(403).json({ error: 'Vehicle not found or access denied' });
+    }
+    
+    let sql = `
+      SELECT * FROM vehicle_expenses 
+      WHERE vehicle_id = ? AND owner_id = ?
+    `;
+    const params = [vehicleId, ownerId];
+    
+    if (start_date) {
+      sql += ' AND expense_date >= ?';
+      params.push(start_date);
+    }
+    
+    if (end_date) {
+      sql += ' AND expense_date <= ?';
+      params.push(end_date);
+    }
+    
+    if (expense_type) {
+      sql += ' AND expense_type = ?';
+      params.push(expense_type);
+    }
+    
+    sql += ' ORDER BY expense_date DESC';
+    
+    const expenses = await db.query(sql, params);
+    
+    res.json({
+      success: true,
+      data: expenses
+    });
+  } catch (error) {
+    logError('Get expenses error', error);
+    res.status(500).json({ error: 'Failed to load expenses' });
+  }
+});
+
+// === END OWNER DASHBOARD ENDPOINTS ===
+
 app.post('/api/chat', (req, res) => {
   const { prompt } = req.body;
   if (!prompt) {
@@ -972,12 +1722,16 @@ app.post('/api/payments/create-intent', authenticateToken, async (req, res) => {
   try {
     const { bookingId } = req.body;
     
+    if (!bookingId) {
+      return res.status(400).json({ error: 'Booking ID is required' });
+    }
+    
     const bookingResult = await db.query(
       `SELECT b.*, u.email as user_email, u.first_name as user_first_name, 
               u.last_name as user_last_name
        FROM bookings b
-       JOIN users u ON b.user_id = u.id
-       WHERE b.id = $1 AND b.user_id = $2`,
+       JOIN users u ON b.renter_id = u.id
+       WHERE b.id = $1 AND b.renter_id = $2`,
       [bookingId, req.user.userId]
     );
     
@@ -1024,6 +1778,29 @@ app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), asy
            WHERE id = $2`,
           [payment_method, bookingId]
         );
+        
+        // Get booking details for notification
+        const bookingResult = await db.query(
+          `SELECT b.*, v.make, v.model, v.year, u.first_name, u.last_name
+           FROM bookings b
+           JOIN vehicles v ON b.vehicle_id = v.id
+           JOIN users u ON b.renter_id = u.id
+           WHERE b.id = $1`,
+          [bookingId]
+        );
+        
+        if (bookingResult.rows.length > 0) {
+          const booking = keysToCamel(bookingResult.rows[0]);
+          booking.vehicle = { make: booking.make, model: booking.model, year: booking.year };
+          
+          // Send booking confirmation notification
+          try {
+            await pushNotificationService.sendBookingConfirmation(booking);
+            console.log(`✅ Booking confirmation notification sent for booking ${bookingId}`);
+          } catch (notifError) {
+            console.error(`❌ Failed to send booking confirmation notification for booking ${bookingId}:`, notifError);
+          }
+        }
         
         console.log(`Payment completed for booking ${bookingId}`);
         break;
@@ -1280,16 +2057,802 @@ app.get('/api/vehicles/:vehicleId/price-history', async (req, res) => {
   }
 });
 
-if (require.main === module) {
-  server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📡 Socket.io ready on ws://localhost:${PORT}`);
+// Review Moderation API Endpoints
+
+// Get pending reviews for admin moderation
+app.get('/api/admin/reviews/pending', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+    const pendingReviews = await reviewModerationService.getPendingReviews(parseInt(limit), offset);
+    res.json({ reviews: pendingReviews, page: parseInt(page), limit: parseInt(limit) });
+  } catch (error) {
+    console.error('Get pending reviews error:', error);
+    res.status(500).json({ error: 'Failed to get pending reviews' });
+  }
+});
+
+// Admin approve review
+app.post('/api/admin/reviews/:reviewId/approve', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    const { notes } = req.body;
+    const result = await reviewModerationService.approveReview(
+      req.params.reviewId, 
+      req.user.userId, 
+      notes
+    );
+    res.json(result);
+  } catch (error) {
+    console.error('Approve review error:', error);
+    res.status(500).json({ error: 'Failed to approve review' });
+  }
+});
+
+// Admin reject review
+app.post('/api/admin/reviews/:reviewId/reject', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    const { reason, notes } = req.body;
+    if (!reason) {
+      return res.status(400).json({ error: 'Rejection reason is required' });
+    }
+    const result = await reviewModerationService.rejectReview(
+      req.params.reviewId, 
+      req.user.userId, 
+      reason, 
+      notes
+    );
+    res.json(result);
+  } catch (error) {
+    console.error('Reject review error:', error);
+    res.status(500).json({ error: 'Failed to reject review' });
+  }
+});
+
+// Report a review
+app.post('/api/reviews/:reviewId/report', authenticateToken, async (req, res) => {
+  try {
+    const { reason, description } = req.body;
+    if (!reason) {
+      return res.status(400).json({ error: 'Report reason is required' });
+    }
     
-    // Start price monitoring service
-    const monitoringInterval = process.env.PRICE_MONITORING_INTERVAL_MINUTES || 60;
-    priceMonitoringService.start(parseInt(monitoringInterval));
-    console.log(`💰 Price monitoring started (interval: ${monitoringInterval} minutes)`);
-  });
+    const validReasons = ['inappropriate', 'spam', 'fake', 'off-topic', 'other'];
+    if (!validReasons.includes(reason)) {
+      return res.status(400).json({ error: 'Invalid report reason' });
+    }
+
+    const result = await reviewModerationService.reportReview(
+      req.params.reviewId,
+      req.user.userId,
+      reason,
+      description
+    );
+    res.json(result);
+  } catch (error) {
+    console.error('Report review error:', error);
+    res.status(500).json({ error: 'Failed to report review' });
+  }
+});
+
+// Get moderation statistics
+app.get('/api/admin/moderation/stats', authenticateToken, checkRole(['admin']), async (req, res) => {
+  try {
+    const stats = await reviewModerationService.getModerationStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Get moderation stats error:', error);
+    res.status(500).json({ error: 'Failed to get moderation statistics' });
+  }
+});
+
+// ======== ADVANCED VEHICLE FEATURES ENDPOINTS ========
+
+// Get vehicle features by vehicle ID
+app.get('/api/vehicles/:vehicleId/features', authenticateToken, async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    
+    const query = `
+      SELECT 
+        vf.id,
+        vf.name,
+        vf.description,
+        vf.icon_name,
+        vf.is_premium,
+        vf.additional_cost,
+        vfa.is_included,
+        vfa.additional_cost as vehicle_additional_cost,
+        vfa.notes,
+        vfc.id as category_id,
+        vfc.name as category_name,
+        vfc.display_name as category_display_name,
+        vfc.description as category_description,
+        vfc.icon_name as category_icon,
+        vfc.sort_order as category_sort_order
+      FROM vehicle_feature_assignments vfa
+      JOIN vehicle_features vf ON vfa.feature_id = vf.id
+      JOIN vehicle_feature_categories vfc ON vf.category_id = vfc.id
+      WHERE vfa.vehicle_id = $1 AND vf.is_active = 1
+      ORDER BY vfc.sort_order, vf.sort_order
+    `;
+    
+    const result = await db.query(query, [vehicleId]);
+    
+    const features = result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      iconName: row.icon_name,
+      isPremium: Boolean(row.is_premium),
+      additionalCost: row.vehicle_additional_cost || row.additional_cost || 0,
+      isIncluded: Boolean(row.is_included),
+      notes: row.notes,
+      category: {
+        id: row.category_id,
+        name: row.category_name,
+        displayName: row.category_display_name,
+        description: row.category_description,
+        iconName: row.category_icon,
+        sortOrder: row.category_sort_order
+      }
+    }));
+    
+    res.json(features);
+  } catch (error) {
+    console.error('Get vehicle features error:', error);
+    res.status(500).json({ error: 'Failed to get vehicle features' });
+  }
+});
+
+// Get all available vehicle features and categories
+app.get('/api/vehicles/features/categories', authenticateToken, async (req, res) => {
+  try {
+    const categoriesResult = await db.query(`
+      SELECT id, name, display_name, description, icon_name, sort_order
+      FROM vehicle_feature_categories
+      WHERE is_active = 1
+      ORDER BY sort_order
+    `);
+    
+    const featuresResult = await db.query(`
+      SELECT vf.*, vfc.name as category_name
+      FROM vehicle_features vf
+      JOIN vehicle_feature_categories vfc ON vf.category_id = vfc.id
+      WHERE vf.is_active = 1 AND vfc.is_active = 1
+      ORDER BY vfc.sort_order, vf.sort_order
+    `);
+    
+    const categories = categoriesResult.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      displayName: row.display_name,
+      description: row.description,
+      iconName: row.icon_name,
+      sortOrder: row.sort_order
+    }));
+    
+    const features = featuresResult.rows.map(row => ({
+      id: row.id,
+      categoryId: row.category_id,
+      name: row.name,
+      description: row.description,
+      iconName: row.icon_name,
+      isPremium: Boolean(row.is_premium),
+      additionalCost: row.additional_cost || 0,
+      isActive: Boolean(row.is_active),
+      sortOrder: row.sort_order,
+      categoryName: row.category_name
+    }));
+    
+    res.json({ categories, features });
+  } catch (error) {
+    console.error('Get feature categories error:', error);
+    res.status(500).json({ error: 'Failed to get feature categories' });
+  }
+});
+
+// Get vehicle photos
+app.get('/api/vehicles/:vehicleId/photos', authenticateToken, async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    
+    const result = await db.query(`
+      SELECT id, photo_url, photo_type, is_primary, sort_order, caption, uploaded_at
+      FROM vehicle_photos
+      WHERE vehicle_id = $1
+      ORDER BY is_primary DESC, sort_order ASC
+    `, [vehicleId]);
+    
+    const photos = result.rows.map(row => ({
+      id: row.id,
+      photoUrl: row.photo_url,
+      photoType: row.photo_type,
+      isPrimary: Boolean(row.is_primary),
+      sortOrder: row.sort_order,
+      caption: row.caption,
+      uploadedAt: row.uploaded_at
+    }));
+    
+    res.json(photos);
+  } catch (error) {
+    console.error('Get vehicle photos error:', error);
+    res.status(500).json({ error: 'Failed to get vehicle photos' });
+  }
+});
+
+// Get vehicle amenities
+app.get('/api/vehicles/:vehicleId/amenities', authenticateToken, async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    
+    const result = await db.query(`
+      SELECT id, name, icon, is_available, additional_cost, description, created_at
+      FROM vehicle_amenities
+      WHERE vehicle_id = $1
+      ORDER BY name
+    `, [vehicleId]);
+    
+    const amenities = result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      icon: row.icon,
+      isAvailable: Boolean(row.is_available),
+      additionalCost: row.additional_cost || 0,
+      description: row.description,
+      createdAt: row.created_at
+    }));
+    
+    res.json(amenities);
+  } catch (error) {
+    console.error('Get vehicle amenities error:', error);
+    res.status(500).json({ error: 'Failed to get vehicle amenities' });
+  }
+});
+
+// Get vehicle maintenance records
+app.get('/api/vehicles/:vehicleId/maintenance', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    
+    // Verify ownership or admin role
+    if (req.user.role !== 'admin') {
+      const ownershipResult = await db.query(
+        'SELECT owner_id FROM vehicles WHERE id = $1',
+        [vehicleId]
+      );
+      
+      if (ownershipResult.rows.length === 0 || ownershipResult.rows[0].owner_id !== req.user.userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+    }
+    
+    const result = await db.query(`
+      SELECT id, maintenance_type, description, cost, performed_by, 
+             performed_at, next_due_date, mileage_at_service, notes, receipts, created_at
+      FROM vehicle_maintenance
+      WHERE vehicle_id = $1
+      ORDER BY performed_at DESC
+    `, [vehicleId]);
+    
+    const maintenance = result.rows.map(row => ({
+      id: row.id,
+      maintenanceType: row.maintenance_type,
+      description: row.description,
+      cost: row.cost,
+      performedBy: row.performed_by,
+      performedAt: row.performed_at,
+      nextDueDate: row.next_due_date,
+      mileageAtService: row.mileage_at_service,
+      notes: row.notes,
+      receipts: row.receipts ? JSON.parse(row.receipts) : [],
+      createdAt: row.created_at
+    }));
+    
+    res.json(maintenance);
+  } catch (error) {
+    console.error('Get vehicle maintenance error:', error);
+    res.status(500).json({ error: 'Failed to get vehicle maintenance records' });
+  }
+});
+
+// Add maintenance record
+app.post('/api/vehicles/:vehicleId/maintenance', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    const { maintenanceType, description, cost, performedBy, performedAt, nextDueDate, mileageAtService, notes, receipts } = req.body;
+    
+    // Verify ownership or admin role
+    if (req.user.role !== 'admin') {
+      const ownershipResult = await db.query(
+        'SELECT owner_id FROM vehicles WHERE id = $1',
+        [vehicleId]
+      );
+      
+      if (ownershipResult.rows.length === 0 || ownershipResult.rows[0].owner_id !== req.user.userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+    }
+    
+    const result = await db.query(`
+      INSERT INTO vehicle_maintenance 
+      (vehicle_id, maintenance_type, description, cost, performed_by, performed_at, 
+       next_due_date, mileage_at_service, notes, receipts)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *
+    `, [vehicleId, maintenanceType, description, cost, performedBy, performedAt, 
+        nextDueDate, mileageAtService, notes, receipts ? JSON.stringify(receipts) : null]);
+    
+    const maintenance = result.rows[0];
+    
+    // Update vehicle's last maintenance date
+    await db.query(
+      'UPDATE vehicles SET last_maintenance_date = $1, next_maintenance_date = $2 WHERE id = $3',
+      [performedAt, nextDueDate, vehicleId]
+    );
+    
+    res.json({
+      id: maintenance.id,
+      maintenanceType: maintenance.maintenance_type,
+      description: maintenance.description,
+      cost: maintenance.cost,
+      performedBy: maintenance.performed_by,
+      performedAt: maintenance.performed_at,
+      nextDueDate: maintenance.next_due_date,
+      mileageAtService: maintenance.mileage_at_service,
+      notes: maintenance.notes,
+      receipts: maintenance.receipts ? JSON.parse(maintenance.receipts) : [],
+      createdAt: maintenance.created_at
+    });
+  } catch (error) {
+    console.error('Add maintenance record error:', error);
+    res.status(500).json({ error: 'Failed to add maintenance record' });
+  }
+});
+
+// Get vehicle damage reports
+app.get('/api/vehicles/:vehicleId/damage-reports', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    
+    // Verify ownership or admin role
+    if (req.user.role !== 'admin') {
+      const ownershipResult = await db.query(
+        'SELECT owner_id FROM vehicles WHERE id = $1',
+        [vehicleId]
+      );
+      
+      if (ownershipResult.rows.length === 0 || ownershipResult.rows[0].owner_id !== req.user.userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+    }
+    
+    const result = await db.query(`
+      SELECT vdr.*, u.first_name, u.last_name
+      FROM vehicle_damage_reports vdr
+      JOIN users u ON vdr.reported_by = u.id
+      WHERE vdr.vehicle_id = $1
+      ORDER BY vdr.reported_at DESC
+    `, [vehicleId]);
+    
+    const reports = result.rows.map(row => ({
+      id: row.id,
+      damageType: row.damage_type,
+      severity: row.severity,
+      description: row.description,
+      photoUrls: row.photo_urls ? JSON.parse(row.photo_urls) : [],
+      repairCost: row.repair_cost,
+      repairStatus: row.repair_status,
+      reportedAt: row.reported_at,
+      resolvedAt: row.resolved_at,
+      reportedBy: {
+        id: row.reported_by,
+        firstName: row.first_name,
+        lastName: row.last_name
+      }
+    }));
+    
+    res.json(reports);
+  } catch (error) {
+    console.error('Get damage reports error:', error);
+    res.status(500).json({ error: 'Failed to get damage reports' });
+  }
+});
+
+// Enhanced vehicle search with advanced filtering
+app.get('/api/vehicles/search', authenticateToken, async (req, res) => {
+  try {
+    const {
+      location,
+      vehicleType,
+      fuelType,
+      transmissionType,
+      seatingCapacity,
+      minPrice,
+      maxPrice,
+      features,
+      conditionRating,
+      verificationStatus,
+      deliveryAvailable,
+      airportPickup,
+      sortBy = 'popularity',
+      page = 1,
+      limit = 20
+    } = req.query;
+    
+    let query = `
+      SELECT DISTINCT v.*, 
+             AVG(r.rating) as average_rating,
+             COUNT(r.id) as total_reviews
+      FROM vehicles v
+      LEFT JOIN reviews r ON v.id = r.vehicle_id AND r.moderation_status = 'approved'
+    `;
+    
+    const conditions = ['v.available = 1'];
+    const params = [];
+    let paramIndex = 1;
+    
+    if (location) {
+      conditions.push(`v.location ILIKE $${paramIndex}`);
+      params.push(`%${location}%`);
+      paramIndex++;
+    }
+    
+    if (vehicleType) {
+      conditions.push(`v.vehicle_type = $${paramIndex}`);
+      params.push(vehicleType);
+      paramIndex++;
+    }
+    
+    if (fuelType) {
+      conditions.push(`v.fuel_type = $${paramIndex}`);
+      params.push(fuelType);
+      paramIndex++;
+    }
+    
+    if (transmissionType) {
+      conditions.push(`v.transmission_type = $${paramIndex}`);
+      params.push(transmissionType);
+      paramIndex++;
+    }
+    
+    if (seatingCapacity) {
+      conditions.push(`v.seating_capacity >= $${paramIndex}`);
+      params.push(parseInt(seatingCapacity));
+      paramIndex++;
+    }
+    
+    if (minPrice) {
+      conditions.push(`v.daily_rate >= $${paramIndex}`);
+      params.push(parseFloat(minPrice));
+      paramIndex++;
+    }
+    
+    if (maxPrice) {
+      conditions.push(`v.daily_rate <= $${paramIndex}`);
+      params.push(parseFloat(maxPrice));
+      paramIndex++;
+    }
+    
+    if (conditionRating) {
+      conditions.push(`v.condition_rating >= $${paramIndex}`);
+      params.push(parseInt(conditionRating));
+      paramIndex++;
+    }
+    
+    if (verificationStatus) {
+      conditions.push(`v.verification_status = $${paramIndex}`);
+      params.push(verificationStatus);
+      paramIndex++;
+    }
+    
+    if (deliveryAvailable === 'true') {
+      conditions.push(`v.delivery_available = 1`);
+    }
+    
+    if (airportPickup === 'true') {
+      conditions.push(`v.airport_pickup = 1`);
+    }
+    
+    if (features && features.length > 0) {
+      const featureIds = features.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+      if (featureIds.length > 0) {
+        query += ` 
+          INNER JOIN vehicle_feature_assignments vfa ON v.id = vfa.vehicle_id 
+          INNER JOIN vehicle_features vf ON vfa.feature_id = vf.id 
+        `;
+        conditions.push(`vf.id IN (${featureIds.map((_, i) => `$${paramIndex + i}`).join(', ')})`);
+        conditions.push(`vfa.is_included = 1`);
+        params.push(...featureIds);
+        paramIndex += featureIds.length;
+      }
+    }
+    
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+    
+    query += ` GROUP BY v.id`;
+    
+    // Add sorting
+    switch (sortBy) {
+      case 'price_low':
+        query += ` ORDER BY v.daily_rate ASC`;
+        break;
+      case 'price_high':
+        query += ` ORDER BY v.daily_rate DESC`;
+        break;
+      case 'rating':
+        query += ` ORDER BY average_rating DESC NULLS LAST`;
+        break;
+      case 'newest':
+        query += ` ORDER BY v.created_at DESC`;
+        break;
+      case 'condition':
+        query += ` ORDER BY v.condition_rating DESC NULLS LAST`;
+        break;
+      default: // popularity
+        query += ` ORDER BY total_reviews DESC, average_rating DESC NULLS LAST`;
+    }
+    
+    // Add pagination
+    const offset = (page - 1) * limit;
+    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(parseInt(limit), offset);
+    
+    const result = await db.query(query, params);
+    
+    // Get total count for pagination
+    let countQuery = `SELECT COUNT(DISTINCT v.id) as total FROM vehicles v`;
+    if (features && features.length > 0) {
+      countQuery += ` INNER JOIN vehicle_feature_assignments vfa ON v.id = vfa.vehicle_id INNER JOIN vehicle_features vf ON vfa.feature_id = vf.id`;
+    }
+    if (conditions.length > 0) {
+      countQuery += ` WHERE ${conditions.join(' AND ')}`;
+    }
+    
+    const countResult = await db.query(countQuery, params.slice(0, -2)); // Remove limit and offset
+    const total = parseInt(countResult.rows[0].total);
+    
+    res.json({
+      vehicles: result.rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Vehicle search error:', error);
+    res.status(500).json({ error: 'Failed to search vehicles' });
+  }
+});
+
+// Get vehicle reviews (only approved reviews for public)
+app.get('/api/vehicles/:vehicleId/reviews', async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+    
+    const result = await db.query(`
+      SELECT 
+        r.id, r.rating, r.comment, r.created_at,
+        u.first_name, u.last_name
+      FROM reviews r
+      JOIN users u ON r.user_id = u.id
+      WHERE r.vehicle_id = $1 AND r.moderation_status = 'approved'
+      ORDER BY r.created_at DESC
+      LIMIT $2 OFFSET $3
+    `, [req.params.vehicleId, limit, offset]);
+
+    const countResult = await db.query(`
+      SELECT COUNT(*) as total
+      FROM reviews 
+      WHERE vehicle_id = $1 AND moderation_status = 'approved'
+    `, [req.params.vehicleId]);
+
+    const avgRatingResult = await db.query(`
+      SELECT AVG(rating)::DECIMAL(2,1) as average_rating
+      FROM reviews 
+      WHERE vehicle_id = $1 AND moderation_status = 'approved'
+    `, [req.params.vehicleId]);
+
+    res.json({
+      reviews: result.rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: parseInt(countResult.rows[0].total),
+        pages: Math.ceil(countResult.rows[0].total / limit)
+      },
+      summary: {
+        totalReviews: parseInt(countResult.rows[0].total),
+        averageRating: parseFloat(avgRatingResult.rows[0].average_rating) || 0
+      }
+    });
+  } catch (error) {
+    console.error('Get vehicle reviews error:', error);
+    res.status(500).json({ error: 'Failed to get vehicle reviews' });
+  }
+});
+
+// Payment receipt endpoint
+app.get('/api/payments/receipt/:bookingId', authenticateToken, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const userId = req.user.id;
+
+    // Verify booking belongs to user
+    const booking = await query(
+      `SELECT b.*, v.make, v.model, v.year, v.location, v.daily_rate,
+              p.transaction_id, p.amount, p.currency, p.payment_method, p.created_at as payment_date,
+              u.first_name, u.last_name, u.email
+       FROM bookings b
+       JOIN vehicles v ON b.vehicle_id = v.id
+       LEFT JOIN payment_transactions p ON b.id = p.booking_id AND p.status = 'completed'
+       JOIN users u ON b.user_id = u.id
+       WHERE b.id = ? AND b.user_id = ?`,
+      [bookingId, userId]
+    );
+
+    if (booking.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    const receiptData = booking[0];
+    
+    // Calculate rental duration
+    const startDate = new Date(receiptData.start_date);
+    const endDate = new Date(receiptData.end_date);
+    const durationDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+    // Build receipt object
+    const receipt = {
+      booking: {
+        id: receiptData.id,
+        status: receiptData.status,
+        startDate: receiptData.start_date,
+        endDate: receiptData.end_date,
+        duration: durationDays,
+        totalAmount: receiptData.total_amount,
+        createdAt: receiptData.created_at
+      },
+      vehicle: {
+        make: receiptData.make,
+        model: receiptData.model,
+        year: receiptData.year,
+        location: receiptData.location,
+        dailyRate: receiptData.daily_rate
+      },
+      customer: {
+        firstName: receiptData.first_name,
+        lastName: receiptData.last_name,
+        email: receiptData.email
+      },
+      payment: {
+        transactionId: receiptData.transaction_id,
+        amount: receiptData.amount,
+        currency: receiptData.currency,
+        method: receiptData.payment_method,
+        date: receiptData.payment_date
+      },
+      company: {
+        name: 'Island Rides',
+        address: 'Nassau, Bahamas',
+        phone: '+1-242-XXX-XXXX',
+        email: 'support@islandrides.com'
+      }
+    };
+
+    res.json({ receipt });
+  } catch (error) {
+    logError('Receipt fetch error', error);
+    res.status(500).json({ error: 'Failed to fetch receipt' });
+  }
+});
+
+// Payment history endpoint
+app.get('/api/payments/history', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const payments = await db.query(
+      `SELECT b.id as booking_id, b.start_date, b.end_date, b.total_amount, b.status,
+              v.make, v.model, v.year,
+              p.transaction_id, p.payment_method, p.created_at as payment_date
+       FROM bookings b
+       JOIN vehicles v ON b.vehicle_id = v.id
+       LEFT JOIN payment_transactions p ON b.id = p.booking_id AND p.status = 'completed'
+       WHERE b.renter_id = $1 AND b.payment_status = 'completed'
+       ORDER BY b.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [userId, parseInt(limit), offset]
+    );
+
+    const totalResult = await db.query(
+      `SELECT COUNT(*) as count FROM bookings 
+       WHERE renter_id = $1 AND payment_status = 'completed'`,
+      [userId]
+    );
+
+    res.json({
+      payments: keysToCamel(payments.rows),
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: totalResult.rows[0].count,
+        pages: Math.ceil(totalResult.rows[0].count / limit)
+      }
+    });
+  } catch (error) {
+    logError('Payment history error', error);
+    res.status(500).json({ error: 'Failed to fetch payment history' });
+  }
+});
+
+// Replace the existing server startup section
+if (require.main === module) {
+  (async () => {
+    try {
+      console.log('🔧 Starting Island Rides API Server with Smart Port Management...');
+      console.log('🔍 Checking for port conflicts...');
+      
+      const { port } = await portManager.startServerWithRetry(server);
+      
+      console.log('✅ Server startup complete!');
+      console.log(`🌐 Access your API at: http://localhost:${port}`);
+      
+      // Graceful shutdown handling
+      const gracefulShutdown = (signal) => {
+        console.log(`📤 Received ${signal}, shutting down gracefully...`);
+        
+        // Stop price monitoring
+        try {
+          priceMonitoringService.stop();
+          console.log('💰 Price monitoring stopped');
+        } catch (error) {
+          console.warn('⚠️ Error stopping price monitoring:', error.message);
+        }
+        
+        server.close((err) => {
+          if (err) {
+            console.error('❌ Error during server shutdown:', err);
+            process.exit(1);
+          } else {
+            console.log('✅ Server closed successfully');
+            process.exit(0);
+          }
+        });
+      };
+      
+      process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+      process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+      
+      // Handle uncaught exceptions
+      process.on('uncaughtException', (error) => {
+        console.error('💥 Uncaught Exception:', error);
+        gracefulShutdown('uncaughtException');
+      });
+      
+      process.on('unhandledRejection', (reason, promise) => {
+        console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+        gracefulShutdown('unhandledRejection');
+      });
+      
+    } catch (error) {
+      console.error('💥 Failed to start server:', error.message);
+      console.error('📋 Troubleshooting tips:');
+      console.error('  1. Check if any services are using ports 3003-3007');
+      console.error('  2. Try restarting your development environment');
+      console.error('  3. Check Docker containers: docker ps');
+      console.error('  4. Kill conflicting processes: npx kill-port 3003');
+      console.error('  5. Check system port usage: netstat -tulpn | grep :3003');
+      
+      process.exit(1);
+    }
+  })();
 }
 
 async function handleSendMessage(socket, user, message) {

@@ -1,0 +1,40 @@
+{
+  "serverPort": 3003,
+  "websocketPort": "3004",
+  "apiBaseUrl": "http://localhost:3003",
+  "websocketUrl": "ws://localhost:3004",
+  "updatedAt": "2025-07-08T04:22:15.135Z",
+  "portStatus": {
+    "currentPort": 3003,
+    "preferredPorts": [
+      3003,
+      3003,
+      3005,
+      3006,
+      3007,
+      3008,
+      8000,
+      8003,
+      8004,
+      8005,
+      8006
+    ],
+    "reservedPorts": [
+      3001,
+      3002,
+      3004,
+      19006,
+      19001,
+      8081,
+      8082
+    ],
+    "lastUpdated": "2025-07-08T04:22:15.135Z",
+    "uptime": 0.473090139,
+    "environment": "development",
+    "version": "1.0.0",
+    "services": {
+      "webSocket": 3004,
+      "main": 3003
+    }
+  }
+}

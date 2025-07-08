@@ -3,7 +3,7 @@
  * Centralized route names to prevent typos and ease refactoring
  */
 
-import { ChatContext, Vehicle } from '../types';
+import { ChatContext, Vehicle, VehicleRecommendation } from '../types';
 
 export const ROUTES = {
   // Authentication routes
@@ -21,10 +21,22 @@ export const ROUTES = {
   
   // User routes
   PROFILE: 'Profile',
+  PUBLIC_USER_PROFILE: 'PublicUserProfile',
+  PAYMENT_HISTORY: 'PaymentHistory',
   CHAT: 'Chat',
   FAVORITES: 'Favorites',
   NOTIFICATION_PREFERENCES: 'NotificationPreferences',
   WRITE_REVIEW: 'WriteReview',
+  
+  // Owner Dashboard routes
+  OWNER_DASHBOARD: 'OwnerDashboard',
+  VEHICLE_PERFORMANCE: 'VehiclePerformance',
+  FINANCIAL_REPORTS: 'FinancialReports',
+  FLEET_MANAGEMENT: 'FleetManagement',
+  VEHICLE_CONDITION_TRACKER: 'VehicleConditionTracker',
+  VEHICLE_PHOTO_UPLOAD: 'VehiclePhotoUpload',
+  VEHICLE_AVAILABILITY: 'VehicleAvailability',
+  BULK_RATE_UPDATE: 'BulkRateUpdate',
 } as const;
 
 export type RouteNames = typeof ROUTES[keyof typeof ROUTES];
@@ -39,7 +51,7 @@ export type RootStackParamList = {
   [ROUTES.ISLAND_SELECTION]: undefined;
   [ROUTES.SEARCH_RESULTS]: {
     island: string;
-    vehicles: Vehicle[];
+    vehicles: VehicleRecommendation[];
   };
   [ROUTES.SEARCH]: undefined;
   [ROUTES.VEHICLE_DETAIL]: {
@@ -54,6 +66,10 @@ export type RootStackParamList = {
     bookingId: number;
   };
   [ROUTES.PROFILE]: undefined;
+  [ROUTES.PUBLIC_USER_PROFILE]: {
+    userId: number;
+  };
+  [ROUTES.PAYMENT_HISTORY]: undefined;
   [ROUTES.CHAT]: {
     context: ChatContext;
     title?: string;
@@ -74,5 +90,23 @@ export type RootStackParamList = {
     };
   };
   Payment: { booking: any };
+  
+  // Owner Dashboard routes
+  [ROUTES.OWNER_DASHBOARD]: undefined;
+  [ROUTES.VEHICLE_PERFORMANCE]: undefined;
+  [ROUTES.FINANCIAL_REPORTS]: undefined;
+  [ROUTES.FLEET_MANAGEMENT]: undefined;
+  [ROUTES.VEHICLE_CONDITION_TRACKER]: {
+    vehicleId: number;
+  };
+  [ROUTES.VEHICLE_PHOTO_UPLOAD]: {
+    vehicleId: number;
+  };
+  [ROUTES.VEHICLE_AVAILABILITY]: {
+    vehicleId: number;
+  };
+  [ROUTES.BULK_RATE_UPDATE]: {
+    vehicleIds: number[];
+  };
 };
 

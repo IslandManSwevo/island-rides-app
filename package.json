@@ -18,6 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@expo/metro-runtime": "~5.0.4",
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.10.0",
     "better-sqlite3": "^12.2.0",
@@ -26,14 +27,14 @@
     "expo": "^53.0.17",
     "expo-constants": "~17.1.7",
     "expo-device": "~7.1.4",
+    "expo-image-manipulator": "^13.1.7",
     "expo-notifications": "~0.31.4",
     "expo-server-sdk": "^3.15.0",
     "express": "^5.1.0",
     "node-cron": "^4.2.0",
-    "uuid": "^11.1.0",
     "react-dom": "19.0.0",
     "react-native-web": "^0.20.0",
-    "@expo/metro-runtime": "~5.0.4"
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/react": "~19.0.10",

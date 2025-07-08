@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { colors } from '../styles/theme';
+import { navigationRef } from '../navigation/navigationRef';
+import { ROUTES } from '../navigation/routes';
 
 interface FavoriteButtonProps {
   vehicleId: number;
@@ -96,12 +98,13 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         onToggle?.(true);
         animateSuccess();
         notificationService.success('Added to favorites!', {
-          duration: 2000,
+          duration: 3000,
           action: {
             label: 'View All',
             handler: () => {
-              // Could navigate to favorites screen
-              console.log('Navigate to favorites');
+              if (navigationRef.current) {
+                navigationRef.current.navigate(ROUTES.FAVORITES as never);
+              }
             }
           }
         });

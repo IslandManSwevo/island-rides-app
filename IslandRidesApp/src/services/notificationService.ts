@@ -1,41 +1,50 @@
 import { Notification, NotificationType } from '../types';
 import { BehaviorSubject } from 'rxjs';
-import { nanoid } from 'nanoid';
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { apiService } from './apiService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configure notification handler
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Check if running in Expo Go
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Conditional imports to avoid Expo Go issues
+let Notifications: any = null;
+let Device: any = null;
+
+if (!isExpoGo) {
+  try {
+    Notifications = require('expo-notifications');
+    Device = require('expo-device');
+    
+    // Configure notification handler only if not in Expo Go
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (error) {
+    console.warn('Notifications not available in Expo Go');
+  }
+}
 
 class NotificationService {
   private notifications = new BehaviorSubject<Notification[]>([]);
-  private defaultDuration = 5000; // 5 seconds
+  private defaultDuration = 5000;
   private notificationListener: any;
   private responseListener: any;
 
-  // Get current notifications
   get current() {
     return this.notifications.asObservable();
   }
 
-  // Subscribe to notifications
   subscribe(callback: (notifications: Notification[]) => void) {
     return this.current.subscribe(callback);
   }
 
-  // Show a notification
   show(notification: Omit<Notification, 'id'>) {
     const id = Date.now().toString();
     const newNotification: Notification = {
@@ -55,7 +64,6 @@ class NotificationService {
     }
   }
 
-  // Helper methods for different notification types
   success(message: string, options: Partial<Notification> = {}) {
     this.show({ type: 'success', message, ...options });
   }
@@ -72,7 +80,6 @@ class NotificationService {
     this.show({ type: 'info', message, ...options });
   }
 
-  // Dismiss a specific notification
   dismiss(id: string) {
     const currentNotifications = this.notifications.value;
     this.notifications.next(
@@ -80,160 +87,194 @@ class NotificationService {
     );
   }
 
-  // Clear all notifications
   clear() {
     this.notifications.next([]);
   }
 
   async registerForPushNotifications() {
-    if (!Device.isDevice) {
-      console.log('Push notifications only work on physical devices');
-      return null;
-    }
-
     try {
+      // Check if we're in Expo Go
+      const isExpoGo = Constants.appOwnership === 'expo';
+      
+      if (isExpoGo) {
+        console.log('📱 Skipping push notification registration in Expo Go');
+        return;
+      }
+
+      if (Platform.OS === 'web') {
+        console.log('📱 Skipping push notification registration on web');
+        return;
+      }
+
+      // Get permission
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-
+      
       if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-
+      
       if (finalStatus !== 'granted') {
-        console.log('Failed to get push token for push notification!');
-        return null;
+        throw new Error('Permission not granted for push notifications');
       }
 
-      const token = await Notifications.getExpoPushTokenAsync({
-        projectId: Constants.expoConfig?.extra?.eas?.projectId
-      });
+      // Get push token
+      const tokenData = await Notifications.getExpoPushTokenAsync();
+      console.log('📱 Push token obtained:', tokenData.data);
 
-      if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('default', {
-          name: 'default',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#FF231F7C',
-        });
-      }
-
-      await apiService.post('/notifications/register-token', {
-        token: token.data,
+      // Register token with backend
+      await apiService.post('/api/notifications/register-token', {
+        token: tokenData.data,
         platform: Platform.OS,
-        deviceId: Device.modelId
       });
 
-      return token.data;
+      console.log('📱 Push token registered with backend');
     } catch (error) {
       console.error('Error registering for push notifications:', error);
-      return null;
+      throw error;
     }
   }
 
   setupNotificationListeners(navigation: any) {
-    // Handle notifications received while app is in foreground
-    this.notificationListener = Notifications.addNotificationReceivedListener(
-      notification => {
-        console.log('Notification received:', notification);
-        
-        // Show in-app notification
-        this.info(notification.request.content.title || '', {
-          message: notification.request.content.body || '',
-          duration: 5000
-        });
-      }
-    );
+    if (isExpoGo || !Notifications) {
+      console.log('Notification listeners not available in Expo Go');
+      return;
+    }
 
-    // Handle notification clicks
-    this.responseListener = Notifications.addNotificationResponseReceivedListener(
-      (response: any) => {
-        const data = response.notification.request.content.data;
-        
-        // Navigate based on notification type
-        if (data?.screen) {
-          switch (data.screen) {
-            case 'BookingDetails':
-              navigation.navigate('BookingDetails', { 
-                bookingId: data.bookingId 
-              });
-              break;
-            case 'Chat':
-              navigation.navigate('Chat', { 
-                conversationId: data.conversationId 
-              });
-              break;
-            case 'VehicleDetail':
-              navigation.navigate('VehicleDetail', { 
-                vehicleId: data.vehicleId 
-              });
-              break;
-            case 'WriteReview':
-              navigation.navigate('WriteReview', { 
-                bookingId: data.bookingId 
-              });
-              break;
+    try {
+      this.notificationListener = Notifications.addNotificationReceivedListener(
+        (notification: any) => {
+          console.log('Notification received:', notification);
+          
+          this.info(notification.request.content.title || '', {
+            message: notification.request.content.body || '',
+            duration: 5000
+          });
+        }
+      );
+
+      this.responseListener = Notifications.addNotificationResponseReceivedListener(
+        (response: any) => {
+          const data = response.notification.request.content.data;
+          
+          if (data?.screen) {
+            switch (data.screen) {
+              case 'BookingDetails':
+                navigation.navigate('Profile');
+                this.success('Booking details in your profile', {
+                  duration: 3000
+                });
+                break;
+              case 'Chat':
+                navigation.navigate('Chat', { 
+                  conversationId: data.conversationId 
+                });
+                break;
+              case 'VehicleDetail':
+                navigation.navigate('VehicleDetail', { 
+                  vehicleId: data.vehicleId 
+                });
+                break;
+              case 'WriteReview':
+                navigation.navigate('WriteReview', { 
+                  bookingId: data.bookingId 
+                });
+                break;
+              default:
+                if (data?.type === 'booking') {
+                  navigation.navigate('Profile');
+                }
+                break;
+            }
           }
         }
-      }
-    );
+      );
+    } catch (error) {
+      console.warn('Failed to setup notification listeners:', error);
+    }
   }
 
   removeListeners() {
-    if (this.notificationListener) {
-      Notifications.removeNotificationSubscription(this.notificationListener);
-    }
-    if (this.responseListener) {
-      Notifications.removeNotificationSubscription(this.responseListener);
+    if (isExpoGo || !Notifications) return;
+    
+    try {
+      if (this.notificationListener) {
+        Notifications.removeNotificationSubscription(this.notificationListener);
+      }
+      if (this.responseListener) {
+        Notifications.removeNotificationSubscription(this.responseListener);
+      }
+    } catch (error) {
+      console.warn('Failed to remove notification listeners:', error);
     }
   }
 
-  // Schedule local notifications
   async scheduleLocalNotification(title: string, body: string, data: any, trigger: Date) {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title,
-        body,
-        data,
-        sound: true,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: trigger,
-      },
-    });
-  }
+    if (isExpoGo || !Notifications) {
+      console.log('Local notifications not available in Expo Go');
+      return;
+    }
 
-  // Cancel scheduled notifications
-  async cancelScheduledNotifications(identifier?: string) {
-    if (identifier) {
-      await Notifications.cancelScheduledNotificationAsync(identifier);
-    } else {
-      await Notifications.cancelAllScheduledNotificationsAsync();
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data,
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: trigger,
+        },
+      });
+    } catch (error) {
+      console.warn('Failed to schedule notification:', error);
     }
   }
 
-  // Get notification settings
-  async getNotificationSettings() {
-    const settings = await Notifications.getPermissionsAsync();
-    return settings;
+  async cancelScheduledNotifications(identifier?: string) {
+    if (isExpoGo || !Notifications) return;
+    
+    try {
+      if (identifier) {
+        await Notifications.cancelScheduledNotificationAsync(identifier);
+      } else {
+        await Notifications.cancelAllScheduledNotificationsAsync();
+      }
+    } catch (error) {
+      console.warn('Failed to cancel notifications:', error);
+    }
   }
 
-  // Get notification preferences from backend
+  async getNotificationSettings() {
+    if (isExpoGo || !Notifications) {
+      return { status: 'undetermined' };
+    }
+
+    try {
+      const settings = await Notifications.getPermissionsAsync();
+      return settings;
+    } catch (error) {
+      console.warn('Failed to get notification settings:', error);
+      return { status: 'undetermined' };
+    }
+  }
+
   async getNotificationPreferences() {
     try {
-      const response: any = await apiService.get('/notifications/preferences');
-      return response.preferences;
+      const response: any = await apiService.get('/api/notifications/preferences');
+      return response.preferences || {};
     } catch (error) {
       console.error('Error fetching notification preferences:', error);
-      return null;
+      return {};
     }
   }
 
-  // Update notification preferences
   async updateNotificationPreferences(preferences: Record<string, boolean>) {
     try {
-      await apiService.put('/notifications/preferences', preferences);
+      await apiService.put('/api/notifications/preferences', { preferences });
       return true;
     } catch (error) {
       console.error('Error updating notification preferences:', error);

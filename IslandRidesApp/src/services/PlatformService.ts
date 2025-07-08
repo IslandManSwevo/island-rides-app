@@ -1,5 +1,6 @@
-import { Platform, PlatformOSType } from 'react-native';
+import { Platform } from 'react-native';
 import { BaseService } from './base/BaseService';
+import Constants from 'expo-constants';
 
 export interface PlatformConfig {
   keyboardBehavior: 'padding' | 'height';
@@ -8,6 +9,8 @@ export interface PlatformConfig {
   isIOS: boolean;
   isAndroid: boolean;
   isWeb: boolean;
+  isExpoGo: boolean;
+  hasKeyboardController: boolean;
 }
 
 class PlatformService extends BaseService {
@@ -15,7 +18,6 @@ class PlatformService extends BaseService {
 
   constructor() {
     super();
-    this.initializeConfig();
   }
 
   protected async onInit(): Promise<void> {
@@ -23,15 +25,17 @@ class PlatformService extends BaseService {
   }
 
   private initializeConfig(): PlatformConfig {
-    const os = Platform.OS as PlatformOSType;
+    const isExpoGo = Constants.appOwnership === 'expo';
     
     return {
-      keyboardBehavior: os === 'ios' ? 'padding' : 'height',
-      keyboardOffset: os === 'ios' ? 64 : 0,
-      bottomOffset: os === 'ios' ? 34 : 0,
-      isIOS: os === 'ios',
-      isAndroid: os === 'android',
-      isWeb: os === 'web'
+      keyboardBehavior: Platform.OS === 'ios' ? 'padding' : 'height',
+      keyboardOffset: Platform.OS === 'ios' ? 0 : 20,
+      bottomOffset: Platform.OS === 'ios' ? 34 : 0,
+      isIOS: Platform.OS === 'ios',
+      isAndroid: Platform.OS === 'android',
+      isWeb: Platform.OS === 'web',
+      isExpoGo,
+      hasKeyboardController: !isExpoGo, // Keyboard controller only works in development builds
     };
   }
 
@@ -43,15 +47,66 @@ class PlatformService extends BaseService {
     ios?: T;
     android?: T;
     web?: T;
+    expo?: T;
     default?: T;
   }): T {
-    if (this.config.isIOS && config.ios !== undefined) return config.ios;
-    if (this.config.isAndroid && config.android !== undefined) return config.android;
-    if (this.config.isWeb && config.web !== undefined) return config.web;
-    if (config.default !== undefined) return config.default;
+    if (this.config.isExpoGo && config.expo !== undefined) {
+      return config.expo;
+    }
     
-    throw new Error('No platform-specific value provided');
+    if (this.config.isIOS && config.ios !== undefined) {
+      return config.ios;
+    }
+    
+    if (this.config.isAndroid && config.android !== undefined) {
+      return config.android;
+    }
+    
+    if (this.config.isWeb && config.web !== undefined) {
+      return config.web;
+    }
+    
+    if (config.default !== undefined) {
+      return config.default;
+    }
+    
+    throw new Error('No platform configuration found');
+  }
+
+  // Safe keyboard handling that works in Expo Go
+  getSafeKeyboardConfig() {
+    return {
+      behavior: this.config.keyboardBehavior,
+      keyboardVerticalOffset: this.config.keyboardOffset,
+      enabled: true,
+    };
+  }
+
+  // Get platform-specific styles
+  getPlatformStyles() {
+    return {
+      statusBarHeight: this.config.isIOS ? 44 : 24,
+      headerHeight: this.config.isIOS ? 44 : 56,
+      tabBarHeight: this.config.isIOS ? 83 : 56,
+      bottomSafeArea: this.config.bottomOffset,
+    };
+  }
+
+  // Check if a feature is available in current environment
+  isFeatureAvailable(feature: 'pushNotifications' | 'keyboard' | 'camera' | 'location'): boolean {
+    switch (feature) {
+      case 'pushNotifications':
+        return !this.config.isExpoGo && !this.config.isWeb;
+      case 'keyboard':
+        return this.config.hasKeyboardController;
+      case 'camera':
+        return !this.config.isWeb;
+      case 'location':
+        return true; // Basic location works everywhere
+      default:
+        return true;
+    }
   }
 }
 
-export const platformService = PlatformService.getInstance();
+export const platformService = PlatformService.getInstance<PlatformService>();

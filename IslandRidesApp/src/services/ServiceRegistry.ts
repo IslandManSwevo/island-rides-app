@@ -3,6 +3,8 @@ import { platformService } from './PlatformService';
 import { environmentService } from './EnvironmentService';
 import { storageService } from './storageService';
 import { loggingService } from './LoggingService';
+import { apiService } from './apiService';
+import { authService } from './authService';
 import { ErrorRecoveryManager } from './errors/ErrorRecoveryManager';
 import { SessionRecoveryStrategy } from './errors/RecoveryStrategy';
 
@@ -16,6 +18,8 @@ class ServiceRegistry extends BaseService {
       await this.initializeEnvironment();
       await this.initializeStorage();
       await this.initializeLogging();
+      await this.initializeApi();
+      await this.initializeAuth();
       await this.initializeErrorRecovery();
 
       // Mark initialization as complete
@@ -27,29 +31,74 @@ class ServiceRegistry extends BaseService {
   }
 
   private async initializePlatform(): Promise<void> {
-    platformService.getConfig();
-    this.initializedServices.add('platform');
+    try {
+      await platformService.waitForInitialization();
+      this.initializedServices.add('platform');
+    } catch (error) {
+      console.error('Failed to initialize platform service:', error);
+      throw error;
+    }
   }
 
   private async initializeEnvironment(): Promise<void> {
-    environmentService.getConfig();
-    this.initializedServices.add('environment');
+    try {
+      await environmentService.waitForInitialization();
+      this.initializedServices.add('environment');
+    } catch (error) {
+      console.error('Failed to initialize environment service:', error);
+      throw error;
+    }
   }
 
   private async initializeStorage(): Promise<void> {
-    await storageService.getUserPreferences();
-    this.initializedServices.add('storage');
+    try {
+      await storageService.getUserPreferences();
+      this.initializedServices.add('storage');
+    } catch (error) {
+      console.error('Failed to initialize storage service:', error);
+      throw error;
+    }
   }
 
   private async initializeLogging(): Promise<void> {
-    loggingService.info('Initializing services...');
-    this.initializedServices.add('logging');
+    try {
+      loggingService.info('Services initialized successfully');
+      this.initializedServices.add('logging');
+    } catch (error) {
+      console.error('Failed to initialize logging service:', error);
+      throw error;
+    }
+  }
+
+  private async initializeApi(): Promise<void> {
+    try {
+      await apiService.waitForInitialization();
+      this.initializedServices.add('api');
+    } catch (error) {
+      console.error('Failed to initialize API service:', error);
+      throw error;
+    }
+  }
+
+  private async initializeAuth(): Promise<void> {
+    try {
+      await authService.waitForInitialization();
+      this.initializedServices.add('auth');
+    } catch (error) {
+      console.error('Failed to initialize auth service:', error);
+      throw error;
+    }
   }
 
   private async initializeErrorRecovery(): Promise<void> {
-    const errorManager = ErrorRecoveryManager.getInstance();
-    errorManager.registerStrategy(new SessionRecoveryStrategy());
-    this.initializedServices.add('errorRecovery');
+    try {
+      const errorManager = ErrorRecoveryManager.getInstance();
+      errorManager.registerStrategy(new SessionRecoveryStrategy());
+      this.initializedServices.add('errorRecovery');
+    } catch (error) {
+      console.error('Failed to initialize error recovery:', error);
+      throw error;
+    }
   }
 
   isServiceInitialized(service: string): boolean {
@@ -61,4 +110,4 @@ class ServiceRegistry extends BaseService {
   }
 }
 
-export const serviceRegistry = ServiceRegistry.getInstance();
+export const serviceRegistry = ServiceRegistry.getInstance<ServiceRegistry>();

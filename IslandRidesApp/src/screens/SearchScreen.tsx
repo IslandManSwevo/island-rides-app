@@ -8,7 +8,8 @@ import {
   TextInput,
   Modal,
   ActivityIndicator,
-  FlatList
+  FlatList,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -17,7 +18,8 @@ import { Button } from '../components/Button';
 import { VehicleCard } from '../components/VehicleCard';
 import { vehicleService } from '../services/vehicleService';
 import { notificationService } from '../services/notificationService';
-import { Island, VehicleRecommendation } from '../types';
+import { vehicleFeatureService } from '../services/vehicleFeatureService';
+import { Island, VehicleRecommendation, VehicleFeature, VehicleFeatureCategory } from '../types';
 
 interface SearchScreenProps {
   navigation: any;
@@ -30,38 +32,52 @@ interface SearchFilters {
   endDate: Date | null;
   priceRange: [number, number];
   vehicleTypes: string[];
-  features: string[];
-  sortBy: 'price_asc' | 'price_desc' | 'rating' | 'distance' | 'newest';
+  fuelTypes: string[];
+  transmissionTypes: string[];
+  minSeatingCapacity: number;
+  features: number[]; // Feature IDs
+  minConditionRating: number;
+  verificationStatus: string[];
+  deliveryAvailable: boolean;
+  airportPickup: boolean;
+  sortBy: 'popularity' | 'price_low' | 'price_high' | 'rating' | 'newest' | 'condition';
 }
 
 const VEHICLE_TYPES = [
-  'Sedan',
-  'SUV', 
-  'Compact',
-  'Luxury',
-  'Convertible',
-  'Truck',
-  'Van'
+  'sedan',
+  'suv', 
+  'truck',
+  'van',
+  'convertible',
+  'coupe',
+  'hatchback'
 ];
 
-const VEHICLE_FEATURES = [
-  'Air Conditioning',
-  'Bluetooth',
-  'GPS Navigation',
-  'Backup Camera',
-  'USB Charging',
-  'Automatic Transmission',
-  'Manual Transmission',
-  'Sunroof',
-  'Leather Seats',
-  'WiFi Hotspot'
+const FUEL_TYPES = [
+  'gasoline',
+  'diesel',
+  'electric',
+  'hybrid'
+];
+
+const TRANSMISSION_TYPES = [
+  'automatic',
+  'manual',
+  'cvt'
+];
+
+const VERIFICATION_STATUS_OPTIONS = [
+  { key: 'verified', label: 'Verified Only', icon: 'checkmark-circle' },
+  { key: 'pending', label: 'Pending Verification', icon: 'time' },
+  { key: 'rejected', label: 'Verification Failed', icon: 'close-circle' }
 ];
 
 const SORT_OPTIONS = [
-  { key: 'price_asc', label: 'Price: Low to High', icon: 'arrow-up' },
-  { key: 'price_desc', label: 'Price: High to Low', icon: 'arrow-down' },
+  { key: 'popularity', label: 'Most Popular', icon: 'trending-up' },
+  { key: 'price_low', label: 'Price: Low to High', icon: 'arrow-up' },
+  { key: 'price_high', label: 'Price: High to Low', icon: 'arrow-down' },
   { key: 'rating', label: 'Highest Rated', icon: 'star' },
-  { key: 'distance', label: 'Distance', icon: 'location' },
+  { key: 'condition', label: 'Best Condition', icon: 'shield-checkmark' },
   { key: 'newest', label: 'Newest First', icon: 'time' }
 ];
 
@@ -74,8 +90,15 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
     endDate: null,
     priceRange: [50, 300],
     vehicleTypes: [],
+    fuelTypes: [],
+    transmissionTypes: [],
+    minSeatingCapacity: 1,
     features: [],
-    sortBy: 'price_asc'
+    minConditionRating: 1,
+    verificationStatus: [],
+    deliveryAvailable: false,
+    airportPickup: false,
+    sortBy: 'popularity'
   });
 
   const [searchResults, setSearchResults] = useState<VehicleRecommendation[]>([]);
@@ -84,12 +107,35 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
   const [showDatePicker, setShowDatePicker] = useState<'start' | 'end' | null>(null);
   const [showSortModal, setShowSortModal] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  
+  // Feature-related state
+  const [availableFeatures, setAvailableFeatures] = useState<VehicleFeature[]>([]);
+  const [featureCategories, setFeatureCategories] = useState<VehicleFeatureCategory[]>([]);
+  const [loadingFeatures, setLoadingFeatures] = useState(false);
 
   useEffect(() => {
+    loadAvailableFeatures();
     if (island) {
       performSearch();
     }
   }, []);
+
+  const loadAvailableFeatures = async () => {
+    try {
+      setLoadingFeatures(true);
+      const [featuresResponse, categories] = await Promise.all([
+        vehicleFeatureService.getVehicleFeatures(),
+        vehicleFeatureService.getFeatureCategories()
+      ]);
+      setAvailableFeatures(featuresResponse.features);
+      setFeatureCategories(categories);
+    } catch (error) {
+      console.error('Failed to load features:', error);
+      notificationService.error('Failed to load vehicle features');
+    } finally {
+      setLoadingFeatures(false);
+    }
+  };
 
   const performSearch = async () => {
     try {
@@ -97,31 +143,32 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
       setHasSearched(true);
 
       const searchParams = {
-        island: filters.island as Island,
-        startDate: filters.startDate?.toISOString(),
-        endDate: filters.endDate?.toISOString(),
-        priceRange: filters.priceRange,
-        vehicleType: filters.vehicleTypes.length > 0 ? filters.vehicleTypes[0] : undefined
+        location: filters.island,
+        vehicleType: filters.vehicleTypes.length > 0 ? filters.vehicleTypes.join(',') : undefined,
+        fuelType: filters.fuelTypes.length > 0 ? filters.fuelTypes.join(',') : undefined,
+        transmissionType: filters.transmissionTypes.length > 0 ? filters.transmissionTypes.join(',') : undefined,
+        seatingCapacity: filters.minSeatingCapacity > 1 ? filters.minSeatingCapacity : undefined,
+        minPrice: filters.priceRange[0],
+        maxPrice: filters.priceRange[1],
+        features: filters.features.length > 0 ? filters.features.join(',') : undefined,
+        conditionRating: filters.minConditionRating > 1 ? filters.minConditionRating : undefined,
+        verificationStatus: filters.verificationStatus.length > 0 ? filters.verificationStatus.join(',') : undefined,
+        deliveryAvailable: filters.deliveryAvailable ? 'true' : undefined,
+        airportPickup: filters.airportPickup ? 'true' : undefined,
+        sortBy: filters.sortBy,
+        page: 1,
+        limit: 50
       };
 
-      let results = await vehicleService.searchVehicles(searchParams);
-      
-      // Apply client-side filtering for features
-      if (filters.features.length > 0) {
-        results = results.filter(vehicle => 
-          filters.features.every(feature => 
-            // Mock feature checking - in real app, this would be in the API
-            true // For now, assume all vehicles have requested features
-          )
-        );
-      }
+      // Remove undefined values
+      Object.keys(searchParams).forEach(key => 
+        searchParams[key as keyof typeof searchParams] === undefined && delete searchParams[key as keyof typeof searchParams]
+      );
 
-      // Apply sorting
-      results = sortResults(results, filters.sortBy);
+      const response = await vehicleService.searchVehicles(searchParams);
+      setSearchResults(response);
       
-      setSearchResults(results);
-      
-      if (results.length === 0) {
+      if (response.length === 0) {
         notificationService.info('No vehicles found matching your criteria', {
           duration: 4000
         });
@@ -140,42 +187,25 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
     }
   };
 
-  const sortResults = (results: VehicleRecommendation[], sortBy: string): VehicleRecommendation[] => {
-    const sorted = [...results];
-    
-    switch (sortBy) {
-      case 'price_asc':
-        return sorted.sort((a, b) => a.pricePerDay - b.pricePerDay);
-      case 'price_desc':
-        return sorted.sort((a, b) => b.pricePerDay - a.pricePerDay);
-      case 'rating':
-        return sorted.sort((a, b) => b.scoreBreakdown.vehicleRating - a.scoreBreakdown.vehicleRating);
-      case 'newest':
-        return sorted.sort((a, b) => new Date(b.vehicle.createdAt).getTime() - new Date(a.vehicle.createdAt).getTime());
-      default:
-        return sorted;
-    }
-  };
-
   const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const toggleVehicleType = (type: string) => {
+  const toggleArrayFilter = (key: 'vehicleTypes' | 'fuelTypes' | 'transmissionTypes' | 'verificationStatus', value: string) => {
     setFilters(prev => ({
       ...prev,
-      vehicleTypes: prev.vehicleTypes.includes(type)
-        ? prev.vehicleTypes.filter(t => t !== type)
-        : [...prev.vehicleTypes, type]
+      [key]: prev[key].includes(value)
+        ? prev[key].filter(item => item !== value)
+        : [...prev[key], value]
     }));
   };
 
-  const toggleFeature = (feature: string) => {
+  const toggleFeature = (featureId: number) => {
     setFilters(prev => ({
       ...prev,
-      features: prev.features.includes(feature)
-        ? prev.features.filter(f => f !== feature)
-        : [...prev.features, feature]
+      features: prev.features.includes(featureId)
+        ? prev.features.filter(id => id !== featureId)
+        : [...prev.features, featureId]
     }));
   };
 
@@ -186,8 +216,15 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
       endDate: null,
       priceRange: [50, 300],
       vehicleTypes: [],
+      fuelTypes: [],
+      transmissionTypes: [],
+      minSeatingCapacity: 1,
       features: [],
-      sortBy: 'price_asc'
+      minConditionRating: 1,
+      verificationStatus: [],
+      deliveryAvailable: false,
+      airportPickup: false,
+      sortBy: 'popularity'
     });
   };
 
@@ -270,7 +307,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
                   styles.optionChip,
                   filters.vehicleTypes.includes(type) && styles.optionChipSelected
                 ]}
-                onPress={() => toggleVehicleType(type)}
+                onPress={() => toggleArrayFilter('vehicleTypes', type)}
               >
                 <Text style={[
                   styles.optionChipText,
@@ -283,29 +320,225 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
           </View>
         </View>
 
-        {/* Features */}
+        {/* Fuel Types */}
         <View style={styles.filterSection}>
-          <Text style={styles.filterTitle}>Features</Text>
+          <Text style={styles.filterTitle}>Fuel Type</Text>
           <View style={styles.optionsGrid}>
-            {VEHICLE_FEATURES.map(feature => (
+            {FUEL_TYPES.map(type => (
               <TouchableOpacity
-                key={feature}
+                key={type}
                 style={[
-                  styles.featureChip,
-                  filters.features.includes(feature) && styles.featureChipSelected
+                  styles.optionChip,
+                  filters.fuelTypes.includes(type) && styles.optionChipSelected
                 ]}
-                onPress={() => toggleFeature(feature)}
+                onPress={() => toggleArrayFilter('fuelTypes', type)}
               >
                 <Text style={[
-                  styles.featureChipText,
-                  filters.features.includes(feature) && styles.featureChipTextSelected
+                  styles.optionChipText,
+                  filters.fuelTypes.includes(type) && styles.optionChipTextSelected
                 ]}>
-                  {feature}
+                  {type}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
+
+        {/* Transmission Types */}
+        <View style={styles.filterSection}>
+          <Text style={styles.filterTitle}>Transmission Type</Text>
+          <View style={styles.optionsGrid}>
+            {TRANSMISSION_TYPES.map(type => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.optionChip,
+                  filters.transmissionTypes.includes(type) && styles.optionChipSelected
+                ]}
+                onPress={() => toggleArrayFilter('transmissionTypes', type)}
+              >
+                <Text style={[
+                  styles.optionChipText,
+                  filters.transmissionTypes.includes(type) && styles.optionChipTextSelected
+                ]}>
+                  {type}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+                 {/* Seating Capacity */}
+         <View style={styles.filterSection}>
+           <Text style={styles.filterTitle}>
+             Minimum Seating: {filters.minSeatingCapacity} passenger{filters.minSeatingCapacity !== 1 ? 's' : ''}
+           </Text>
+           <View style={styles.sliderContainer}>
+             <TouchableOpacity
+               style={styles.sliderButton}
+               onPress={() => updateFilter('minSeatingCapacity', Math.max(1, filters.minSeatingCapacity - 1))}
+             >
+               <Ionicons name="remove" size={16} color={colors.primary} />
+             </TouchableOpacity>
+             <View style={styles.sliderTrack}>
+               <View 
+                 style={[styles.sliderProgress, { width: `${(filters.minSeatingCapacity - 1) * 14.28}%` }]} 
+               />
+             </View>
+             <TouchableOpacity
+               style={styles.sliderButton}
+               onPress={() => updateFilter('minSeatingCapacity', Math.min(8, filters.minSeatingCapacity + 1))}
+             >
+               <Ionicons name="add" size={16} color={colors.primary} />
+             </TouchableOpacity>
+           </View>
+         </View>
+
+         {/* Condition Rating */}
+         <View style={styles.filterSection}>
+           <Text style={styles.filterTitle}>
+             Minimum Condition Rating: {filters.minConditionRating} star{filters.minConditionRating !== 1 ? 's' : ''}
+           </Text>
+           <View style={styles.ratingContainer}>
+             {[1, 2, 3, 4, 5].map(rating => (
+               <TouchableOpacity
+                 key={rating}
+                 style={styles.starButton}
+                 onPress={() => updateFilter('minConditionRating', rating)}
+               >
+                 <Ionicons
+                   name={rating <= filters.minConditionRating ? 'star' : 'star-outline'}
+                   size={24}
+                   color={rating <= filters.minConditionRating ? '#F59E0B' : colors.lightGrey}
+                 />
+               </TouchableOpacity>
+             ))}
+           </View>
+         </View>
+
+         {/* Verification Status */}
+         <View style={styles.filterSection}>
+           <Text style={styles.filterTitle}>Verification Status</Text>
+           <View style={styles.optionsGrid}>
+             {VERIFICATION_STATUS_OPTIONS.map(option => (
+               <TouchableOpacity
+                 key={option.key}
+                 style={[
+                   styles.verificationChip,
+                   filters.verificationStatus.includes(option.key) && styles.verificationChipSelected
+                 ]}
+                 onPress={() => toggleArrayFilter('verificationStatus', option.key)}
+               >
+                 <Ionicons 
+                   name={option.icon as any} 
+                   size={16} 
+                   color={filters.verificationStatus.includes(option.key) ? colors.white : colors.primary} 
+                 />
+                 <Text style={[
+                   styles.verificationChipText,
+                   filters.verificationStatus.includes(option.key) && styles.verificationChipTextSelected
+                 ]}>
+                   {option.label}
+                 </Text>
+               </TouchableOpacity>
+             ))}
+           </View>
+         </View>
+
+         {/* Features */}
+         {!loadingFeatures && availableFeatures.length > 0 && (
+           <View style={styles.filterSection}>
+             <Text style={styles.filterTitle}>
+               Features ({filters.features.length} selected)
+             </Text>
+             <ScrollView 
+               style={styles.featuresScrollView}
+               showsVerticalScrollIndicator={false}
+               nestedScrollEnabled
+             >
+               {featureCategories.map(category => {
+                 const categoryFeatures = availableFeatures.filter(f => f.categoryId === category.id);
+                 if (categoryFeatures.length === 0) return null;
+                 
+                 return (
+                   <View key={category.id} style={styles.featureCategorySection}>
+                     <Text style={styles.featureCategoryTitle}>{category.name}</Text>
+                     <View style={styles.featuresGrid}>
+                       {categoryFeatures.map(feature => (
+                         <TouchableOpacity
+                           key={feature.id}
+                           style={[
+                             styles.featureChip,
+                             filters.features.includes(feature.id) && styles.featureChipSelected
+                           ]}
+                           onPress={() => toggleFeature(feature.id)}
+                         >
+                           <Text style={[
+                             styles.featureChipText,
+                             filters.features.includes(feature.id) && styles.featureChipTextSelected
+                           ]}>
+                             {feature.name}
+                           </Text>
+                           {feature.isPremium && (
+                             <View style={styles.premiumBadge}>
+                               <Text style={styles.premiumBadgeText}>★</Text>
+                             </View>
+                           )}
+                         </TouchableOpacity>
+                       ))}
+                     </View>
+                   </View>
+                 );
+               })}
+             </ScrollView>
+           </View>
+         )}
+
+         {/* Service Options */}
+         <View style={styles.filterSection}>
+           <Text style={styles.filterTitle}>Service Options</Text>
+           <View style={styles.serviceOptionsContainer}>
+             <TouchableOpacity
+               style={[
+                 styles.serviceOption,
+                 filters.deliveryAvailable && styles.serviceOptionSelected
+               ]}
+               onPress={() => updateFilter('deliveryAvailable', !filters.deliveryAvailable)}
+             >
+               <Ionicons 
+                 name="car-outline" 
+                 size={20} 
+                 color={filters.deliveryAvailable ? colors.white : colors.primary} 
+               />
+               <Text style={[
+                 styles.serviceOptionText,
+                 filters.deliveryAvailable && styles.serviceOptionTextSelected
+               ]}>
+                 Delivery Available
+               </Text>
+             </TouchableOpacity>
+             
+             <TouchableOpacity
+               style={[
+                 styles.serviceOption,
+                 filters.airportPickup && styles.serviceOptionSelected
+               ]}
+               onPress={() => updateFilter('airportPickup', !filters.airportPickup)}
+             >
+               <Ionicons 
+                 name="airplane-outline" 
+                 size={20} 
+                 color={filters.airportPickup ? colors.white : colors.primary} 
+               />
+               <Text style={[
+                 styles.serviceOptionText,
+                 filters.airportPickup && styles.serviceOptionTextSelected
+               ]}>
+                 Airport Pickup
+               </Text>
+             </TouchableOpacity>
+           </View>
+         </View>
 
         {/* Filter Actions */}
         <View style={styles.filterActions}>
@@ -443,10 +676,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
           >
             <Ionicons name="options-outline" size={20} color={colors.primary} />
             <Text style={styles.filterButtonText}>Filters</Text>
-            {(filters.vehicleTypes.length + filters.features.length) > 0 && (
+            {(filters.vehicleTypes.length + filters.fuelTypes.length + filters.transmissionTypes.length + filters.verificationStatus.length) > 0 && (
               <View style={styles.filterBadge}>
                 <Text style={styles.filterBadgeText}>
-                  {filters.vehicleTypes.length + filters.features.length}
+                  {filters.vehicleTypes.length + filters.fuelTypes.length + filters.transmissionTypes.length + filters.verificationStatus.length}
                 </Text>
               </View>
             )}
@@ -791,5 +1024,122 @@ const styles = StyleSheet.create({
   sortOptionTextSelected: {
     fontWeight: '600',
     color: colors.primary,
+  },
+  // New slider styles
+  sliderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sliderButton: {
+    backgroundColor: colors.offWhite,
+    padding: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+  },
+  sliderTrack: {
+    flex: 1,
+    height: 4,
+    backgroundColor: colors.lightGrey,
+    marginHorizontal: spacing.md,
+    borderRadius: 2,
+  },
+  sliderProgress: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+  },
+  // Rating styles
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  starButton: {
+    padding: spacing.xs,
+  },
+  // Verification chip styles
+  verificationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.offWhite,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    gap: spacing.xs,
+  },
+  verificationChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  verificationChipText: {
+    ...typography.body,
+    fontSize: 14,
+  },
+  verificationChipTextSelected: {
+    color: colors.white,
+  },
+  // Features styles
+  featuresScrollView: {
+    maxHeight: 200,
+  },
+  featureCategorySection: {
+    marginBottom: spacing.md,
+  },
+  featureCategoryTitle: {
+    ...typography.body,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+    color: colors.darkGrey,
+  },
+  featuresGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  premiumBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#F59E0B',
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  premiumBadgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  // Service options styles
+  serviceOptionsContainer: {
+    gap: spacing.sm,
+  },
+  serviceOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.offWhite,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    gap: spacing.sm,
+  },
+  serviceOptionSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  serviceOptionText: {
+    ...typography.body,
+    fontSize: 14,
+  },
+  serviceOptionTextSelected: {
+    color: colors.white,
   },
 });

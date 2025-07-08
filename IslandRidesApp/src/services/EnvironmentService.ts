@@ -1,5 +1,6 @@
 import { BaseService } from './base/BaseService';
-import { platformService } from './PlatformService';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 interface Environment {
   api: {
@@ -18,9 +19,26 @@ interface Environment {
   };
 }
 
+const getApiBaseUrl = () => {
+  if (Platform.OS === 'web') {
+    return 'http://localhost:3003';
+  }
+  
+  // For mobile development, try to get the host from Expo
+  const manifest = Constants.expoConfig;
+  const debuggerHost = manifest?.hostUri?.split(':').shift();
+  
+  if (debuggerHost && __DEV__) {
+    return `http://${debuggerHost}:3003`;
+  }
+  
+  // Fallback for development
+  return 'http://localhost:3003';
+};
+
 const development: Environment = {
   api: {
-    baseUrl: 'http://localhost:3003',
+    baseUrl: getApiBaseUrl(),
     timeout: 10000,
     version: 'v1'
   },
@@ -30,7 +48,7 @@ const development: Environment = {
   },
   features: {
     enableChat: true,
-    enablePushNotifications: true,
+    enablePushNotifications: Constants.appOwnership !== 'expo', // Disable in Expo Go
     enableAnalytics: false
   }
 };
@@ -72,18 +90,12 @@ class EnvironmentService extends BaseService {
   }
 
   protected async onInit(): Promise<void> {
-    await platformService.waitForInitialization();
     this.config = this.initializeConfig();
   }
 
   private initializeConfig(): Environment {
     if (__DEV__) {
-      return platformService.select({
-        ios: development,
-        android: development,
-        web: { ...development, api: { ...development.api, baseUrl: 'http://localhost:3003' } },
-        default: development
-      });
+      return development;
     }
 
     // Check for staging environment
@@ -111,4 +123,4 @@ class EnvironmentService extends BaseService {
   }
 }
 
-export const environmentService = EnvironmentService.getInstance();
+export const environmentService = EnvironmentService.getInstance<EnvironmentService>();

@@ -1,27 +1,46 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { notificationService } from '../services/notificationService';
+import { reviewPromptService } from '../services/reviewPromptService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Button } from '../components/Button';
+import { ReceiptModal } from '../components/ReceiptModal';
 import { Vehicle } from '../types';
 
 export const BookingConfirmedScreen = ({ navigation, route }: any) => {
   const { booking, vehicle } = route.params;
+  const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
+    // Show success notification
     notificationService.success('Your booking has been confirmed!', {
       title: 'Booking Successful',
       duration: 5000,
       action: {
-        label: 'Share',
-        handler: async () => {
-          // TODO: Implement sharing functionality
-          notificationService.info('Sharing feature coming soon!', { duration: 2000 });
-        }
+        label: 'View Receipt',
+        handler: () => setShowReceipt(true)
       }
     });
-  }, []);
+
+    // If this is a completed booking, schedule review prompt
+    if (booking.status === 'completed') {
+      const bookingForReview = {
+        id: booking.id,
+        vehicle: {
+          id: booking.vehicle.id,
+          make: booking.vehicle.make,
+          model: booking.vehicle.model,
+          year: booking.vehicle.year
+        },
+        startDate: booking.start_date,
+        endDate: booking.end_date,
+        status: booking.status
+      };
+      
+      reviewPromptService.scheduleReviewPrompt(bookingForReview);
+    }
+  }, [booking]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -115,19 +134,31 @@ export const BookingConfirmedScreen = ({ navigation, route }: any) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Next Steps</Text>
         <Text style={styles.nextStepsText}>
-          • You will receive a confirmation email shortly{'\n'}
+          • You will receive a confirmation email and push notification{'\n'}
           • Please bring a valid driver's license and credit card{'\n'}
           • Arrive 15 minutes early for vehicle inspection{'\n'}
+          • We'll send you a reminder notification the day before{'\n'}
           • Contact support if you need to modify your booking
         </Text>
       </View>
 
       <View style={styles.buttonContainer}>
         <Button
+          title="View Receipt"
+          onPress={() => setShowReceipt(true)}
+        />
+        <Button
           title="Back to Home"
           onPress={handleBackToHome}
+          variant="secondary"
         />
       </View>
+
+      <ReceiptModal
+        visible={showReceipt}
+        bookingId={booking.id}
+        onClose={() => setShowReceipt(false)}
+      />
     </ScrollView>
   );
 };
@@ -249,5 +280,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     padding: spacing.lg,
+    gap: spacing.md,
   },
 });

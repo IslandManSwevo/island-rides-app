@@ -29,7 +29,7 @@ class WebSocketService {
       return;
     }
 
-    const url = process.env.WEBSOCKET_URL || 'ws://localhost:3003';
+    const url = process.env.WEBSOCKET_URL || 'ws://localhost:3004';
     this.socket = io(url, {
       auth: { token },
       reconnection: true,

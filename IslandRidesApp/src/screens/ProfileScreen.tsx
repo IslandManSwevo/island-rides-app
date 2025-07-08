@@ -12,10 +12,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProfileService } from '../services/profileService';
+import { reviewPromptService } from '../services/reviewPromptService';
 import { useAuth } from '../context/AuthContext';
 import { ProfileData, ProfileBooking } from '../types';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { AppHeader } from '../components/AppHeader';
+import { ROUTES } from '../navigation/routes';
 
 interface ProfileScreenProps {
   navigation: any;
@@ -84,6 +86,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
   const handleEditProfile = () => {
     Alert.alert('Coming Soon', 'Profile editing will be available in a future update.');
+  };
+
+  const testReviewPrompts = async () => {
+    try {
+      // Get completed bookings and show some test prompts
+      await reviewPromptService.checkForCompletedBookings();
+      const stats = await reviewPromptService.getPromptStats();
+      
+      Alert.alert(
+        'Review Prompts Test',
+        `Prompt stats:\n• Total: ${stats.total}\n• Pending: ${stats.pending}\n• Sent: ${stats.sent}\n• Completed: ${stats.completed}\n• Completion Rate: ${stats.completionRate.toFixed(1)}%`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Failed to test review prompts:', error);
+      Alert.alert('Error', 'Failed to test review prompts');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -245,9 +264,43 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
               {/* Action Buttons */}
               <View style={styles.actionButtons}>
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate(ROUTES.PAYMENT_HISTORY)}
+                >
+                  <Ionicons name="receipt-outline" size={20} color={colors.white} />
+                  <Text style={styles.actionButtonText}>Payment History</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate(ROUTES.FAVORITES)}
+                >
+                  <Ionicons name="heart-outline" size={20} color={colors.white} />
+                  <Text style={styles.actionButtonText}>My Favorites</Text>
+                </TouchableOpacity>
+                
+                {profileData?.user.role === 'owner' && (
+                  <TouchableOpacity 
+                    style={[styles.actionButton, { backgroundColor: colors.warning }]}
+                    onPress={() => navigation.navigate(ROUTES.OWNER_DASHBOARD)}
+                  >
+                    <Ionicons name="analytics-outline" size={20} color={colors.white} />
+                    <Text style={styles.actionButtonText}>Owner Dashboard</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Secondary Action Buttons */}
+              <View style={styles.secondaryActionButtons}>
                 <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
                   <Text style={styles.editButtonText}>Edit Profile</Text>
                 </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.testButton} onPress={testReviewPrompts}>
+                  <Text style={styles.testButtonText}>Test Reviews</Text>
+                </TouchableOpacity>
+                
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                   <Text style={styles.logoutButtonText}>Logout</Text>
                 </TouchableOpacity>
@@ -370,6 +423,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.lg,
   },
+  actionButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    flex: 1,
+    marginHorizontal: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
+  },
   editButton: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
@@ -379,6 +449,20 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   editButtonText: {
+    color: 'white',
+    fontSize: typography.body.fontSize,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  testButton: {
+    backgroundColor: colors.warning,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    flex: 1,
+    marginHorizontal: spacing.xs,
+  },
+  testButtonText: {
     color: 'white',
     fontSize: typography.body.fontSize,
     fontWeight: '600',
@@ -468,6 +552,11 @@ const styles = StyleSheet.create({
     fontSize: typography.body.fontSize,
     color: colors.lightGrey,
     textAlign: 'center',
+  },
+  secondaryActionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
   },
 });
 

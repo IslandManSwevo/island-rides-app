@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - WEBSOCKET_PORT=3004
+      - JWT_SECRET=your-jwt-secret-key-here
+      - DB_PATH=./island-rides.db
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_data:/app/data
+    restart: unless-stopped
+    networks:
+      - island-rides-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./IslandRidesApp
+      dockerfile: Dockerfile
+    ports:
+      - "19006:19006"  # Expo Metro bundler
+      - "19001:19001"  # Expo DevTools
+    environment:
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
+      - API_BASE_URL=http://backend:3003
+      - WEBSOCKET_URL=ws://backend:3004
+    volumes:
+      - ./IslandRidesApp:/app
+      - /app/node_modules
+      - /app/.expo
+    restart: unless-stopped
+    networks:
+      - island-rides-network
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
+
+networks:
+  island-rides-network:
+    driver: bridge 

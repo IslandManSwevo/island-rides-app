@@ -286,6 +286,6 @@ async function handleTyping(ws, user, message) {
   }
 }
 
-console.log(`WebSocket server running on port ${process.env.WEBSOCKET_PORT || 3001}`);
+console.log(`WebSocket server running on port ${process.env.WEBSOCKET_PORT || 3004}`);
 
 module.exports = wss;

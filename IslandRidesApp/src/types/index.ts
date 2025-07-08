@@ -143,6 +143,136 @@ export interface Vehicle {
   available: boolean;
   driveSide: 'LHD' | 'RHD';
   createdAt: string;
+  
+  // Advanced specifications
+  engineType?: string;
+  fuelType?: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
+  transmissionType?: 'automatic' | 'manual' | 'cvt';
+  seatingCapacity?: number;
+  doors?: number;
+  fuelEfficiency?: string;
+  vehicleType?: 'sedan' | 'suv' | 'truck' | 'van' | 'convertible' | 'coupe' | 'hatchback';
+  color?: string;
+  licensePlate?: string;
+  vin?: string;
+  mileage?: number;
+  
+  // Pricing and availability
+  weeklyRate?: number;
+  monthlyRate?: number;
+  securityDeposit?: number;
+  minimumRentalDays?: number;
+  maximumRentalDays?: number;
+  
+  // Condition and verification
+  conditionRating?: number; // 1-5 rating
+  lastInspectionDate?: string;
+  nextServiceDue?: string;
+  insurancePolicyNumber?: string;
+  insuranceExpires?: string;
+  verificationStatus?: 'pending' | 'verified' | 'rejected' | 'expired';
+  verificationNotes?: string;
+  
+  // Location and delivery
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  deliveryAvailable?: boolean;
+  deliveryFee?: number;
+  deliveryRadius?: number; // in kilometers
+  airportPickup?: boolean;
+  airportPickupFee?: number;
+  
+  // Related data
+  photos?: VehiclePhoto[];
+  features?: VehicleFeature[];
+  amenities?: VehicleAmenity[];
+  averageRating?: number;
+  totalReviews?: number;
+}
+
+export interface VehiclePhoto {
+  id: number;
+  vehicleId: number;
+  photoUrl: string;
+  photoType: 'exterior' | 'interior' | 'engine' | 'dashboard' | 'trunk' | 'other';
+  displayOrder: number;
+  caption?: string;
+  isPrimary: boolean;
+  uploadedAt: string;
+}
+
+export interface VehicleFeatureCategory {
+  id: number;
+  name: string;
+  description: string;
+  iconName: string;
+  displayOrder: number;
+}
+
+export interface VehicleFeature {
+  id: number;
+  categoryId: number;
+  category?: VehicleFeatureCategory;
+  name: string;
+  description: string;
+  iconName: string;
+  isPremium: boolean;
+  displayOrder: number;
+  isIncluded?: boolean;
+  additionalCost?: number;
+  notes?: string;
+}
+
+export interface VehicleAmenity {
+  id: number;
+  vehicleId: number;
+  amenityType: string;
+  amenityName: string;
+  description?: string;
+  isStandard: boolean;
+  additionalCost: number;
+  createdAt: string;
+}
+
+export interface VehicleAvailability {
+  id: number;
+  vehicleId: number;
+  date: string;
+  isAvailable: boolean;
+  priceOverride?: number;
+  reason?: string;
+  createdAt: string;
+}
+
+export interface VehicleMaintenance {
+  id: number;
+  vehicleId: number;
+  maintenanceType: string;
+  description: string;
+  cost?: number;
+  serviceProvider?: string;
+  scheduledDate?: string;
+  completedDate?: string;
+  mileageAtService?: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface VehicleDamageReport {
+  id: number;
+  vehicleId: number;
+  bookingId?: number;
+  reportedBy: number;
+  damageType: string;
+  description: string;
+  severity: 'minor' | 'moderate' | 'major';
+  repairCost?: number;
+  photos?: string[]; // Array of photo URLs
+  insuranceClaimNumber?: string;
+  resolvedAt?: string;
+  resolutionNotes?: string;
+  createdAt: string;
 }
 
 export interface VehicleRecommendation {
