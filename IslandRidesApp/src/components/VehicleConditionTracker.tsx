@@ -16,6 +16,7 @@ import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { VehicleMaintenance, VehicleDamageReport } from '../types';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
 import { notificationService } from '../services/notificationService';
+import { useAuth } from '../context/AuthContext';
 
 interface VehicleConditionTrackerProps {
   vehicleId: number;
@@ -48,6 +49,7 @@ export const VehicleConditionTracker: React.FC<VehicleConditionTrackerProps> = (
   currentConditionRating = 5,
   onConditionUpdate
 }) => {
+  const { currentUser } = useAuth();
   const [conditionRating, setConditionRating] = useState(currentConditionRating);
   const [maintenanceRecords, setMaintenanceRecords] = useState<VehicleMaintenance[]>([]);
   const [damageReports, setDamageReports] = useState<VehicleDamageReport[]>([]);
@@ -168,6 +170,11 @@ export const VehicleConditionTracker: React.FC<VehicleConditionTrackerProps> = (
       return;
     }
 
+    if (!currentUser) {
+      Alert.alert('Authentication Error', 'You must be logged in to report damage.');
+      return;
+    }
+
     try {
       const report = await vehicleFeatureService.reportVehicleDamage(vehicleId, {
         damageType: damageForm.damageType,
@@ -176,7 +183,7 @@ export const VehicleConditionTracker: React.FC<VehicleConditionTrackerProps> = (
         repairCost: damageForm.repairCost,
         photos: damageForm.photos,
         insuranceClaimNumber: damageForm.insuranceClaimNumber,
-        reportedBy: 1 // Current user ID - should be retrieved from auth context
+        reportedBy: currentUser.id
       });
 
       setDamageReports(prev => [report, ...prev]);

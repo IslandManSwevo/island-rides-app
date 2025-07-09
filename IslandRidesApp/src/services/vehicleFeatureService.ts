@@ -47,94 +47,94 @@ class VehicleFeatureService extends BaseService {
 
   // Vehicle Photos
   async getVehiclePhotos(vehicleId: number): Promise<VehiclePhoto[]> {
-    return await apiService.get<VehiclePhoto[]>(`/vehicles/${vehicleId}/photos`);
+    return await apiService.get<VehiclePhoto[]>(`/api/vehicles/${vehicleId}/photos`);
   }
 
   async uploadVehiclePhoto(vehicleId: number, photoData: FormData): Promise<VehiclePhoto> {
-    return await apiService.post<VehiclePhoto>(`/vehicles/${vehicleId}/photos`, photoData);
+    return await apiService.post<VehiclePhoto>(`/api/vehicles/${vehicleId}/photos`, photoData);
   }
 
   async updatePhotoOrder(vehicleId: number, photoUpdates: { id: number; displayOrder: number }[]): Promise<void> {
-    return await apiService.put(`/vehicles/${vehicleId}/photos/order`, { photoUpdates });
+    return await apiService.put(`/api/vehicles/${vehicleId}/photos/order`, { photoUpdates });
   }
 
   async setPrimaryPhoto(vehicleId: number, photoId: number): Promise<void> {
-    return await apiService.put(`/vehicles/${vehicleId}/photos/${photoId}/primary`, {});
+    return await apiService.put(`/api/vehicles/${vehicleId}/photos/${photoId}/primary`, {});
   }
 
   async deleteVehiclePhoto(vehicleId: number, photoId: number): Promise<void> {
-    return await apiService.delete(`/vehicles/${vehicleId}/photos/${photoId}`);
+    return await apiService.delete(`/api/vehicles/${vehicleId}/photos/${photoId}`);
   }
 
   // Vehicle Amenities
   async getVehicleAmenities(vehicleId: number): Promise<VehicleAmenity[]> {
-    return await apiService.get<VehicleAmenity[]>(`/vehicles/${vehicleId}/amenities`);
+    return await apiService.get<VehicleAmenity[]>(`/api/vehicles/${vehicleId}/amenities`);
   }
 
   async addVehicleAmenity(vehicleId: number, amenity: Omit<VehicleAmenity, 'id' | 'vehicleId' | 'createdAt'>): Promise<VehicleAmenity> {
-    return await apiService.post<VehicleAmenity>(`/vehicles/${vehicleId}/amenities`, amenity);
+    return await apiService.post<VehicleAmenity>(`/api/vehicles/${vehicleId}/amenities`, amenity);
   }
 
   async updateVehicleAmenity(amenityId: number, amenity: Partial<VehicleAmenity>): Promise<VehicleAmenity> {
-    return await apiService.put<VehicleAmenity>(`/vehicles/amenities/${amenityId}`, amenity);
+    return await apiService.put<VehicleAmenity>(`/api/vehicles/amenities/${amenityId}`, amenity);
   }
 
   async deleteVehicleAmenity(amenityId: number): Promise<void> {
-    return await apiService.delete(`/vehicles/amenities/${amenityId}`);
+    return await apiService.delete(`/api/vehicles/amenities/${amenityId}`);
   }
 
   // Vehicle Availability
   async getVehicleAvailability(vehicleId: number, startDate: string, endDate: string): Promise<VehicleAvailability[]> {
-    return await apiService.get<VehicleAvailability[]>(`/vehicles/${vehicleId}/availability`, {
+    return await apiService.get<VehicleAvailability[]>(`/api/vehicles/${vehicleId}/availability`, {
       startDate,
       endDate
     });
   }
 
   async updateVehicleAvailability(vehicleId: number, availability: Omit<VehicleAvailability, 'id' | 'vehicleId' | 'createdAt'>[]): Promise<void> {
-    return await apiService.put(`/vehicles/${vehicleId}/availability`, { availability });
+    return await apiService.put(`/api/vehicles/${vehicleId}/availability`, { availability });
   }
 
   async blockDates(vehicleId: number, dates: string[], reason?: string): Promise<void> {
-    return await apiService.post(`/vehicles/${vehicleId}/availability/block`, { dates, reason });
+    return await apiService.post(`/api/vehicles/${vehicleId}/availability/block`, { dates, reason });
   }
 
   async unblockDates(vehicleId: number, dates: string[]): Promise<void> {
-    return await apiService.post(`/vehicles/${vehicleId}/availability/unblock`, { dates });
+    return await apiService.post(`/api/vehicles/${vehicleId}/availability/unblock`, { dates });
   }
 
   // Vehicle Maintenance
   async getVehicleMaintenance(vehicleId: number): Promise<VehicleMaintenance[]> {
-    return await apiService.get<VehicleMaintenance[]>(`/vehicles/${vehicleId}/maintenance`);
+    return await apiService.get<VehicleMaintenance[]>(`/api/vehicles/${vehicleId}/maintenance`);
   }
 
   async addMaintenanceRecord(vehicleId: number, maintenance: Omit<VehicleMaintenance, 'id' | 'vehicleId' | 'createdAt'>): Promise<VehicleMaintenance> {
-    return await apiService.post<VehicleMaintenance>(`/vehicles/${vehicleId}/maintenance`, maintenance);
+    return await apiService.post<VehicleMaintenance>(`/api/vehicles/${vehicleId}/maintenance`, maintenance);
   }
 
   async updateMaintenanceRecord(maintenanceId: number, maintenance: Partial<VehicleMaintenance>): Promise<VehicleMaintenance> {
-    return await apiService.put<VehicleMaintenance>(`/vehicles/maintenance/${maintenanceId}`, maintenance);
+    return await apiService.put<VehicleMaintenance>(`/api/vehicles/maintenance/${maintenanceId}`, maintenance);
   }
 
   async deleteMaintenanceRecord(maintenanceId: number): Promise<void> {
-    return await apiService.delete(`/vehicles/maintenance/${maintenanceId}`);
+    return await apiService.delete(`/api/vehicles/maintenance/${maintenanceId}`);
   }
 
   // Vehicle Damage Reports
   async getVehicleDamageReports(vehicleId: number): Promise<VehicleDamageReport[]> {
-    return await apiService.get<VehicleDamageReport[]>(`/vehicles/${vehicleId}/damage-reports`);
+    return await apiService.get<VehicleDamageReport[]>(`/api/vehicles/${vehicleId}/damage-reports`);
   }
 
   async reportVehicleDamage(vehicleId: number, report: Omit<VehicleDamageReport, 'id' | 'vehicleId' | 'createdAt'>): Promise<VehicleDamageReport> {
-    return await apiService.post<VehicleDamageReport>(`/vehicles/${vehicleId}/damage-reports`, report);
+    return await apiService.post<VehicleDamageReport>(`/api/vehicles/${vehicleId}/damage-reports`, report);
   }
 
   async updateDamageReport(reportId: number, report: Partial<VehicleDamageReport>): Promise<VehicleDamageReport> {
-    return await apiService.put<VehicleDamageReport>(`/vehicles/damage-reports/${reportId}`, report);
+    return await apiService.put<VehicleDamageReport>(`/api/vehicles/damage-reports/${reportId}`, report);
   }
 
   async resolveDamageReport(reportId: number, resolution: { resolutionNotes: string; repairCost?: number }): Promise<void> {
-    return await apiService.put(`/vehicles/damage-reports/${reportId}/resolve`, resolution);
+    return await apiService.put(`/api/vehicles/damage-reports/${reportId}/resolve`, resolution);
   }
 
   // Search and filtering helpers

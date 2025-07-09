@@ -1,14 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { notificationService } from '../services/notificationService';
 import { reviewPromptService } from '../services/reviewPromptService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Button } from '../components/Button';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { Vehicle } from '../types';
+import { RootStackParamList, ROUTES } from '../navigation/routes';
 
-export const BookingConfirmedScreen = ({ navigation, route }: any) => {
+type BookingConfirmedScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.BOOKING_CONFIRMED>;
+type BookingConfirmedScreenRouteProp = RouteProp<RootStackParamList, typeof ROUTES.BOOKING_CONFIRMED>;
+
+interface BookingConfirmedScreenProps {
+  navigation: BookingConfirmedScreenNavigationProp;
+  route: BookingConfirmedScreenRouteProp;
+}
+
+export const BookingConfirmedScreen: React.FC<BookingConfirmedScreenProps> = ({ navigation, route }) => {
   const { booking, vehicle } = route.params;
   const [showReceipt, setShowReceipt] = useState(false);
 
@@ -25,20 +36,31 @@ export const BookingConfirmedScreen = ({ navigation, route }: any) => {
 
     // If this is a completed booking, schedule review prompt
     if (booking.status === 'completed') {
-      const bookingForReview = {
-        id: booking.id,
-        vehicle: {
-          id: booking.vehicle.id,
-          make: booking.vehicle.make,
-          model: booking.vehicle.model,
-          year: booking.vehicle.year
-        },
-        startDate: booking.start_date,
-        endDate: booking.end_date,
-        status: booking.status
+      const scheduleReviewPrompt = async () => {
+        try {
+          const bookingForReview = {
+            id: booking.id,
+            vehicle: {
+              id: booking.vehicle.id,
+              make: booking.vehicle.make,
+              model: booking.vehicle.model,
+              year: booking.vehicle.year
+            },
+            startDate: booking.start_date,
+            endDate: booking.end_date,
+            status: booking.status
+          };
+          
+          await reviewPromptService.scheduleReviewPrompt(bookingForReview);
+          console.log('Review prompt scheduled successfully for booking:', booking.id);
+        } catch (error) {
+          console.error('Failed to schedule review prompt for booking:', booking.id, error);
+          // Don't show error to user as this is a background process
+          // The app should continue to work normally even if review prompt fails
+        }
       };
-      
-      reviewPromptService.scheduleReviewPrompt(bookingForReview);
+
+      scheduleReviewPrompt();
     }
   }, [booking]);
 
@@ -99,14 +121,14 @@ export const BookingConfirmedScreen = ({ navigation, route }: any) => {
           </Text>
           <View style={[
             styles.driveBadge,
-            vehicle.drive_side === 'LHD' ? styles.lhdBadge : styles.rhdBadge
+            vehicle.driveSide === 'LHD' ? styles.lhdBadge : styles.rhdBadge
           ]}>
             <Ionicons 
               name="car-outline" 
               size={16} 
               color={colors.white} 
             />
-            <Text style={styles.badgeText}>{vehicle.drive_side}</Text>
+            <Text style={styles.badgeText}>{vehicle.driveSide}</Text>
           </View>
         </View>
         

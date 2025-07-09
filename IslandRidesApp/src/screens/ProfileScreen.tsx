@@ -11,16 +11,19 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { ProfileService } from '../services/profileService';
 import { reviewPromptService } from '../services/reviewPromptService';
 import { useAuth } from '../context/AuthContext';
 import { ProfileData, ProfileBooking } from '../types';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { AppHeader } from '../components/AppHeader';
-import { ROUTES } from '../navigation/routes';
+import { ROUTES, RootStackParamList } from '../navigation/routes';
+
+type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.PROFILE>;
 
 interface ProfileScreenProps {
-  navigation: any;
+  navigation: ProfileScreenNavigationProp;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
@@ -88,7 +91,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     Alert.alert('Coming Soon', 'Profile editing will be available in a future update.');
   };
 
-  const testReviewPrompts = async () => {
+  // Development-only function for testing review prompts
+  const testReviewPrompts = __DEV__ ? async () => {
     try {
       // Get completed bookings and show some test prompts
       await reviewPromptService.checkForCompletedBookings();
@@ -103,7 +107,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       console.error('Failed to test review prompts:', error);
       Alert.alert('Error', 'Failed to test review prompts');
     }
-  };
+  } : undefined;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -157,19 +161,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <View style={styles.bookingActions}>
           <TouchableOpacity
             style={styles.reviewButton}
-            onPress={() => navigation.navigate('WriteReview', { 
-              booking: {
-                id: item.id,
-                vehicle: {
-                  id: item.vehicle!.id,
-                  make: item.vehicle!.make,
-                  model: item.vehicle!.model,
-                  year: item.vehicle!.year,
-                },
-                start_date: item.startDate,
-                end_date: item.endDate,
-              }
-            })}
+            onPress={() => {
+              const vehicle = item.vehicle!; // Safe since we check item.vehicle above
+              navigation.navigate('WriteReview', { 
+                booking: {
+                  id: item.id,
+                  vehicle: {
+                    id: vehicle.id,
+                    make: vehicle.make,
+                    model: vehicle.model,
+                    year: vehicle.year,
+                  },
+                  start_date: item.startDate,
+                  end_date: item.endDate,
+                }
+              });
+            }}
           >
             <Ionicons name="star-outline" size={16} color={colors.primary} />
             <Text style={styles.reviewButtonText}>Write Review</Text>
@@ -297,9 +304,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                   <Text style={styles.editButtonText}>Edit Profile</Text>
                 </TouchableOpacity>
                 
-                <TouchableOpacity style={styles.testButton} onPress={testReviewPrompts}>
-                  <Text style={styles.testButtonText}>Test Reviews</Text>
-                </TouchableOpacity>
+                {/* Development-only test button */}
+                {__DEV__ && testReviewPrompts && (
+                  <TouchableOpacity style={styles.testButton} onPress={testReviewPrompts}>
+                    <Text style={styles.testButtonText}>Test Reviews</Text>
+                  </TouchableOpacity>
+                )}
                 
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                   <Text style={styles.logoutButtonText}>Logout</Text>

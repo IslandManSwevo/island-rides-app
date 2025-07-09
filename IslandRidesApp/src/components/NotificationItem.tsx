@@ -21,14 +21,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         duration: 300,
         useNativeDriver: true,
       }),
+      Animated.delay(notification.duration || 5000),
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 300,
-        delay: notification.duration ? notification.duration - 300 : 0,
         useNativeDriver: true,
       }),
-    ]).start();
-  }, []);
+    ]).start(() => onDismiss());
+  }, [notification.duration, onDismiss]);
 
   const getBackgroundColor = () => {
     switch (notification.type) {

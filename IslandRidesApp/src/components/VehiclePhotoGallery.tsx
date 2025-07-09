@@ -10,8 +10,11 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { VehiclePhoto } from '../types';
+import { colors } from '../styles/theme';
 
 interface VehiclePhotoGalleryProps {
   photos: VehiclePhoto[];
@@ -23,7 +26,15 @@ interface VehiclePhotoGalleryProps {
   onPhotoPress?: (photo: VehiclePhoto, index: number) => void;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+// Photo type color mapping using theme colors
+const PHOTO_TYPE_COLORS = {
+  exterior: colors.info,      // '#3498DB' - blue for exterior
+  interior: colors.success,   // '#2ECC71' - green for interior  
+  engine: colors.warning,     // '#F1C40F' - yellow for engine
+  dashboard: '#8B5CF6',       // purple for dashboard (keeping original as theme doesn't have purple)
+  trunk: colors.error,        // '#E74C3C' - red for trunk
+  default: colors.lightGrey,  // '#6C757D' - grey for default
+} as const;
 
 export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
   photos,
@@ -39,6 +50,9 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Get screen width dynamically within component
+  const screenWidth = Dimensions.get('window').width;
+
   if (!photos || photos.length === 0) {
     return (
       <View style={[styles.container, { height }, style]}>
@@ -49,7 +63,7 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
     );
   }
 
-  const handleScroll = (event: any) => {
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffset = event.nativeEvent.contentOffset;
     const index = Math.round(contentOffset.x / screenWidth);
     setCurrentIndex(index);
@@ -83,14 +97,7 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
   };
 
   const getPhotoTypeColor = (photoType: string) => {
-    switch (photoType) {
-      case 'exterior': return '#3B82F6';
-      case 'interior': return '#10B981';
-      case 'engine': return '#F59E0B';
-      case 'dashboard': return '#8B5CF6';
-      case 'trunk': return '#EF4444';
-      default: return '#6B7280';
-    }
+    return PHOTO_TYPE_COLORS[photoType as keyof typeof PHOTO_TYPE_COLORS] || PHOTO_TYPE_COLORS.default;
   };
 
   const renderMainGallery = () => (
@@ -106,7 +113,7 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
         {photos.map((photo, index) => (
           <TouchableOpacity
             key={photo.id}
-            style={styles.photoContainer}
+            style={[styles.photoContainer, { width: screenWidth }]}
             onPress={() => openFullscreen(index)}
             activeOpacity={0.9}
           >
@@ -233,7 +240,7 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(event) => {
+          onMomentumScrollEnd={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
             const index = Math.round(
               event.nativeEvent.contentOffset.x / screenWidth
             );
@@ -242,7 +249,7 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
           contentOffset={{ x: fullscreenIndex * screenWidth, y: 0 }}
         >
           {photos.map((photo) => (
-            <View key={photo.id} style={styles.fullscreenPhotoContainer}>
+            <View key={photo.id} style={[styles.fullscreenPhotoContainer, { width: screenWidth }]}>
               <Image
                 source={{ uri: photo.photoUrl }}
                 style={styles.fullscreenPhoto}
@@ -282,7 +289,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   photoContainer: {
-    width: screenWidth,
     flex: 1,
     position: 'relative',
   },
@@ -456,13 +462,12 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   fullscreenPhotoContainer: {
-    width: screenWidth,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   fullscreenPhoto: {
-    width: screenWidth,
+    width: '100%',
     height: '100%',
   },
   fullscreenCaption: {

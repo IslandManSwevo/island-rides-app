@@ -148,13 +148,15 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
 
   const handleViewVehicle = (vehicle: Vehicle) => {
     // Convert the public profile vehicle to the full Vehicle type expected by VehicleDetail
+    // Note: Some properties are not available in the public profile vehicle data
+    // and would need to be fetched from a complete vehicle details API endpoint
     const fullVehicle = {
       ...vehicle,
-      ownerId: 0, // This will be populated by the VehicleDetail screen
+      ownerId: profile?.id || 0, // Use the profile owner's ID instead of hardcoded 0
       dailyRate: vehicle.daily_rate,
-      available: true,
-      driveSide: 'LHD' as const,
-      createdAt: new Date().toISOString(),
+      available: true, // Assuming available for public display, would need to be fetched
+      driveSide: 'LHD' as const, // Default to LHD, would need to be fetched from backend
+      createdAt: new Date().toISOString(), // Placeholder timestamp, would need actual creation date
     };
     navigation.navigate(ROUTES.VEHICLE_DETAIL, { vehicle: fullVehicle });
   };
@@ -396,7 +398,7 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
                 {[1, 2, 3, 4, 5].map(star => (
                   <Ionicons
                     key={star}
-                    name={star <= trip.trip_rating! ? 'star' : 'star-outline'}
+                    name={star <= (trip.trip_rating || 0) ? 'star' : 'star-outline'}
                     size={14}
                     color="#F59E0B"
                   />

@@ -47,7 +47,7 @@ const AppNavigator: React.FC = () => {
           <Stack.Screen name={ROUTES.PROFILE} component={ProfileScreen} options={{ title: 'Profile' }} />
           <Stack.Screen name={ROUTES.PAYMENT_HISTORY} component={PaymentHistoryScreen} options={{ title: 'Payment History' }} />
           <Stack.Screen name={ROUTES.CHAT} component={ChatConversationScreen} options={{ title: 'Chat' }} />
-          <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Payment' }} />
+          <Stack.Screen name={ROUTES.PAYMENT} component={PaymentScreen} options={{ title: 'Payment' }} />
           <Stack.Screen name={ROUTES.FAVORITES} component={FavoritesScreen} options={{ title: 'Favorites' }} />
           <Stack.Screen name={ROUTES.NOTIFICATION_PREFERENCES} component={NotificationPreferencesScreen} options={{ title: 'Notification Preferences' }} />
           <Stack.Screen name={ROUTES.WRITE_REVIEW} component={WriteReviewScreen} options={{ title: 'Write Review' }} />

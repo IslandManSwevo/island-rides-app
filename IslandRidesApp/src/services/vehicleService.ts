@@ -50,6 +50,56 @@ class VehicleService {
     }
   }
 
+  private mapVehicleFields(vehicle: any): VehicleRecommendation {
+    const totalReviews = vehicle.total_reviews || vehicle.totalReviews || 0;
+    const averageRating = vehicle.average_rating || vehicle.averageRating || 0;
+    const conditionRating = vehicle.condition_rating || vehicle.conditionRating || 0;
+
+    // A more realistic scoring model
+    const recommendationScore = (averageRating * 0.5) + (conditionRating * 0.3) + (Math.log1p(totalReviews) * 0.2);
+
+    return {
+      id: vehicle.id.toString(),
+      vehicle: {
+        ...vehicle,
+        createdAt: vehicle.created_at || vehicle.createdAt,
+        updatedAt: vehicle.updated_at || vehicle.updatedAt,
+        driveSide: vehicle.drive_side || vehicle.driveSide,
+        dailyRate: vehicle.daily_rate || vehicle.dailyRate,
+        ownerId: vehicle.owner_id || vehicle.ownerId,
+        vehicleType: vehicle.vehicle_type || vehicle.vehicleType,
+        fuelType: vehicle.fuel_type || vehicle.fuelType,
+        transmissionType: vehicle.transmission_type || vehicle.transmissionType,
+        seatingCapacity: vehicle.seating_capacity || vehicle.seatingCapacity,
+        conditionRating: conditionRating,
+        verificationStatus: vehicle.verification_status || vehicle.verificationStatus,
+        deliveryAvailable: vehicle.delivery_available || vehicle.deliveryAvailable,
+        airportPickup: vehicle.airport_pickup || vehicle.airportPickup,
+        averageRating: averageRating,
+        totalReviews: totalReviews,
+      },
+      recommendationScore: recommendationScore,
+      type: vehicle.vehicle_type || vehicle.vehicleType || 'car',
+      island: vehicle.location || 'Nassau',
+      pricePerDay: vehicle.daily_rate || vehicle.dailyRate || 0,
+      scoreBreakdown: {
+        collaborativeFiltering: 0,
+        vehiclePopularity: totalReviews,
+        vehicleRating: averageRating,
+        hostPopularity: 0
+      }
+    };
+  }
+
+  private appendQueryParams(queryParams: URLSearchParams, params: Record<string, any>, keys: string[]) {
+    keys.forEach(key => {
+      const value = params[key];
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+
   async searchVehicles(params: {
     location?: string;
     vehicleType?: string;
@@ -75,30 +125,21 @@ class VehicleService {
     try {
       const queryParams = new URLSearchParams();
       
-      // Handle new parameters
-      if (params.location) queryParams.append('location', params.location);
-      if (params.vehicleType) queryParams.append('vehicleType', params.vehicleType);
-      if (params.fuelType) queryParams.append('fuelType', params.fuelType);
-      if (params.transmissionType) queryParams.append('transmissionType', params.transmissionType);
-      if (params.seatingCapacity) queryParams.append('seatingCapacity', params.seatingCapacity.toString());
-      if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
-      if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
-      if (params.features) queryParams.append('features', params.features);
-      if (params.conditionRating) queryParams.append('conditionRating', params.conditionRating.toString());
-      if (params.verificationStatus) queryParams.append('verificationStatus', params.verificationStatus);
-      if (params.deliveryAvailable) queryParams.append('deliveryAvailable', params.deliveryAvailable);
-      if (params.airportPickup) queryParams.append('airportPickup', params.airportPickup);
-      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-      if (params.page) queryParams.append('page', params.page.toString());
-      if (params.limit) queryParams.append('limit', params.limit.toString());
+      const paramKeys = [
+        'location', 'vehicleType', 'fuelType', 'transmissionType', 
+        'seatingCapacity', 'minPrice', 'maxPrice', 'features', 
+        'conditionRating', 'verificationStatus', 'deliveryAvailable', 
+        'airportPickup', 'sortBy', 'page', 'limit', 'startDate', 'endDate'
+      ];
+      this.appendQueryParams(queryParams, params, paramKeys);
       
       // Legacy parameter support
-      if (params.island && !params.location) queryParams.append('location', params.island);
-      if (params.startDate) queryParams.append('startDate', params.startDate);
-      if (params.endDate) queryParams.append('endDate', params.endDate);
+      if (params.island && !params.location) {
+        queryParams.set('location', params.island);
+      }
       if (params.priceRange && !params.minPrice && !params.maxPrice) {
-        queryParams.append('minPrice', params.priceRange[0].toString());
-        queryParams.append('maxPrice', params.priceRange[1].toString());
+        queryParams.set('minPrice', params.priceRange[0].toString());
+        queryParams.set('maxPrice', params.priceRange[1].toString());
       }
 
       const url = `/api/vehicles/search${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
@@ -106,37 +147,7 @@ class VehicleService {
       
       // Transform backend vehicle data to VehicleRecommendation format
       const vehicles = response.vehicles || [];
-      return vehicles.map(vehicle => ({
-        id: vehicle.id.toString(),
-        vehicle: {
-          ...vehicle,
-          createdAt: vehicle.created_at || vehicle.createdAt,
-          updatedAt: vehicle.updated_at || vehicle.updatedAt,
-          driveSide: vehicle.drive_side || vehicle.driveSide,
-          dailyRate: vehicle.daily_rate || vehicle.dailyRate,
-          ownerId: vehicle.owner_id || vehicle.ownerId,
-          vehicleType: vehicle.vehicle_type || vehicle.vehicleType,
-          fuelType: vehicle.fuel_type || vehicle.fuelType,
-          transmissionType: vehicle.transmission_type || vehicle.transmissionType,
-          seatingCapacity: vehicle.seating_capacity || vehicle.seatingCapacity,
-          conditionRating: vehicle.condition_rating || vehicle.conditionRating,
-          verificationStatus: vehicle.verification_status || vehicle.verificationStatus,
-          deliveryAvailable: vehicle.delivery_available || vehicle.deliveryAvailable,
-          airportPickup: vehicle.airport_pickup || vehicle.airportPickup,
-          averageRating: vehicle.average_rating || vehicle.averageRating,
-          totalReviews: vehicle.total_reviews || vehicle.totalReviews,
-        },
-        recommendationScore: vehicle.total_reviews || 0,
-        type: vehicle.vehicle_type || vehicle.vehicleType || 'car',
-        island: vehicle.location || 'Nassau',
-        pricePerDay: vehicle.daily_rate || vehicle.dailyRate || 0,
-        scoreBreakdown: {
-          collaborativeFiltering: 0,
-          vehiclePopularity: vehicle.total_reviews || 0,
-          vehicleRating: vehicle.average_rating || 0,
-          hostPopularity: 0
-        }
-      }));
+      return vehicles.map(this.mapVehicleFields);
     } catch (error) {
       throw new Error(`Failed to search vehicles: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
     }

@@ -3,8 +3,6 @@ import { BaseService } from './base/BaseService';
 import { storageService } from './storageService';
 import { getEnvironmentConfig } from '../config/environment';
 
-const TOKEN_KEY = 'user_jwt_token';
-
 interface ApiErrorResponse {
   message: string;
   code: string;
@@ -146,12 +144,13 @@ export class ApiService extends BaseService {
   }
 
   // Token management methods
-  async storeToken(token: string): Promise<void> {
+  async storeToken(accessToken: string, refreshToken: string): Promise<void> {
     try {
-      await storageService.setAuthToken(token);
+      await storageService.setAuthToken(accessToken);
+      await storageService.setRefreshToken(refreshToken);
     } catch (error) {
-      console.error('Failed to store token:', error);
-      throw new Error('Failed to store authentication token');
+      console.error('Failed to store tokens:', error);
+      throw new Error('Failed to store authentication tokens');
     }
   }
 
@@ -167,27 +166,30 @@ export class ApiService extends BaseService {
   async clearToken(): Promise<void> {
     try {
       await storageService.clearAuthToken();
+      await storageService.clearRefreshToken();
     } catch (error) {
-      console.warn('Failed to clear token:', error);
+      console.warn('Failed to clear tokens:', error);
     }
   }
 
   async refreshToken(): Promise<void> {
     await this.waitForInitialization();
-    const token = await this.getToken();
-    if (!token) {
-      throw new Error('No token available for refresh');
+    const refreshToken = await storageService.getRefreshToken();
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
     }
 
     try {
       const response = await this.axiosInstanceWithoutAuth.post('/api/auth/refresh', {
-        token,
+        refreshToken,
       });
       
-      if (response.data?.token) {
-        await this.storeToken(response.data.token);
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+      if (accessToken && newRefreshToken) {
+        await this.storeToken(accessToken, newRefreshToken);
       } else {
-        throw new Error('No token in refresh response');
+        throw new Error('Invalid token refresh response');
       }
     } catch (error) {
       console.error('Token refresh failed:', error);

@@ -10,7 +10,9 @@ import {
   Modal,
   Switch,
   TextInput,
+  Platform,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
@@ -57,7 +59,8 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [maintenanceVehicleId, setMaintenanceVehicleId] = useState<number | null>(null);
-  const [maintenanceDate, setMaintenanceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [maintenanceDate, setMaintenanceDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'unavailable' | 'maintenance'>('all');
 
   const bulkActions: BulkAction[] = [
@@ -157,13 +160,29 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
     }
   };
 
+  // Extracted function to handle vehicle availability toggle
+  const handleToggleAvailability = async (vehicleId: number, currentAvailability: boolean) => {
+    try {
+      await apiService.put(`/owner/vehicles/${vehicleId}`, {
+        available: !currentAvailability
+      });
+      
+      await loadFleetData();
+      notificationService.success('Availability updated');
+    } catch (error) {
+      console.error('Toggle availability error:', error);
+      notificationService.error('Failed to update availability');
+    }
+  };
+
   const handleScheduleMaintenance = async () => {
     try {
       const vehicleIds = Array.from(selectedVehicles);
+      const formattedDate = maintenanceDate.toISOString().split('T')[0];
       
       await apiService.post('/owner/fleet/bulk/maintenance', {
         vehicleIds,
-        maintenanceDate,
+        maintenanceDate: formattedDate,
       });
 
       await loadFleetData();
@@ -173,6 +192,13 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
     } catch (error) {
       console.error('Schedule maintenance error:', error);
       notificationService.error('Failed to schedule maintenance');
+    }
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setMaintenanceDate(selectedDate);
     }
   };
 
@@ -396,15 +422,7 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
       <View style={styles.quickActions}>
         <TouchableOpacity 
           style={styles.quickAction}
-          onPress={() => {
-            // Toggle availability
-            apiService.patch(`/owner/vehicles/${vehicle.id}`, {
-              available: !vehicle.available
-            }).then(() => {
-              loadFleetData();
-              notificationService.success('Availability updated');
-            });
-          }}
+          onPress={() => handleToggleAvailability(vehicle.id, vehicle.available)}
         >
           <Ionicons 
             name={vehicle.available ? 'pause-circle' : 'play-circle'} 
@@ -473,12 +491,25 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
           <Text style={styles.modalTitle}>Schedule Maintenance</Text>
           
           <Text style={styles.inputLabel}>Maintenance Date</Text>
-          <TextInput
-            style={styles.input}
-            value={maintenanceDate}
-            onChangeText={setMaintenanceDate}
-            placeholder="YYYY-MM-DD"
-          />
+          <TouchableOpacity
+            style={styles.datePickerButton}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={styles.datePickerText}>
+              {maintenanceDate.toLocaleDateString()}
+            </Text>
+            <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={maintenanceDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleDateChange}
+              minimumDate={new Date()}
+            />
+          )}
 
           <View style={styles.modalActions}>
             <TouchableOpacity
@@ -835,5 +866,20 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.white,
     fontWeight: '600',
+  },
+  datePickerButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.white,
+  },
+  datePickerText: {
+    ...typography.body,
+    color: colors.darkGrey,
   },
 }); 

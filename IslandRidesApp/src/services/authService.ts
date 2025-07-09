@@ -88,11 +88,11 @@ class AuthService extends BaseService {
 
       const response = await apiService.postWithoutAuth<AuthResponse>('/api/auth/login', credentials);
       
-      if (!response.token) {
+      if (!response.token || !response.refreshToken) {
         throw new AuthError('No token received from server', 'NO_TOKEN', 500);
       }
       
-      await apiService.storeToken(response.token);
+      await apiService.storeToken(response.token, response.refreshToken);
       // Clear failed attempts on successful login
       if (credentials.email) {
         this.clearFailedAttempts(credentials.email);
@@ -130,8 +130,8 @@ class AuthService extends BaseService {
 
       const response = await apiService.postWithoutAuth<AuthResponse>('/api/auth/register', userData);
       
-      if (response.token) {
-        await apiService.storeToken(response.token);
+      if (response.token && response.refreshToken) {
+        await apiService.storeToken(response.token, response.refreshToken);
       }
       
       return response;
@@ -182,8 +182,8 @@ class AuthService extends BaseService {
       await this.waitForInitialization();
       const response = await apiService.post<AuthResponse>('/api/auth/refresh', {});
       
-      if (response.token) {
-        await apiService.storeToken(response.token);
+      if (response.token && response.refreshToken) {
+        await apiService.storeToken(response.token, response.refreshToken);
       }
       
       return response;
@@ -196,10 +196,10 @@ class AuthService extends BaseService {
   async refreshSession(): Promise<void> {
     try {
       const response = await this.refreshToken();
-      if (!response.token) {
+      if (!response.token || !response.refreshToken) {
         throw new BusinessLogicError('Failed to refresh session', 'SESSION_REFRESH_FAILED');
       }
-      await apiService.storeToken(response.token);
+      await apiService.storeToken(response.token, response.refreshToken);
     } catch (error) {
       throw new BusinessLogicError(
         'Unable to refresh session',

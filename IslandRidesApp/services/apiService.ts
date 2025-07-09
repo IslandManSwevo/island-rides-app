@@ -1,15 +1,34 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// You can move this to a config file later
-const API_BASE_URL = 'http://localhost:3003/api';
+import { getEnvironmentConfig } from '../src/config/environment';
 
 export class ApiService {
   private static readonly TOKEN_KEY = 'auth_token';
   private baseUrl: string;
   private token: string | null = null;
+  private static instance: ApiService | null = null;
 
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl || 'http://localhost:3003/api'; // Fallback URL
+    this.initializeBaseUrl();
+  }
+
+  private async initializeBaseUrl(): Promise<void> {
+    try {
+      const config = await getEnvironmentConfig();
+      this.baseUrl = `${config.API_BASE_URL}/api`;
+    } catch (error) {
+      console.warn('Failed to load environment config, using fallback URL:', error);
+      // Keep the fallback URL set in constructor
+    }
+  }
+
+  // Singleton pattern to ensure consistent configuration
+  static async getInstance(): Promise<ApiService> {
+    if (!ApiService.instance) {
+      ApiService.instance = new ApiService();
+      await ApiService.instance.initializeBaseUrl();
+    }
+    return ApiService.instance;
   }
 
   // Token management methods
@@ -104,7 +123,8 @@ export class ApiService {
 
   async refreshToken(): Promise<void> {
     try {
-      const response = await this.post<{ token: string }>('/auth/refresh', {});
+      // Use postWithoutAuth to avoid circular dependency when token is expired
+      const response = await this.postWithoutAuth<{ token: string }>('/auth/refresh', {});
       if (response.token) {
         await ApiService.storeToken(response.token);
       } else {
@@ -117,6 +137,21 @@ export class ApiService {
   }
 }
 
-// Create and export a singleton instance
-const apiServiceInstance = new ApiService();
-export default apiServiceInstance;
+// Create and export a singleton instance factory
+let apiServiceInstance: ApiService | null = null;
+
+export const getApiService = async (): Promise<ApiService> => {
+  if (!apiServiceInstance) {
+    apiServiceInstance = await ApiService.getInstance();
+  }
+  return apiServiceInstance;
+};
+
+// For backward compatibility, create a default instance
+// Note: This will use fallback URL until getApiService() is called
+const defaultApiService = new ApiService();
+
+// Named export for backward compatibility
+export const apiService = defaultApiService;
+
+export default defaultApiService;

@@ -74,7 +74,7 @@ export class ApiErrorBoundary extends Component<ErrorBoundaryProps, State> {
   private async handleTokenRefresh(): Promise<void> {
     try {
       this.setState({ isRetrying: true });
-      await (apiService as any).refreshToken();
+      await apiService.refreshToken();
       // Reset error state to retry the failed request
       this.setState({ 
         hasError: false, 
@@ -89,7 +89,7 @@ export class ApiErrorBoundary extends Component<ErrorBoundaryProps, State> {
 
   private async redirectToLogin(): Promise<void> {
     // Clear auth state
-    await (apiService as any).clearToken();
+    await apiService.clearToken();
     
     // Use your navigation method here
     // navigation.navigate('Login');

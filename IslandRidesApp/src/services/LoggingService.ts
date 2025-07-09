@@ -1,5 +1,6 @@
 import { BaseService } from './base/BaseService';
 import { environmentService } from './EnvironmentService';
+import { logger } from 'react-native-logs';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -10,9 +11,32 @@ interface LogEntry {
   data?: any;
 }
 
+const defaultConfig = {
+  severity: __DEV__ ? 'debug' : 'error' as LogLevel,
+  transport: logger.consoleTransport,
+  transportOptions: {
+    colors: {
+      info: 'blueBright',
+      warn: 'yellowBright',
+      error: 'redBright',
+    },
+  },
+  async: true,
+  dateFormat: 'time',
+  printLevel: true,
+  printDate: true,
+  enabled: true,
+};
+
 class LoggingService extends BaseService {
   private logs: LogEntry[] = [];
   private readonly MAX_LOGS = 1000;
+  private nativeLogger: any;
+
+  constructor() {
+    super();
+    this.nativeLogger = logger.createLogger(defaultConfig);
+  }
 
   private shouldLog(level: LogLevel): boolean {
     if (!__DEV__ && level === 'debug') return false;
@@ -43,7 +67,7 @@ class LoggingService extends BaseService {
   debug(message: string, data?: any): void {
     if (this.shouldLog('debug')) {
       const entry = this.createLogEntry('debug', message, data);
-      console.debug(message, data);
+      this.nativeLogger.debug(message, data);
       this.store(entry);
     }
   }
@@ -51,7 +75,7 @@ class LoggingService extends BaseService {
   info(message: string, data?: any): void {
     if (this.shouldLog('info')) {
       const entry = this.createLogEntry('info', message, data);
-      console.info(message, data);
+      this.nativeLogger.info(message, data);
       this.store(entry);
     }
   }
@@ -59,7 +83,7 @@ class LoggingService extends BaseService {
   warn(message: string, data?: any): void {
     if (this.shouldLog('warn')) {
       const entry = this.createLogEntry('warn', message, data);
-      console.warn(message, data);
+      this.nativeLogger.warn(message, data);
       this.store(entry);
     }
   }
@@ -67,7 +91,7 @@ class LoggingService extends BaseService {
   error(message: string, error?: Error, data?: any): void {
     if (this.shouldLog('error')) {
       const entry = this.createLogEntry('error', message, { error, ...data });
-      console.error(message, error, data);
+      this.nativeLogger.error(message, error, data);
       this.store(entry);
     }
   }
@@ -80,6 +104,15 @@ class LoggingService extends BaseService {
 
   clearLogs(): void {
     this.logs = [];
+  }
+
+  // Additional methods for react-native-logs compatibility
+  setSeverity(severity: LogLevel): void {
+    this.nativeLogger.setSeverity(severity);
+  }
+
+  enable(enabled: boolean): void {
+    this.nativeLogger.enable(enabled);
   }
 }
 

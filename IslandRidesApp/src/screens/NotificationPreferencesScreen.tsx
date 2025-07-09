@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,10 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { notificationService } from '../services/notificationService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { RootStackParamList, ROUTES } from '../navigation/routes';
 
 interface NotificationPreferences {
   pushEnabled: boolean;
@@ -23,9 +25,26 @@ interface NotificationPreferences {
   promotional: boolean;
 }
 
+type NotificationPreferencesScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.NOTIFICATION_PREFERENCES>;
+
 interface NotificationPreferencesScreenProps {
-  navigation: any;
+  navigation: NotificationPreferencesScreenNavigationProp;
 }
+
+// Type-safe icon mapping for notification preferences
+const PREFERENCE_ICONS = {
+  notifications: 'notifications' as const,
+  checkmarkCircle: 'checkmark-circle' as const,
+  time: 'time' as const,
+  star: 'star' as const,
+  trendingDown: 'trending-down' as const,
+  chatbubble: 'chatbubble' as const,
+  gift: 'gift' as const,
+  informationCircle: 'information-circle' as const,
+  send: 'send' as const,
+} as const;
+
+type PreferenceIconName = keyof typeof PREFERENCE_ICONS;
 
 export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScreenProps> = ({ navigation }) => {
   const [preferences, setPreferences] = useState<NotificationPreferences>({
@@ -41,45 +60,21 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  useEffect(() => {
-    fetchPreferences();
-  }, []);
-
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => hasChanges ? (
-        <TouchableOpacity onPress={savePreferences} disabled={saving}>
-          {saving ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Text style={styles.saveButton}>Save</Text>
-          )}
-        </TouchableOpacity>
-      ) : null,
-    });
-  }, [hasChanges, saving, navigation]);
-
-  const fetchPreferences = async () => {
-    try {
-      setLoading(true);
-      const prefs = await notificationService.getNotificationPreferences();
-      if (prefs) {
-        setPreferences(prefs);
-      }
-    } catch (error) {
-      console.error('Error fetching preferences:', error);
-      notificationService.error('Failed to load notification preferences', {
-        duration: 4000
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const savePreferences = async () => {
+  const savePreferences = useCallback(async () => {
     try {
       setSaving(true);
-      const success = await notificationService.updateNotificationPreferences(preferences as unknown as Record<string, boolean>);
+      // Convert NotificationPreferences to Record<string, boolean>
+      const preferencesRecord: Record<string, boolean> = {
+        pushEnabled: preferences.pushEnabled,
+        bookingConfirmations: preferences.bookingConfirmations,
+        bookingReminders: preferences.bookingReminders,
+        reviewRequests: preferences.reviewRequests,
+        priceAlerts: preferences.priceAlerts,
+        newMessages: preferences.newMessages,
+        promotional: preferences.promotional,
+      };
+      
+      const success = await notificationService.updateNotificationPreferences(preferencesRecord);
       
       if (success) {
         setHasChanges(false);
@@ -101,6 +96,41 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
     } finally {
       setSaving(false);
     }
+  }, [preferences]);
+
+  useEffect(() => {
+    fetchPreferences();
+  }, []);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => hasChanges ? (
+        <TouchableOpacity onPress={() => savePreferences()} disabled={saving}>
+          {saving ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Text style={styles.saveButton}>Save</Text>
+          )}
+        </TouchableOpacity>
+      ) : null,
+    });
+  }, [hasChanges, saving, navigation, savePreferences]);
+
+  const fetchPreferences = async () => {
+    try {
+      setLoading(true);
+      const prefs = await notificationService.getNotificationPreferences();
+      if (prefs) {
+        setPreferences(prefs);
+      }
+    } catch (error) {
+      console.error('Error fetching preferences:', error);
+      notificationService.error('Failed to load notification preferences', {
+        duration: 4000
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updatePreference = (key: keyof NotificationPreferences, value: boolean) => {
@@ -117,13 +147,14 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
         {
           text: 'Enable',
           onPress: async () => {
-            const token = await notificationService.registerForPushNotifications();
-            if (token) {
+            try {
+              await notificationService.registerForPushNotifications();
               updatePreference('pushEnabled', true);
               notificationService.success('Push notifications enabled!', {
                 duration: 3000
               });
-            } else {
+            } catch (error) {
+              console.error('Failed to enable push notifications:', error);
               notificationService.error('Failed to enable push notifications', {
                 duration: 4000
               });
@@ -138,16 +169,17 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
     key: keyof NotificationPreferences,
     title: string,
     description: string,
-    icon: string,
+    iconName: PreferenceIconName,
     important: boolean = false
   ) => {
     const isEnabled = preferences[key];
+    const iconKey = PREFERENCE_ICONS[iconName];
     
     return (
       <View style={[styles.preferenceItem, important && styles.importantItem]}>
         <View style={styles.preferenceHeader}>
           <Ionicons 
-            name={icon as any} 
+            name={iconKey} 
             size={24} 
             color={isEnabled ? colors.primary : colors.lightGrey} 
             style={styles.preferenceIcon}
@@ -176,7 +208,7 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
         </View>
         {key !== 'pushEnabled' && !preferences.pushEnabled && (
           <View style={styles.disabledNotice}>
-            <Ionicons name="information-circle" size={16} color={colors.warning} />
+            <Ionicons name={PREFERENCE_ICONS.informationCircle} size={16} color={colors.warning} />
             <Text style={styles.disabledText}>
               Enable push notifications to use this feature
             </Text>
@@ -231,7 +263,7 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
             'bookingConfirmations',
             'Booking Confirmations',
             'Get notified when your booking is confirmed or modified',
-            'checkmark-circle'
+            'checkmarkCircle'
           )}
           {renderPreferenceItem(
             'bookingReminders',
@@ -255,7 +287,7 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
             'priceAlerts',
             'Price Alerts',
             'Get notified when prices drop on your favorite vehicles',
-            'trending-down'
+            'trendingDown'
           )}
           {renderPreferenceItem(
             'newMessages',
@@ -278,7 +310,7 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
 
       <View style={styles.footer}>
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={colors.info} />
+          <Ionicons name={PREFERENCE_ICONS.informationCircle} size={20} color={colors.info} />
           <Text style={styles.infoText}>
             You can change these settings at any time. Important booking and safety notifications will always be sent.
           </Text>
@@ -293,7 +325,7 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
             });
           }}
         >
-          <Ionicons name="send" size={16} color={colors.primary} style={styles.buttonIcon} />
+          <Ionicons name={PREFERENCE_ICONS.send} size={16} color={colors.primary} style={styles.buttonIcon} />
           <Text style={styles.testButtonText}>Send Test Notification</Text>
         </TouchableOpacity>
       </View>

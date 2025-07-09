@@ -27,21 +27,20 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   const pulseAnim = new Animated.Value(1);
 
   useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      try {
+        setChecking(true);
+        const response: any = await apiService.get(`/favorites/check/${vehicleId}`);
+        setIsFavorited(response.isFavorited);
+      } catch (error) {
+        console.error('Error checking favorite status:', error);
+        // Don't show error for checking status, just log it
+      } finally {
+        setChecking(false);
+      }
+    };
     checkFavoriteStatus();
   }, [vehicleId]);
-
-  const checkFavoriteStatus = async () => {
-    try {
-      setChecking(true);
-      const response: any = await apiService.get(`/favorites/check/${vehicleId}`);
-      setIsFavorited(response.isFavorited);
-    } catch (error) {
-      console.error('Error checking favorite status:', error);
-      // Don't show error for checking status, just log it
-    } finally {
-      setChecking(false);
-    }
-  };
 
   const animatePress = () => {
     Animated.sequence([

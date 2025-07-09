@@ -22,6 +22,13 @@ interface Review {
   };
 }
 
+interface VehicleAmenity {
+  id: number;
+  icon?: string;
+  name: string;
+  isAvailable?: boolean;
+}
+
 export const VehicleDetailScreen = ({ navigation, route }: any) => {
   const { vehicle } = route.params;
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -65,6 +72,10 @@ export const VehicleDetailScreen = ({ navigation, route }: any) => {
 
   const handleBookNow = () => {
     navigation.navigate('Checkout', { vehicle });
+  };
+
+  const handleToggleReviews = () => {
+    setShowAllReviews(!showAllReviews);
   };
 
   const toggleSection = (sectionName: string) => {
@@ -405,7 +416,7 @@ export const VehicleDetailScreen = ({ navigation, route }: any) => {
         {reviews.length > 2 && (
           <TouchableOpacity
             style={styles.showMoreButton}
-            onPress={() => setShowAllReviews(!showAllReviews)}
+            onPress={handleToggleReviews}
           >
             <Text style={styles.showMoreText}>
               {showAllReviews ? 'Show Less' : `View All ${reviews.length} Reviews`}
@@ -434,7 +445,7 @@ export const VehicleDetailScreen = ({ navigation, route }: any) => {
       ) : (
         <View style={styles.galleryContainer}>
           <Image 
-            source={{ uri: `https://placehold.co/400x300/00B8D4/FFFFFF?text=${vehicle.make}+${vehicle.model}` }}
+            source={{ uri: `https://placehold.co/400x300/00B8D4/FFFFFF?text=${encodeURIComponent(vehicle.make)}+${encodeURIComponent(vehicle.model)}` }}
             style={styles.mainImage}
             resizeMode="cover"
           />
@@ -528,7 +539,7 @@ export const VehicleDetailScreen = ({ navigation, route }: any) => {
             'Vehicle Amenities',
             'amenities',
             <View style={styles.amenitiesGrid}>
-              {vehicle.amenities.map((amenity: any, index: number) => (
+              {vehicle.amenities.map((amenity: VehicleAmenity, index: number) => (
                 <View key={amenity.id || index} style={styles.amenityItem}>
                   <Text style={styles.amenityIcon}>{amenity.icon || '•'}</Text>
                   <Text style={styles.amenityText}>{amenity.name}</Text>

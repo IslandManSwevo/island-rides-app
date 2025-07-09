@@ -1,7 +1,21 @@
 import { ApiErrorCode, ErrorCategory, ErrorMeta } from '../types';
 import { notificationService } from './notificationService';
+import { navigationRef } from '../navigation/navigationRef';
+import { ROUTES } from '../navigation/routes';
+import { apiService } from './apiService';
 
 class ErrorHandlerService {
+  private handleAuthErrorRedirect() {
+    const handler = async () => {
+      await apiService.clearToken();
+      if (navigationRef.isReady()) {
+        // Cast to any to bypass TypeScript error with navigate from outside component tree
+        (navigationRef as any).navigate(ROUTES.LOGIN);
+      }
+    };
+    handler();
+  }
+
   handleApiError(error: any, category: ErrorCategory = ErrorCategory.TECHNICAL) {
     let code: ApiErrorCode = 'SERVER_ERROR';
     let message = 'An unexpected error occurred';
@@ -16,14 +30,15 @@ class ErrorHandlerService {
             title: 'Session Expired',
             duration: 5000
           });
-          // Redirect to login
+          this.handleAuthErrorRedirect();
           break;
 
         case 'UNAUTHORIZED':
-          notificationService.error('Please log in to continue.', {
+          notificationService.error('Your session is invalid. Please log in again.', {
             title: 'Authentication Required',
             duration: 4000
           });
+          this.handleAuthErrorRedirect();
           break;
 
         case 'VALIDATION_ERROR':

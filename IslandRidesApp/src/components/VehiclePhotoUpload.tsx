@@ -492,7 +492,11 @@ export const VehiclePhotoUpload: React.FC<VehiclePhotoUploadProps> = ({
               <TouchableOpacity
                 key={option.key}
                 style={styles.typeOption}
-                onPress={() => setPhotoType(selectedPhotoForType!, option.key as any)}
+                onPress={() => {
+                  if (selectedPhotoForType) {
+                    setPhotoType(selectedPhotoForType, option.key as any);
+                  }
+                }}
               >
                 <Ionicons name={option.icon as any} size={20} color={option.color} />
                 <Text style={styles.typeOptionText}>{option.label}</Text>
@@ -534,7 +538,11 @@ export const VehiclePhotoUpload: React.FC<VehiclePhotoUploadProps> = ({
               
               <TouchableOpacity
                 style={styles.saveButton}
-                onPress={() => setPhotoCaption(selectedPhotoForCaption!, tempCaption)}
+                onPress={() => {
+                  if (selectedPhotoForCaption) {
+                    setPhotoCaption(selectedPhotoForCaption, tempCaption)
+                  }
+                }}
               >
                 <Text style={styles.saveButtonText}>Save</Text>
               </TouchableOpacity>

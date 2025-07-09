@@ -63,7 +63,22 @@ export type RootStackParamList = {
     endDate: string;
   };
   [ROUTES.BOOKING_CONFIRMED]: {
-    bookingId: number;
+    booking: {
+      id: number;
+      status: string;
+      total_amount: number;
+      start_date: string;
+      end_date: string;
+      vehicle: {
+        id: number;
+        make: string;
+        model: string;
+        year: number;
+        location: string;
+        daily_rate: number;
+      };
+    };
+    vehicle: Vehicle;
   };
   [ROUTES.PROFILE]: undefined;
   [ROUTES.PUBLIC_USER_PROFILE]: {

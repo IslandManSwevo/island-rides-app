@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '../types';
 import { notificationService } from './notificationService';
+import { getEnvironmentConfig } from '../config/environment';
 
 // Define the event types for better type safety
 interface ServerToClientEvents {
@@ -23,21 +24,32 @@ interface ClientToServerEvents {
 class WebSocketService {
   private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
   private maxReconnectAttempts = 5;
+  private eventListeners = new Map<string, Function[]>();
 
-  public connect(token: string): void {
+  public async connect(token: string): Promise<void> {
     if (this.socket?.connected) {
       return;
     }
 
-    const url = process.env.WEBSOCKET_URL || 'ws://localhost:3004';
-    this.socket = io(url, {
-      auth: { token },
-      reconnection: true,
-      reconnectionAttempts: this.maxReconnectAttempts,
-      reconnectionDelay: 1000,
-    });
+    try {
+      const envConfig = await getEnvironmentConfig();
+      const url = envConfig.WS_URL;
+      
+      this.socket = io(url, {
+        auth: { token },
+        reconnection: true,
+        reconnectionAttempts: this.maxReconnectAttempts,
+        reconnectionDelay: 1000,
+      });
 
-    this.setupListeners();
+      this.setupListeners();
+    } catch (error) {
+      console.error('Failed to connect to WebSocket:', error);
+      notificationService.error('Failed to connect to chat server', {
+        title: 'Connection Failed',
+        duration: 5000,
+      });
+    }
   }
 
   private setupListeners(): void {
@@ -51,13 +63,13 @@ class WebSocketService {
 
     this.socket.on('disconnect', () => {
       notificationService.warning('Lost connection to chat server', {
-        duration: 0,
-        closable: false,
+        duration: 3000, // Auto-close after 3 seconds to prevent stacking
+        closable: true,
       });
     });
 
     this.socket.on('reconnect_attempt', (attempt) => {
-      if (attempt === this.maxReconnectAttempts) {
+      if (attempt >= this.maxReconnectAttempts) { // Fixed: Use >= instead of ===
         notificationService.error('Unable to connect to chat server', {
           title: 'Connection Failed',
           duration: 5000,
@@ -73,6 +85,27 @@ class WebSocketService {
     });
   }
 
+  private removeAllListeners(): void {
+    if (!this.socket) return;
+
+    // Remove built-in event listeners
+    this.socket.off('connect');
+    this.socket.off('disconnect');
+    this.socket.off('reconnect_attempt');
+    this.socket.off('connect_error');
+    this.socket.off('new_message');
+    this.socket.off('typing:start');
+    this.socket.off('typing:stop');
+
+    // Remove custom event listeners
+    this.eventListeners.forEach((listeners, eventName) => {
+      listeners.forEach(listener => {
+        this.socket?.off(eventName as any, listener as any);
+      });
+    });
+    this.eventListeners.clear();
+  }
+
   public joinConversation(conversationId: number): void {
     this.socket?.emit('join_conversation', { conversationId });
   }
@@ -86,15 +119,84 @@ class WebSocketService {
   }
 
   public onNewMessage(callback: (message: ChatMessage) => void): void {
-    this.socket?.on('new_message', callback);
+    if (!this.socket) return;
+    
+    this.socket.on('new_message', callback);
+    
+    // Track the listener for cleanup
+    if (!this.eventListeners.has('new_message')) {
+      this.eventListeners.set('new_message', []);
+    }
+    this.eventListeners.get('new_message')!.push(callback);
+  }
+
+  public offNewMessage(callback: (message: ChatMessage) => void): void {
+    if (!this.socket) return;
+    
+    this.socket.off('new_message', callback);
+    
+    // Remove from tracking
+    const listeners = this.eventListeners.get('new_message');
+    if (listeners) {
+      const index = listeners.indexOf(callback);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    }
   }
 
   public onTypingStart(callback: (data: { userId: string; userName: string }) => void): void {
-    this.socket?.on('typing:start', callback);
+    if (!this.socket) return;
+    
+    this.socket.on('typing:start', callback);
+    
+    // Track the listener for cleanup
+    if (!this.eventListeners.has('typing:start')) {
+      this.eventListeners.set('typing:start', []);
+    }
+    this.eventListeners.get('typing:start')!.push(callback);
+  }
+
+  public offTypingStart(callback: (data: { userId: string; userName: string }) => void): void {
+    if (!this.socket) return;
+    
+    this.socket.off('typing:start', callback);
+    
+    // Remove from tracking
+    const listeners = this.eventListeners.get('typing:start');
+    if (listeners) {
+      const index = listeners.indexOf(callback);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    }
   }
 
   public onTypingStop(callback: (data: { userId: string }) => void): void {
-    this.socket?.on('typing:stop', callback);
+    if (!this.socket) return;
+    
+    this.socket.on('typing:stop', callback);
+    
+    // Track the listener for cleanup
+    if (!this.eventListeners.has('typing:stop')) {
+      this.eventListeners.set('typing:stop', []);
+    }
+    this.eventListeners.get('typing:stop')!.push(callback);
+  }
+
+  public offTypingStop(callback: (data: { userId: string }) => void): void {
+    if (!this.socket) return;
+    
+    this.socket.off('typing:stop', callback);
+    
+    // Remove from tracking
+    const listeners = this.eventListeners.get('typing:stop');
+    if (listeners) {
+      const index = listeners.indexOf(callback);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    }
   }
 
   public emitTyping(conversationId: number): void {
@@ -107,9 +209,28 @@ class WebSocketService {
 
   public disconnect(): void {
     if (this.socket) {
+      // Clean up all event listeners before disconnecting
+      this.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
     }
+  }
+
+  public isConnected(): boolean {
+    return this.socket?.connected || false;
+  }
+
+  // Method to clean up specific event listeners without disconnecting
+  public removeListeners(eventName: keyof ServerToClientEvents): void {
+    if (!this.socket) return;
+    
+    this.socket.off(eventName);
+    this.eventListeners.delete(eventName);
+  }
+
+  // Method to clean up all listeners without disconnecting
+  public removeAllEventListeners(): void {
+    this.removeAllListeners();
   }
 }
 

@@ -10,6 +10,7 @@ import { serviceRegistry } from './src/services/ServiceRegistry';
 import { loggingService } from './src/services/LoggingService';
 import { navigationRef } from './src/navigation/navigationRef';
 import { reviewPromptService } from './src/services/reviewPromptService';
+import runSetupTests from './src/utils/setupTest';
 import Constants from 'expo-constants';
 
 const App: React.FC = () => {
@@ -49,6 +50,16 @@ const App: React.FC = () => {
         }
 
         setInitProgress('Finalizing...');
+
+        // Run setup tests in development mode
+        if (__DEV__) {
+          setInitProgress('Running setup verification...');
+          try {
+            await runSetupTests();
+          } catch (error) {
+            console.warn('Setup tests failed (non-critical):', error);
+          }
+        }
         
         setIsInitialized(true);
         console.log('App initialized successfully');
@@ -117,7 +128,6 @@ const App: React.FC = () => {
       const timer = setTimeout(() => {
         setInitProgress('Starting...');
       }, 500);
-      return () => clearTimeout(timer);
     }
   };
 

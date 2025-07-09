@@ -26,17 +26,15 @@ class ConversationService {
     try {
       console.log(`🏠 Finding/creating host conversation: hostId=${hostId}, vehicleId=${vehicleId}`);
 
-      // First, get vehicle details to verify the host owns it
-      const vehicles = await apiService.get<Vehicle[]>('/api/vehicles');
-      const vehicle: Vehicle | undefined = vehicles.find((v: Vehicle) => v.id === vehicleId);
+      // Optimized: Get specific vehicle instead of all vehicles
+      const vehicle = await apiService.get<Vehicle>(`/api/vehicles/${vehicleId}`);
       
       if (!vehicle) {
         throw new Error(`Vehicle with ID ${vehicleId} not found`);
       }
 
-      // Get all users to find the host
-      const users = await apiService.get<User[]>('/api/users');
-      const host: User | undefined = users.find((u: User) => u.id === hostId);
+      // Optimized: Get specific host instead of all users
+      const host = await apiService.get<User>(`/api/users/${hostId}`);
       
       if (!host) {
         throw new Error(`Host with ID ${hostId} not found`);
@@ -75,23 +73,28 @@ class ConversationService {
     try {
       console.log(`📋 Finding/creating booking conversation: bookingId=${bookingId}`);
 
-      // Get booking details to find the other participant
-      const bookings = await apiService.get<Booking[]>('/api/bookings');
-      const booking: Booking | undefined = bookings.find((b: Booking) => b.id === bookingId);
+      // Optimized: Get specific booking instead of all bookings
+      const booking = await apiService.get<Booking>(`/api/bookings/${bookingId}`);
       
       if (!booking) {
         throw new Error(`Booking with ID ${bookingId} not found`);
       }
 
-      // Get vehicle details
-      const vehicles = await apiService.get<Vehicle[]>('/api/vehicles');
-      const vehicle: Vehicle | undefined = vehicles.find((v: Vehicle) => v.id === booking.vehicleId);
+      // Optimized: Get specific vehicle instead of all vehicles
+      const vehicle = await apiService.get<Vehicle>(`/api/vehicles/${booking.vehicleId}`);
 
-      // Get all users to find the other participant
-      const users = await apiService.get<User[]>('/api/users');
-      
-      // Current user is the renter, so we need to find the vehicle owner (host)
-      const host: User | undefined = users.find((u: User) => u.id === vehicle?.ownerId);
+      // Add null check for vehicle before accessing ownerId
+      if (!vehicle) {
+        throw new Error(`Vehicle with ID ${booking.vehicleId} not found for this booking`);
+      }
+
+      // Check if vehicle has ownerId property
+      if (!vehicle.ownerId) {
+        throw new Error('Vehicle owner information is not available for this booking');
+      }
+
+      // Optimized: Get specific host instead of all users
+      const host = await apiService.get<User>(`/api/users/${vehicle.ownerId}`);
       
       if (!host) {
         throw new Error('Host not found for this booking');
@@ -109,12 +112,12 @@ class ConversationService {
           firstName: host.firstName,
           lastName: host.lastName
         },
-        vehicle: vehicle ? {
+        vehicle: {
           id: vehicle.id,
           make: vehicle.make,
           model: vehicle.model,
           year: vehicle.year
-        } : undefined
+        }
       };
 
     } catch (error) {
@@ -130,9 +133,8 @@ class ConversationService {
     try {
       console.log(`👤 Finding/creating direct conversation: participantId=${participantId}`);
 
-      // Get user details
-      const users = await apiService.get<User[]>('/api/users');
-      const participant: User | undefined = users.find((u: User) => u.id === participantId);
+      // Optimized: Get specific user instead of all users
+      const participant = await apiService.get<User>(`/api/users/${participantId}`);
       
       if (!participant) {
         throw new Error(`User with ID ${participantId} not found`);

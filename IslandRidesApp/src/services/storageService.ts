@@ -55,6 +55,18 @@ class StorageService {
     await this.remove('authToken');
   }
 
+  async setRefreshToken(token: string): Promise<void> {
+    await this.set('refreshToken', token);
+  }
+
+  async getRefreshToken(): Promise<string | null> {
+    return this.get<string>('refreshToken');
+  }
+
+  async clearRefreshToken(): Promise<void> {
+    await this.remove('refreshToken');
+  }
+
   // User preferences storage
   async setUserPreferences(preferences: Record<string, any>): Promise<void> {
     await this.set('userPreferences', preferences);
