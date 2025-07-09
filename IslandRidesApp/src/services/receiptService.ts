@@ -90,7 +90,7 @@ class ReceiptService {
   }
 
   generateReceiptHTML(receipt: Receipt): string {
-    const { booking, vehicle, customer, payment, company } = receipt;
+    const { booking, vehicle, customer, payment, company } = receipt || {};
     
     // Helper function to safely format dates with null/undefined checks
     const formatDate = (dateString: string | null | undefined) => {
@@ -132,31 +132,31 @@ class ReceiptService {
 
     // Safe data extraction with fallbacks
     const safeBooking = {
-      id: booking?.id || 0,
+      id: booking?.id ?? 'N/A',
       duration: booking?.duration || 0,
-      startDate: booking?.startDate || '',
-      endDate: booking?.endDate || '',
+      startDate: booking?.startDate,
+      endDate: booking?.endDate,
       totalAmount: booking?.totalAmount || 0,
-      createdAt: booking?.createdAt || ''
+      createdAt: booking?.createdAt
     };
 
     const safeVehicle = {
       make: escapeHtml(vehicle?.make) || 'Unknown',
       model: escapeHtml(vehicle?.model) || 'Vehicle',
-      year: vehicle?.year || new Date().getFullYear(),
+      year: vehicle?.year,
       location: escapeHtml(vehicle?.location) || 'Unknown Location',
       dailyRate: vehicle?.dailyRate || 0
     };
 
     const safeCustomer = {
-      firstName: escapeHtml(customer?.firstName) || 'Unknown',
+      firstName: escapeHtml(customer?.firstName) || 'Valued',
       lastName: escapeHtml(customer?.lastName) || 'Customer',
       email: escapeHtml(customer?.email) || 'N/A'
     };
 
     const safePayment = {
       transactionId: escapeHtml(payment?.transactionId) || 'N/A',
-      method: escapeHtml(payment?.method) || 'Transfer',
+      method: escapeHtml(payment?.method) || 'N/A',
       date: payment?.date || safeBooking.createdAt,
       currency: payment?.currency || 'USD'
     };
@@ -320,7 +320,7 @@ class ReceiptService {
                 <div class="section">
                     <div class="section-title">Vehicle & Rental Details</div>
                     <div class="vehicle-info">
-                        <div class="vehicle-name">${safeVehicle.make} ${safeVehicle.model} ${safeVehicle.year}</div>
+                        <div class="vehicle-name">${safeVehicle.make} ${safeVehicle.model} ${safeVehicle.year || ''}</div>
                         <div class="vehicle-location">📍 ${safeVehicle.location}</div>
                     </div>
                     <br>

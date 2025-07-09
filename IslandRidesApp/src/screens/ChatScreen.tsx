@@ -14,6 +14,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { apiService } from '../services/apiService';
 import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '../types';
+import { getEnvironmentConfig } from '../config/environment';
+import { notificationService } from '../services/notificationService';
 
 interface ChatScreenProps {
   conversationId: string;
@@ -34,7 +36,12 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 5;
+  const reconnectDelayBase = 1000; // Start with 1 second, exponential backoff
 
   const currentUser: User = {
     _id: currentUserId,
@@ -46,88 +53,156 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     name: otherUserName,
   };
 
+  // Clear reconnection timeout
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Reconnection mechanism
+  const attemptReconnection = useCallback(async () => {
+    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+      console.log('Max reconnection attempts reached');
+      setIsReconnecting(false);
+      notificationService.error('Unable to reconnect to chat. Please refresh the page.', {
+        duration: 0, // Persistent notification
+        closable: true
+      });
+      return;
+    }
+
+    setIsReconnecting(true);
+    reconnectAttemptsRef.current += 1;
+    
+    const delay = reconnectDelayBase * Math.pow(2, reconnectAttemptsRef.current - 1); // Exponential backoff
+    console.log(`Attempting reconnection ${reconnectAttemptsRef.current}/${maxReconnectAttempts} in ${delay}ms`);
+
+    reconnectTimeoutRef.current = setTimeout(async () => {
+      try {
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+        }
+        await initializeSocket();
+      } catch (error) {
+        console.error('Reconnection attempt failed:', error);
+        attemptReconnection(); // Try again
+      }
+    }, delay);
+  }, []);
+
+  // Initialize WebSocket connection
+  const initializeSocket = useCallback(async () => {
+    try {
+      const token = await apiService.getToken();
+      if (!token) {
+        Alert.alert('Authentication Error', 'Please log in again');
+        return;
+      }
+
+      // Get WebSocket URL from environment configuration
+      const envConfig = await getEnvironmentConfig();
+      const wsUrl = envConfig.WS_URL;
+
+      console.log('Connecting to WebSocket server:', wsUrl);
+
+      // Create socket connection with authentication
+      socketRef.current = io(wsUrl, {
+        auth: {
+          token: token,
+        },
+        transports: ['websocket'],
+        timeout: 10000,
+        forceNew: true, // Force new connection for reconnections
+      });
+
+      const socket = socketRef.current;
+
+      // Connection event handlers
+      socket.on('connect', () => {
+        console.log('Connected to chat server');
+        setIsConnected(true);
+        setIsReconnecting(false);
+        reconnectAttemptsRef.current = 0; // Reset reconnection attempts on successful connection
+        clearReconnectTimeout();
+        
+        // Join the conversation room
+        socket.emit('join:conversation', { conversationId });
+      });
+
+      socket.on('disconnect', (reason) => {
+        console.log('Disconnected from chat server:', reason);
+        setIsConnected(false);
+        
+        // Only attempt reconnection for certain disconnect reasons
+        if (reason === 'io server disconnect' || reason === 'transport close' || reason === 'transport error') {
+          console.log('Attempting to reconnect due to:', reason);
+          attemptReconnection();
+        }
+      });
+
+      socket.on('connect_error', (error: Error) => {
+        console.error('Socket connection error:', error);
+        setIsConnected(false);
+        
+        // Attempt reconnection on connection errors
+        if (reconnectAttemptsRef.current === 0) {
+          // Only show alert on first connection error, not during reconnection attempts
+          console.log('Initial connection failed, attempting to reconnect...');
+        }
+        attemptReconnection();
+      });
+
+      // Message event handlers
+      socket.on('message:received', (messageData: ChatMessage) => {
+        const newMessage: IMessage = {
+          _id: messageData._id,
+          text: messageData.text,
+          createdAt: new Date(messageData.createdAt),
+          user: messageData.user,
+        };
+
+        setMessages((previousMessages) =>
+          GiftedChat.append(previousMessages, [newMessage])
+        );
+      });
+
+      // Typing indicators
+      socket.on('typing:start', (data: { userId: string; userName: string }) => {
+        if (data.userId !== currentUserId) {
+          setIsTyping(true);
+        }
+      });
+
+      socket.on('typing:stop', (data: { userId: string }) => {
+        if (data.userId !== currentUserId) {
+          setIsTyping(false);
+        }
+      });
+
+      // Error handling
+      socket.on('error', (error: { message: string }) => {
+        console.error('Chat error:', error);
+        notificationService.error(`Chat Error: ${error.message}`, {
+          duration: 5000
+        });
+      });
+
+    } catch (error) {
+      console.error('Socket initialization error:', error);
+      Alert.alert('Error', 'Failed to initialize chat connection');
+      attemptReconnection();
+    }
+  }, [conversationId, currentUserId, attemptReconnection, clearReconnectTimeout]);
+
   // Initialize WebSocket connection
   useEffect(() => {
-    const initializeSocket = async () => {
-      try {
-        const token = await apiService.getToken();
-        if (!token) {
-          Alert.alert('Authentication Error', 'Please log in again');
-          return;
-        }
-
-        // Create socket connection with authentication
-        socketRef.current = io('ws://localhost:3000', {
-          auth: {
-            token: token,
-          },
-          transports: ['websocket'],
-        });
-
-        const socket = socketRef.current;
-
-        // Connection event handlers
-        socket.on('connect', () => {
-          console.log('Connected to chat server');
-          setIsConnected(true);
-          
-          // Join the conversation room
-          socket.emit('join:conversation', { conversationId });
-        });
-
-        socket.on('disconnect', () => {
-          console.log('Disconnected from chat server');
-          setIsConnected(false);
-        });
-
-        socket.on('connect_error', (error: Error) => {
-          console.error('Socket connection error:', error);
-          setIsConnected(false);
-          Alert.alert('Connection Error', 'Failed to connect to chat server');
-        });
-
-        // Message event handlers
-        socket.on('message:received', (messageData: ChatMessage) => {
-          const newMessage: IMessage = {
-            _id: messageData._id,
-            text: messageData.text,
-            createdAt: new Date(messageData.createdAt),
-            user: messageData.user,
-          };
-
-          setMessages((previousMessages) =>
-            GiftedChat.append(previousMessages, [newMessage])
-          );
-        });
-
-        // Typing indicators
-        socket.on('typing:start', (data: { userId: string; userName: string }) => {
-          if (data.userId !== currentUserId) {
-            setIsTyping(true);
-          }
-        });
-
-        socket.on('typing:stop', (data: { userId: string }) => {
-          if (data.userId !== currentUserId) {
-            setIsTyping(false);
-          }
-        });
-
-        // Error handling
-        socket.on('error', (error: { message: string }) => {
-          Alert.alert('Chat Error', error.message);
-        });
-
-      } catch (error) {
-        console.error('Socket initialization error:', error);
-        Alert.alert('Error', 'Failed to initialize chat connection');
-      }
-    };
-
     initializeSocket();
 
     // Cleanup on component unmount
     return () => {
+      clearReconnectTimeout();
       if (socketRef.current) {
         socketRef.current.off('connect');
         socketRef.current.off('disconnect');
@@ -139,7 +214,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
         socketRef.current.disconnect();
       }
     };
-  }, [conversationId, currentUserId]);
+  }, [initializeSocket, clearReconnectTimeout]);
 
   // Load conversation history
   useEffect(() => {
@@ -174,25 +249,58 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     loadMessages();
   }, [conversationId, currentUserId, currentUserName, otherUserName]);
 
-  // Handle sending messages
+  // Handle sending messages with acknowledgment and error handling
   const onSend = useCallback((newMessages: IMessage[] = []) => {
     const messageToSend = newMessages[0];
     
     if (socketRef.current && isConnected) {
-      // Emit message to server
+      // Optimistically add message to UI first
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, newMessages)
+      );
+
+      // Emit message to server with acknowledgment callback
       socketRef.current.emit('message:send', {
         conversationId,
         text: messageToSend.text,
         receiverId: otherUserId,
         tempId: messageToSend._id, // For optimistic updates
+      }, (acknowledgment: { success: boolean; error?: string; messageId?: string }) => {
+        if (!acknowledgment.success) {
+          // Remove the optimistically added message on failure
+          setMessages((previousMessages) => 
+            previousMessages.filter(msg => msg._id !== messageToSend._id)
+          );
+          
+          // Show error notification
+          const errorMessage = acknowledgment.error || 'Failed to send message';
+          notificationService.error(errorMessage, {
+            duration: 5000,
+            action: {
+              label: 'Retry',
+              handler: () => onSend(newMessages) // Retry sending the message
+            }
+          });
+          
+          console.error('Message send failed:', acknowledgment.error);
+        } else {
+          // Optionally update the message with the server-generated ID
+          if (acknowledgment.messageId) {
+            setMessages((previousMessages) => 
+              previousMessages.map(msg => 
+                msg._id === messageToSend._id 
+                  ? { ...msg, _id: acknowledgment.messageId! }
+                  : msg
+              )
+            );
+          }
+          console.log('Message sent successfully');
+        }
       });
-
-      // Optimistically add message to UI
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, newMessages)
-      );
     } else {
-      Alert.alert('Connection Error', 'Not connected to chat server');
+      notificationService.warning('Not connected to chat server. Please wait for connection.', {
+        duration: 3000
+      });
     }
   }, [conversationId, otherUserId, isConnected]);
 
@@ -209,9 +317,13 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
   // Custom send button
   const renderSend = (props: any) => (
-    <Send {...props}>
-      <View style={styles.sendButton}>
-        <MaterialIcons name="send" size={24} color="#007AFF" />
+    <Send {...props} disabled={!isConnected}>
+      <View style={[styles.sendButton, !isConnected && styles.sendButtonDisabled]}>
+        <MaterialIcons 
+          name="send" 
+          size={24} 
+          color={isConnected ? "#007AFF" : "#CCC"} 
+        />
       </View>
     </Send>
   );
@@ -228,10 +340,19 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   const renderConnectionStatus = () => {
     if (!isConnected) {
       return (
-        <View style={styles.connectionStatus}>
+        <View style={[
+          styles.connectionStatus, 
+          isReconnecting ? styles.reconnectingStatus : styles.disconnectedStatus
+        ]}>
           <Text style={styles.connectionStatusText}>
-            Connecting to chat...
+            {isReconnecting 
+              ? `Reconnecting... (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
+              : 'Disconnected from chat'
+            }
           </Text>
+          {isReconnecting && (
+            <ActivityIndicator size="small" color="white" style={styles.statusIndicator} />
+          )}
         </View>
       );
     }
@@ -292,15 +413,25 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   connectionStatus: {
-    backgroundColor: '#FF6B6B',
     paddingVertical: 8,
     paddingHorizontal: 16,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  disconnectedStatus: {
+    backgroundColor: '#FF6B6B',
+  },
+  reconnectingStatus: {
+    backgroundColor: '#FFA726',
   },
   connectionStatusText: {
     color: 'white',
     fontSize: 14,
     fontWeight: '500',
+  },
+  statusIndicator: {
+    marginLeft: 8,
   },
   messagesContainer: {
     backgroundColor: '#f5f5f5',
@@ -312,6 +443,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 44,
     height: 44,
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
   textInput: {
     backgroundColor: 'white',

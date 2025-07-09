@@ -1,9 +1,19 @@
+import React from 'react';
+
+// User role enum for type safety
+export enum UserRole {
+  CUSTOMER = 'customer',
+  OWNER = 'owner',
+  ADMIN = 'admin',
+  MODERATOR = 'moderator'
+}
+
 export interface User {
   id: number;
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  role: UserRole;
 }
 
 export interface AuthResponse {
@@ -22,7 +32,7 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
-  role?: string;
+  role?: UserRole;
 }
 
 // Password validation rules interface
