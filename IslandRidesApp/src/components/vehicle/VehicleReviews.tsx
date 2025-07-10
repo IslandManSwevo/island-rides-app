@@ -33,7 +33,7 @@ export const VehicleReviews: React.FC<VehicleReviewsProps> = ({ vehicleId }) => 
 
   useEffect(() => {
     fetchVehicleReviews();
-  }, []);
+  }, [vehicleId]);
 
   const fetchVehicleReviews = async () => {
     try {
@@ -83,12 +83,12 @@ export const VehicleReviews: React.FC<VehicleReviewsProps> = ({ vehicleId }) => 
         <View style={styles.reviewUserInfo}>
           <View style={styles.userAvatar}>
             <Text style={styles.userInitial}>
-              {review.user.first_name.charAt(0)}
+              {review.user.first_name && review.user.first_name.length > 0 ? review.user.first_name.charAt(0) : '?'}
             </Text>
           </View>
           <View style={styles.userDetails}>
             <Text style={styles.userName}>
-              {review.user.first_name} {review.user.last_name.charAt(0)}.
+              {review.user.first_name} {review.user.last_name && review.user.last_name.length > 0 ? `${review.user.last_name.charAt(0)}.` : ''}
             </Text>
             <Text style={styles.reviewDate}>{formatDate(review.created_at)}</Text>
           </View>

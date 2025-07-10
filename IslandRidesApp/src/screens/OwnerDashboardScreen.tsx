@@ -43,7 +43,15 @@ const timeframeOptions = [
   { label: '1 Year', value: '365' },
 ];
 
-export const OwnerDashboardScreen = ({ navigation }) => {
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type OwnerDashboardScreenNavigationProp = StackNavigationProp<any, 'OwnerDashboardScreen'>;
+
+interface OwnerDashboardScreenProps {
+  navigation: OwnerDashboardScreenNavigationProp;
+}
+
+export const OwnerDashboardScreen = ({ navigation }: OwnerDashboardScreenProps) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [timeframe, setTimeframe] = useState('30');

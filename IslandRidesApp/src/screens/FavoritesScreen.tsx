@@ -17,7 +17,7 @@ import { notificationService } from '../services/notificationService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Vehicle } from '../types';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { RootStackParamList, ROUTES } from '../navigation/routes';
 
 
 interface FavoriteVehicle extends Vehicle {
@@ -96,7 +96,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
     }
 
     // Navigate to comparison screen (if implemented)
-    navigation.navigate('CompareVehicles', { vehicleIds: selectedVehicles });
+    navigation.navigate(ROUTES.COMPARE_VEHICLES, { vehicleIds: selectedVehicles });
   };
 
   const handleVehiclePress = (vehicle: FavoriteVehicle) => {
@@ -107,12 +107,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
     }
   };
 
-  const handleFavoriteToggle = (vehicleId: number, isFavorited: boolean) => {
-    if (!isFavorited) {
-      // Remove from local state when unfavorited
-      setFavorites(prev => prev.filter(fav => fav.id !== vehicleId));
-    }
-  };
+
 
   const renderVehicleItem = ({ item }: { item: FavoriteVehicle }) => (
     <View style={styles.vehicleContainer}>
@@ -135,7 +130,6 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         <VehicleCard
           vehicle={item}
           onPress={() => handleVehiclePress(item)}
-          onFavoriteToggle={handleFavoriteToggle}
         />
         {compareMode && (
           <View style={styles.selectionIndicator}>
@@ -271,7 +265,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     padding: spacing.lg,
     paddingTop: spacing.xl,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -320,14 +314,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   compareActionButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.white + '33',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: colors.white + '4D',
   },
   compareActionButtonDisabled: {
     opacity: 0.5,
@@ -378,7 +372,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: colors.white + 'E6',
     borderWidth: 2,
     borderColor: colors.lightGrey,
     justifyContent: 'center',
@@ -414,7 +408,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.lg,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

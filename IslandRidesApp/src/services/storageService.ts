@@ -81,7 +81,6 @@ export class StorageService {
   async getUserPreferences<T>(): Promise<T | null> {
     return this.get<T>('userPreferences');
   }
-}
 
   private static instance: StorageService;
 

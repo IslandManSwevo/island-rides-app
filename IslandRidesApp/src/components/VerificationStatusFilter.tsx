@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../styles/theme';
-import { VERIFICATION_STATUS_OPTIONS } from '../constants/filters';
+import { VERIFICATION_STATUS_OPTIONS, VerificationStatusOption } from '../constants/filters';
 
 interface VerificationStatusFilterProps {
   verificationStatus: string[];
@@ -14,7 +14,7 @@ const VerificationStatusFilter: React.FC<VerificationStatusFilterProps> = ({ ver
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>Verification Status</Text>
       <View style={styles.optionsGrid}>
-        {VERIFICATION_STATUS_OPTIONS.map(option => (
+        {VERIFICATION_STATUS_OPTIONS.map((option: VerificationStatusOption) => (
           <TouchableOpacity
             key={option.key}
             style={[
@@ -22,6 +22,9 @@ const VerificationStatusFilter: React.FC<VerificationStatusFilterProps> = ({ ver
               verificationStatus.includes(option.key) && styles.verificationChipSelected
             ]}
             onPress={() => onToggleFilter('verificationStatus', option.key)}
+            accessibilityRole="button"
+            accessibilityLabel={`${option.label} verification status filter`}
+            accessibilityState={{ selected: verificationStatus.includes(option.key) }}
           >
             <Ionicons 
               name={option.icon as any} 
@@ -49,7 +52,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: spacing.md,
-    color: colors.dark,
+    color: colors.darkGrey,
   },
   optionsGrid: {
     flexDirection: 'row',
@@ -61,7 +64,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.light,
+    backgroundColor: colors.offWhite,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.lightGrey,
@@ -73,7 +76,7 @@ const styles = StyleSheet.create({
   verificationChipText: {
     marginLeft: spacing.sm,
     fontSize: 14,
-    color: colors.dark,
+    color: colors.darkGrey,
   },
   verificationChipTextSelected: {
     color: colors.white,

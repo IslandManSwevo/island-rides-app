@@ -14,6 +14,7 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import { VehiclePhoto } from '../types';
+import { colors } from '../styles/theme';
 
 interface FullscreenModalProps {
   photos: VehiclePhoto[];
@@ -43,17 +44,19 @@ export const FullscreenModal: React.FC<FullscreenModalProps> = ({ photos, visibl
       animationType="fade"
       onRequestClose={onClose}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="light-content" backgroundColor={colors.black} />
       <SafeAreaView style={styles.fullscreenContainer}>
         <View style={styles.fullscreenHeader}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>✕</Text>
           </TouchableOpacity>
           <Text style={styles.fullscreenTitle}>
-            {getPhotoTypeLabel(photos[currentIndex]?.photoType)}
+            {photos && photos.length > 0 && photos[currentIndex] 
+              ? getPhotoTypeLabel(photos[currentIndex].photoType) 
+              : 'Photo'}
           </Text>
           <Text style={styles.fullscreenCounter}>
-            {currentIndex + 1} / {photos.length}
+            {photos && photos.length > 0 ? `${currentIndex + 1} / ${photos.length}` : '0 / 0'}
           </Text>
         </View>
 
@@ -89,7 +92,7 @@ export const FullscreenModal: React.FC<FullscreenModalProps> = ({ photos, visibl
 const styles = StyleSheet.create({
   fullscreenContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.black,
   },
   fullscreenHeader: {
     flexDirection: 'row',
@@ -97,23 +100,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
   },
   closeButton: {
     padding: 8,
   },
   closeButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 24,
     fontWeight: 'bold',
   },
   fullscreenTitle: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 18,
     fontWeight: 'bold',
   },
   fullscreenCounter: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
   },
   fullscreenPhotoContainer: {
@@ -130,12 +133,12 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: colors.overlay + 'B3',
     padding: 12,
     borderRadius: 8,
   },
   fullscreenCaptionText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     textAlign: 'center',
   },

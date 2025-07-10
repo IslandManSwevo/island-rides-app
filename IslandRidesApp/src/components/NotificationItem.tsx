@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Notification } from '../types';
-import { theme } from '../styles/theme';
+import { colors, borderRadius, elevationStyles } from '../styles/theme';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -43,15 +43,15 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const getBackgroundColor = () => {
     switch (notification.type) {
       case 'success':
-        return theme.colors.success;
+        return colors.success;
       case 'error':
-        return theme.colors.error;
+        return colors.error;
       case 'warning':
-        return theme.colors.warning;
+        return colors.warning;
       case 'info':
-        return theme.colors.info;
+        return colors.info;
       default:
-        return theme.colors.info;
+        return colors.info;
     }
   };
 
@@ -81,21 +81,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
     padding: 12,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderRadius: borderRadius.sm,
+    ...elevationStyles.level3,
   },
   content: {
     flex: 1,
   },
   message: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -104,7 +97,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   closeButtonText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 20,
     fontWeight: 'bold',
   },

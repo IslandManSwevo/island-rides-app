@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Alert } from 'react-native';
+// Alert is already imported in the react-native imports below
 import {
   View,
   Text,
@@ -21,7 +21,6 @@ import {
   IMessage, 
   User as GiftedChatUser, 
   Actions, 
-  Composer, 
   Send, 
   MessageImage,
   Bubble,
@@ -30,12 +29,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
-import { RouteProp, useNavigation } from '@react-navigation/native';
+// Removed unused imports from @react-navigation/native
 import { StackNavigationProp, StackScreenProps } from '@react-navigation/stack';
 
 import { ChatContext, ChatMessage, ConversationResponse } from '../types';
 import { RootStackParamList } from '../navigation/routes';
-import conversationService from '../services/conversationService';
+import { conversationService } from '../services/conversationService';
 import chatService from '../services/chatService';
 import { mediaUploadService } from '../services/mediaUploadService';
 import { AppHeader } from '../components/AppHeader';
@@ -409,7 +408,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
 
         try {
           const imageUrl = await mediaUploadService.uploadImage(imageUri);
-          notificationService.hide();
+          notificationService.clear();
 
           const message: IMessage = {
             _id: Math.round(Math.random() * 1000000),
@@ -478,7 +477,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
 
         try {
           const audioUrl = await mediaUploadService.uploadAudio(uri);
-          notificationService.hide();
+          notificationService.clear();
 
           const message: IMessage = {
             _id: Math.round(Math.random() * 1000000),
@@ -586,15 +585,15 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
           backgroundColor: colors.primary,
         },
         left: {
-          backgroundColor: '#f0f0f0',
+          backgroundColor: colors.offWhite,
         },
       }}
       textStyle={{
         right: {
-          color: '#fff',
+          color: colors.white,
         },
         left: {
-          color: '#000',
+          color: colors.black,
         },
       }}
     />
@@ -693,7 +692,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
           style={styles.imageViewerClose}
           onPress={() => setShowImageViewer(false)}
         >
-          <Ionicons name="close" size={30} color="#fff" />
+          <Ionicons name="close" size={30} color={colors.white} />
         </TouchableOpacity>
         
         {selectedImage && (
@@ -713,7 +712,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+        <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
         <AppHeader 
           title="Loading Chat..." 
           navigation={navigation}
@@ -736,7 +735,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+        <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
         <AppHeader 
           title="Chat Error" 
           navigation={navigation}
@@ -766,7 +765,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
           {connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
         </Text>
         {connectionStatus === 'connecting' && (
-          <ActivityIndicator size="small" color="#fff" style={styles.connectionIndicator} />
+          <ActivityIndicator size="small" color={colors.white} style={styles.connectionIndicator} />
         )}
       </View>
     );
@@ -777,7 +776,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
    */
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
       
       <AppHeader 
         title={conversationData ? 
@@ -831,7 +830,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   loadingContainer: {
     flex: 1,
@@ -871,7 +870,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   retryButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -884,7 +883,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   connectionStatusText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -908,7 +907,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   inputToolbar: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.offWhite,
     paddingVertical: spacing.xs,
@@ -916,11 +915,11 @@ const styles = StyleSheet.create({
   // Quick Replies Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   quickRepliesModal: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderTopLeftRadius: borderRadius.lg,
     borderTopRightRadius: borderRadius.lg,
     maxHeight: '70%',
@@ -956,7 +955,7 @@ const styles = StyleSheet.create({
   // Image Viewer Modal
   imageViewerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: colors.overlay + 'E6',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -988,11 +987,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     marginRight: spacing.sm,
   },
      recordingText: {
-     color: '#fff',
+     color: colors.white,
      fontSize: 14,
      fontWeight: '600',
    },

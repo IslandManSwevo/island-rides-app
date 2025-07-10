@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -70,6 +70,12 @@ export const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'right',
   },
+  recordNotes: {
+    fontSize: 14,
+    color: colors.darkGrey,
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
   emptyText: {
     textAlign: 'center',
     color: colors.lightGrey,
@@ -89,7 +95,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay + '80',
   },
   modalContent: {
     width: '80%',

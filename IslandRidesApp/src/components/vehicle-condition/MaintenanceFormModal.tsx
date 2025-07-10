@@ -2,11 +2,20 @@ import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { styles } from './styles';
 import { parseNumericInput } from '../../utils/inputUtils';
+import { VehicleMaintenance } from '../../types';
+
+// Interface for the maintenance record form data (without auto-generated fields)
+interface MaintenanceFormData {
+  maintenanceType: string;
+  description: string;
+  cost?: number;
+  serviceProvider?: string;
+}
 
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSave: (record: any) => void;
+  onSave: (record: MaintenanceFormData) => void;
 }
 
 export const MaintenanceFormModal: React.FC<Props> = ({ visible, onClose, onSave }) => {
@@ -17,7 +26,7 @@ export const MaintenanceFormModal: React.FC<Props> = ({ visible, onClose, onSave
 
   const handleSave = () => {
     if (!maintenanceType || !description) {
-      Alert.alert('Error', 'Please fill in all fields.');
+      Alert.alert('Error', 'Please fill in the maintenance type and description.');
       return;
     }
     onSave({ maintenanceType, description, cost, serviceProvider });

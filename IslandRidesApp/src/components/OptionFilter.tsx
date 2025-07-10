@@ -14,23 +14,29 @@ const OptionFilter: React.FC<OptionFilterProps> = ({ title, options, selectedOpt
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>{title}</Text>
       <View style={styles.optionsGrid}>
-        {options.map(option => (
-          <TouchableOpacity
-            key={option}
-            style={[
-              styles.optionChip,
-              selectedOptions.includes(option) && styles.optionChipSelected
-            ]}
-            onPress={() => onToggleOption(option)}
-          >
-            <Text style={[
-              styles.optionChipText,
-              selectedOptions.includes(option) && styles.optionChipTextSelected
-            ]}>
-              {option}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {options.map(option => {
+          const isSelected = selectedOptions.includes(option);
+          return (
+            <TouchableOpacity
+              key={option}
+              style={[
+                styles.optionChip,
+                isSelected && styles.optionChipSelected
+              ]}
+              onPress={() => onToggleOption(option)}
+              accessibilityLabel={`${option}, ${isSelected ? 'selected' : 'not selected'}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+            >
+              <Text style={[
+                styles.optionChipText,
+                isSelected && styles.optionChipTextSelected
+              ]}>
+                {option}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );

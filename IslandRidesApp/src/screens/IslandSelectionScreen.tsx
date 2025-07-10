@@ -1,5 +1,4 @@
 import React from 'react';
-import React from 'react';
 import { View, StyleSheet, SafeAreaView, Alert, ScrollView, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../components/AppHeader';
@@ -7,12 +6,12 @@ import { vehicleService } from '../services/vehicleService';
 import { useAuth } from '../context/AuthContext';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Island } from '../types';
-import { ROUTES } from '../navigation/routes';
+import { ROUTES, RootStackParamList } from '../navigation/routes';
 import { islands, IslandOption } from '../constants/islands';
 import { NavigationProp } from '@react-navigation/native';
 
 interface IslandSelectionScreenProps {
-  navigation: NavigationProp<any>;
+  navigation: NavigationProp<RootStackParamList>;
 }
 
 const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({
@@ -186,7 +185,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -206,7 +205,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

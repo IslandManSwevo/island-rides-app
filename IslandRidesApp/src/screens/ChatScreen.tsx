@@ -16,6 +16,7 @@ import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '../types';
 import { getEnvironmentConfig } from '../config/environment';
 import { notificationService } from '../services/notificationService';
+import { colors } from '../styles/theme';
 
 interface ChatScreenProps {
   conversationId: string;
@@ -335,7 +336,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
         <MaterialIcons 
           name="send" 
           size={24} 
-          color={isConnected ? "#007AFF" : "#CCC"} 
+          color={isConnected ? colors.primary : colors.lightGrey} 
         />
       </View>
     </Send>
@@ -344,7 +345,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   // Custom loading component
   const renderLoading = () => (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#007AFF" />
+      <ActivityIndicator size="large" color={colors.primary} />
       <Text style={styles.loadingText}>Loading messages...</Text>
     </View>
   );
@@ -412,18 +413,18 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.sectionBackground,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.sectionBackground,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: colors.grey,
   },
   connectionStatus: {
     paddingVertical: 8,
@@ -433,13 +434,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   disconnectedStatus: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: colors.error,
   },
   reconnectingStatus: {
-    backgroundColor: '#FFA726',
+    backgroundColor: colors.warning,
   },
   connectionStatusText: {
-    color: 'white',
+    color: colors.white,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -447,7 +448,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   messagesContainer: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.sectionBackground,
   },
   sendButton: {
     marginRight: 10,
@@ -461,10 +462,10 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   textInput: {
-    backgroundColor: 'white',
+    backgroundColor: colors.white,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#e1e1e1',
+    borderColor: colors.lightBorder,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginHorizontal: 8,
@@ -473,7 +474,7 @@ const styles = StyleSheet.create({
   },
   quickReply: {
     borderRadius: 15,
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
   },
 });
 

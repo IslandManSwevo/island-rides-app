@@ -113,9 +113,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return '#28a745';
+        return colors.success;
       case 'pending':
-        return '#ffc107';
+        return colors.warning;
       case 'confirmed':
         return colors.primary;
       case 'cancelled':

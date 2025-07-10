@@ -1,4 +1,6 @@
 import { Receipt } from './receiptService';
+import { colors } from '../styles/theme';
+import { colors } from '../styles/theme';
 
 // Helper function to safely format dates with null/undefined checks
 const formatDate = (dateString: string | null | undefined) => {
@@ -16,14 +18,15 @@ const formatDate = (dateString: string | null | undefined) => {
 
 // Helper function to safely format currency with null/undefined checks
 const formatCurrency = (amount: number | null | undefined, currency: string = 'USD') => {
-  if (amount === null || amount === undefined || isNaN(amount)) return '$0.00';
+  const numericAmount = Number(amount);
+  if (isNaN(numericAmount)) return '$0.00';
   try {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency
-    }).format(amount);
-  } catch (error) {
-    return `$${amount.toFixed(2)}`;
+    }).format(numericAmount);
+  } catch (error) {    
+    return `$${numericAmount.toFixed(2)}`;
   }
 };
 
@@ -44,20 +47,20 @@ const getStyles = () => `
         font-family: 'Helvetica Neue', Arial, sans-serif;
         margin: 0;
         padding: 20px;
-        background-color: #f8f9fa;
-        color: #333;
+        background-color: ${colors.sectionBackground};
+        color: ${colors.darkText};
     }
     .receipt-container {
         max-width: 600px;
         margin: 0 auto;
-        background: white;
+        background: ${colors.white};
         border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 10px ${colors.shadow}1A;
         overflow: hidden;
     }
     .header {
-        background: #007AFF;
-        color: white;
+        background: ${colors.primary};
+        color: ${colors.white};
         padding: 30px;
         text-align: center;
     }
@@ -76,7 +79,7 @@ const getStyles = () => `
     .section {
         margin-bottom: 30px;
         padding-bottom: 20px;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid ${colors.lightBorder};
     }
     .section:last-child {
         border-bottom: none;
@@ -85,7 +88,7 @@ const getStyles = () => `
     .section-title {
         font-size: 18px;
         font-weight: 600;
-        color: #007AFF;
+        color: ${colors.primary};
         margin-bottom: 15px;
     }
     .detail-row {
@@ -95,7 +98,7 @@ const getStyles = () => `
         align-items: center;
     }
     .detail-label {
-        color: #666;
+        color: ${colors.grey};
         font-weight: 500;
     }
     .detail-value {
@@ -129,69 +132,105 @@ const getStyles = () => `
     }
     .footer {
         text-align: center;
-        color: #666;
+        color: ${colors.grey};
         font-size: 12px;
         margin-top: 30px;
         padding-top: 20px;
-        border-top: 1px solid #eee;
+        border-top: 1px solid ${colors.lightBorder};
     }
     @media print {
-        body { margin: 0; background: white; }
+        body { margin: 0; background: ${colors.white}; }
         .receipt-container { box-shadow: none; }
     }
 </style>
 `;
 
-const generateHeader = (company: any) => `
+interface CompanyData {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+}
+
+interface BookingData {
+    id: number | string;
+    startDate: string;
+    endDate: string;
+    duration: number;
+    totalAmount: number;
+}
+
+interface VehicleData {
+    make: string;
+    model: string;
+    year: number;
+    location: string;
+    dailyRate: number;
+}
+
+interface CustomerData {
+    firstName: string;
+    lastName: string;
+    email: string;
+}
+
+interface PaymentData {
+    transactionId: string;
+    date: string;
+    method: string;
+    currency: string;
+}
+
+const generateHeader = (company: CompanyData) => `
 <div class="header">
-    <h1>${company.name}</h1>
-    <p>${company.address}</p>
-    <p>${company.phone} • ${company.email}</p>
+    <h1>${escapeHtml(company.name)}</h1>
+    <p>${escapeHtml(company.address)}</p>
+    <p>${escapeHtml(company.phone)} • ${escapeHtml(company.email)}</p>
 </div>
 `;
 
-const generatePaymentDetails = (booking: any, payment: any) => `
+const generatePaymentDetails = (booking: BookingData, payment: PaymentData) => `
 <div class="section">
     <div class="section-title">Payment Receipt</div>
     <div class="detail-row">
         <span class="detail-label">Receipt #:</span>
-        <span class="detail-value">${typeof booking.id === 'number' ? booking.id.toString().padStart(6, '0') : booking.id}</span>
+        <span class="detail-value">${escapeHtml(typeof booking.id === 'number' ? booking.id.toString().padStart(6, '0') : booking.id)}</span>
     </div>
     <div class="detail-row">
         <span class="detail-label">Transaction ID:</span>
-        <span class="detail-value">${payment.transactionId}</span>
+        <span class="detail-value">${escapeHtml(payment.transactionId)}</span>
     </div>
     <div class="detail-row">
         <span class="detail-label">Payment Date:</span>
-        <span class="detail-value">${formatDate(payment.date)}</span>
+        <span class="detail-value">${escapeHtml(formatDate(payment.date))}</span>
     </div>
     <div class="detail-row">
         <span class="detail-label">Payment Method:</span>
-        <span class="detail-value">${payment.method}</span>
+        <span class="detail-value">${escapeHtml(payment.method)}</span>
     </div>
 </div>
 `;
 
-const generateCustomerInfo = (customer: any) => `
+const generateCustomerInfo = (customer: CustomerData) => `
 <div class="section">
     <div class="section-title">Customer Information</div>
     <div class="detail-row">
         <span class="detail-label">Name:</span>
-        <span class="detail-value">${customer.firstName} ${customer.lastName}</span>
+        <span class="detail-value">${escapeHtml(customer.firstName)} ${escapeHtml(customer.lastName)}</span>
     </div>
     <div class="detail-row">
         <span class="detail-label">Email:</span>
-        <span class="detail-value">${customer.email}</span>
+        <span class="detail-value">${escapeHtml(customer.email)}</span>
     </div>
 </div>
 `;
 
-const generateVehicleDetails = (vehicle: any, booking: any, payment: any) => `
+const generateVehicleDetails = (vehicle: VehicleData, booking: BookingData, payment: PaymentData) => `
 <div class="section">
     <div class="section-title">Vehicle & Rental Details</div>
     <div class="vehicle-info">
-        <div class="vehicle-name">${vehicle.make} ${vehicle.model} ${vehicle.year || ''}</div>
-        <div class="vehicle-location">📍 ${vehicle.location}</div>
+        <div class="vehicle-name">${escapeHtml(vehicle.make)} ${escapeHtml(vehicle.model)} ${escapeHtml(vehicle.year?.toString())}</div>
+        <div class="vehicle-location">📍 ${escapeHtml(vehicle.location)}</div>
     </div>
     <br>
     <div class="detail-row">
@@ -213,7 +252,7 @@ const generateVehicleDetails = (vehicle: any, booking: any, payment: any) => `
 </div>
 `;
 
-const generatePaymentSummary = (booking: any, vehicle: any, payment: any) => `
+const generatePaymentSummary = (booking: BookingData, vehicle: VehicleData, payment: PaymentData) => `
 <div class="section">
     <div class="section-title">Payment Summary</div>
     <div class="detail-row">
@@ -229,10 +268,10 @@ const generatePaymentSummary = (booking: any, vehicle: any, payment: any) => `
 </div>
 `;
 
-const generateFooter = (company: any) => `
+const generateFooter = (company: CompanyData) => `
 <div class="footer">
-    <p>Thank you for choosing ${company.name}!</p>
-    <p>Questions? Contact us at ${company.email} or ${company.phone}</p>
+    <p>Thank you for choosing ${escapeHtml(company.name)}!</p>
+    <p>Questions? Contact us at ${escapeHtml(company.email)} or ${escapeHtml(company.phone)}</p>
 </div>
 `;
 

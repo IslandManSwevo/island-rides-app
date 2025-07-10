@@ -4,16 +4,13 @@ export interface PricingConfig {
   insuranceFeePerDay: number;
   serviceFee: number;
   taxRate: number;
-  minRentalDays: number;
-  maxRentalDays: number;
-  minAdvanceBookingHours: number;
 }
 
 export interface BusinessRules {
-  minRentalPeriod: number; // in days
-  maxRentalPeriod: number; // in days
-  minAdvanceBooking: number; // in hours
-  maxAdvanceBooking: number; // in days
+  minRentalDays: number;
+  maxRentalDays: number;
+  minAdvanceBookingHours: number;
+  maxAdvanceBookingHours: number;
 }
 
 class PricingConfigService {
@@ -23,6 +20,7 @@ class PricingConfigService {
   private configCacheExpiry: number = 0;
   private rulesCacheExpiry: number = 0;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private readonly FALLBACK_CACHE_DURATION = 30 * 1000; // 30 seconds for fallback values
 
   private constructor() {}
 
@@ -51,13 +49,10 @@ class PricingConfigService {
       const defaultConfig: PricingConfig = {
         insuranceFeePerDay: 15,
         serviceFee: 25,
-        taxRate: 0.10,
-        minRentalDays: 1,
-        maxRentalDays: 30,
-        minAdvanceBookingHours: 2
+        taxRate: 0.10
       };
       this.cachedConfig = defaultConfig;
-      this.configCacheExpiry = now + this.CACHE_DURATION;
+      this.configCacheExpiry = now + this.FALLBACK_CACHE_DURATION; // Shorter cache for fallback
       return defaultConfig;
     }
   }
@@ -78,13 +73,13 @@ class PricingConfigService {
       console.warn('Failed to fetch business rules from API, using defaults:', error);
       // Fallback to default values if API fails
       const defaultRules: BusinessRules = {
-        minRentalPeriod: 1, // 1 day minimum
-        maxRentalPeriod: 30, // 30 days maximum
-        minAdvanceBooking: 2, // 2 hours minimum advance booking
-        maxAdvanceBooking: 365 // 1 year maximum advance booking
+        minRentalDays: 1,
+        maxRentalDays: 30,
+        minAdvanceBookingHours: 2,
+        maxAdvanceBookingHours: 8760 // 365 days * 24 hours
       };
       this.cachedBusinessRules = defaultRules;
-      this.rulesCacheExpiry = now + this.CACHE_DURATION;
+      this.rulesCacheExpiry = now + this.FALLBACK_CACHE_DURATION; // Shorter cache for fallback
       return defaultRules;
     }
   }

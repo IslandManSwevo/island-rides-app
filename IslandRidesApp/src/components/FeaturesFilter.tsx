@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { colors, spacing } from '../styles/theme';
-import { Feature, FeatureCategory } from '../types';
+import { VehicleFeature, VehicleFeatureCategory } from '../types';
 
 interface FeaturesFilterProps {
   features: number[];
-  availableFeatures: Feature[];
-  featureCategories: FeatureCategory[];
+  availableFeatures: VehicleFeature[];
+  featureCategories: VehicleFeatureCategory[];
   loadingFeatures: boolean;
   onToggleFeature: (featureId: number) => void;
 }
@@ -34,15 +34,22 @@ const FeaturesFilter: React.FC<FeaturesFilterProps> = ({ features, availableFeat
             <View key={category.id} style={styles.featureCategorySection}>
               <Text style={styles.featureCategoryTitle}>{category.name}</Text>
               <View style={styles.featuresGrid}>
-                {categoryFeatures.map(feature => (
-                  <TouchableOpacity
-                    key={feature.id}
-                    style={[
-                      styles.featureChip,
-                      features.includes(feature.id) && styles.featureChipSelected
-                    ]}
-                    onPress={() => onToggleFeature(feature.id)}
-                  >
+                {categoryFeatures.map(feature => {
+                  const isSelected = features.includes(feature.id);
+                  const accessibilityLabel = `${feature.name}${feature.isPremium ? ', premium feature' : ''}${isSelected ? ', selected' : ', not selected'}`;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={feature.id}
+                      style={[
+                        styles.featureChip,
+                        isSelected && styles.featureChipSelected
+                      ]}
+                      onPress={() => onToggleFeature(feature.id)}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={accessibilityLabel}
+                    >
                     <Text style={[
                       styles.featureChipText,
                       features.includes(feature.id) && styles.featureChipTextSelected
@@ -54,8 +61,9 @@ const FeaturesFilter: React.FC<FeaturesFilterProps> = ({ features, availableFeat
                         <Text style={styles.premiumBadgeText}>★</Text>
                       </View>
                     )}
-                  </TouchableOpacity>
-                ))}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           );
@@ -73,7 +81,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: spacing.md,
-    color: colors.dark,
+    color: colors.darkGrey,
   },
   featuresScrollView: {
     maxHeight: 250,
@@ -84,7 +92,7 @@ const styles = StyleSheet.create({
   featureCategoryTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.dark,
+    color: colors.darkGrey,
     marginBottom: spacing.sm,
     paddingLeft: spacing.xs,
   },

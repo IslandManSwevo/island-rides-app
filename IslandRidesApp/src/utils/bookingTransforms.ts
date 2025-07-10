@@ -5,7 +5,11 @@ import { Booking } from '../types';
  * @param booking - The booking object.
  * @returns The transformed booking data for review.
  */
-export const transformBookingForReview = (booking: Booking) => {
+export const transformBookingForReview = (booking: any) => {
+  if (!booking || !booking.vehicle) {
+    return null;
+  }
+
   return {
     id: booking.id,
     vehicle: {
@@ -14,8 +18,8 @@ export const transformBookingForReview = (booking: Booking) => {
       model: booking.vehicle.model,
       year: booking.vehicle.year,
     },
-    startDate: booking.start_date,
-    endDate: booking.end_date,
+    startDate: booking.startDate,
+    endDate: booking.endDate,
     status: booking.status,
   };
 };

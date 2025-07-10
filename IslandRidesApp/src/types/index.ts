@@ -144,6 +144,7 @@ export interface Vehicle {
   available: boolean;
   driveSide: 'LHD' | 'RHD';
   createdAt: string;
+  description?: string;
   
   // Advanced specifications
   engineType?: string;
@@ -169,6 +170,9 @@ export interface Vehicle {
   conditionRating?: number; // 1-5 rating
   lastInspectionDate?: string;
   nextServiceDue?: string;
+  lastMaintenanceDate?: string;
+  nextMaintenanceDate?: string;
+  safetyFeatures?: string[];
   insurancePolicyNumber?: string;
   insuranceExpires?: string;
   verificationStatus?: 'pending' | 'verified' | 'rejected' | 'expired';
@@ -224,6 +228,10 @@ export interface VehicleFeature {
   additionalCost?: number;
   notes?: string;
 }
+
+// Type aliases for backward compatibility and cleaner imports
+export type Feature = VehicleFeature;
+export type FeatureCategory = VehicleFeatureCategory;
 
 export interface VehicleAmenity {
   id: number;

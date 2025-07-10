@@ -4,10 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../styles/theme';
 
 interface DateFilterProps {
-  startDate: Date;
-  endDate: Date;
+  startDate: Date | null;
+  endDate: Date | null;
   onShowDatePicker: (type: 'start' | 'end') => void;
-  formatDate: (date: Date) => string;
+  formatDate: (date: Date | null) => string;
 }
 
 const DateFilter: React.FC<DateFilterProps> = ({ startDate, endDate, onShowDatePicker, formatDate }) => {

@@ -31,7 +31,7 @@ const PHOTO_TYPE_COLORS = {
   exterior: colors.info,      // '#3498DB' - blue for exterior
   interior: colors.success,   // '#2ECC71' - green for interior  
   engine: colors.warning,     // '#F1C40F' - yellow for engine
-  dashboard: '#8B5CF6',       // purple for dashboard (keeping original as theme doesn't have purple)
+  dashboard: colors.secondary,    // purple for dashboard
   trunk: colors.error,        // '#E74C3C' - red for trunk
   default: colors.lightGrey,  // '#6C757D' - grey for default
 } as const;
@@ -193,7 +193,7 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.sectionBackground,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -212,11 +212,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#e5e5e5',
+    backgroundColor: colors.lightBorder,
   },
   placeholderText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.grey,
     fontWeight: '500',
   },
   typeBadge: {
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   typeBadgeText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: '#f59e0b',
+    backgroundColor: colors.star,
     borderRadius: 12,
     width: 24,
     height: 24,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryBadgeText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -253,11 +253,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: colors.overlay + 'B3',
     padding: 12,
   },
   captionText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 14,
     lineHeight: 18,
   },
@@ -265,13 +265,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: colors.overlay,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   counterText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 12,
     fontWeight: '600',
   },

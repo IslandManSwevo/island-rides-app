@@ -86,7 +86,11 @@ export const VehicleSpecs: React.FC<VehicleSpecsProps> = ({ vehicle }) => {
           <Ionicons name="speedometer-outline" size={20} color={colors.primary} />
           <View style={styles.specContent}>
             <Text style={styles.specLabel}>Mileage</Text>
-            <Text style={styles.specValue}>{vehicle.mileage.toLocaleString()} miles</Text>
+            <Text style={styles.specValue}>
+              {typeof vehicle.mileage === 'number' && !isNaN(vehicle.mileage) 
+                ? vehicle.mileage.toLocaleString() 
+                : 'N/A'} miles
+            </Text>
           </View>
         </View>
       )}

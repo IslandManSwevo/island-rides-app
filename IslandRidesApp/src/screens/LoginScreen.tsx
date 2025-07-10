@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import * as yup from 'yup';
 import { notificationService } from '../services/notificationService';
-import { Button } from '../components/Button';
+import Button from '../components/Button';
 import { Input } from '../components/Input';
 import { useAuth } from '../context/AuthContext';
 import { colors, typography, spacing } from '../styles/theme';
@@ -128,13 +128,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
   },
   errorContainer: {
-    backgroundColor: '#ffebee',
+    backgroundColor: colors.error + '20',
     padding: spacing.md,
     borderRadius: 8,
     marginBottom: spacing.md,
   },
   errorText: {
-    color: '#c62828',
+    color: colors.error,
     textAlign: 'center',
     fontSize: 14,
   },

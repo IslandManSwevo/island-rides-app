@@ -1,20 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { styles } from '../styles';
 import { NewGoal } from '../types';
+import { goalTypes } from '../../../constants/goalTypes';
 
 interface Props {
   visible: boolean;
   onClose: () => void;
   onCreate: (goal: NewGoal) => void;
 }
-
-const goalTypes = [
-  { label: 'Monthly Revenue', value: 'monthly_revenue' },
-  { label: 'Occupancy Rate', value: 'occupancy_rate' },
-  { label: 'Average Rating', value: 'rating_target' },
-  { label: 'Booking Count', value: 'booking_count' },
-];
 
 const GoalModal: React.FC<Props> = ({ visible, onClose, onCreate }) => {
   const [newGoal, setNewGoal] = useState<NewGoal>({
@@ -25,7 +19,7 @@ const GoalModal: React.FC<Props> = ({ visible, onClose, onCreate }) => {
 
   const handleCreate = () => {
     if (!newGoal.targetValue) {
-      alert('Please enter a target value');
+      Alert.alert('Error', 'Please enter a target value');
       return;
     }
     onCreate(newGoal);
@@ -83,7 +77,7 @@ const GoalModal: React.FC<Props> = ({ visible, onClose, onCreate }) => {
                   styles.pickerOption,
                   newGoal.targetPeriod === period && styles.pickerOptionSelected,
                 ]}
-                onPress={() => setNewGoal({ ...newGoal, targetPeriod: period as any })}
+                onPress={() => setNewGoal({ ...newGoal, targetPeriod: period as 'monthly' | 'quarterly' | 'yearly' })}
               >
                 <Text
                   style={[

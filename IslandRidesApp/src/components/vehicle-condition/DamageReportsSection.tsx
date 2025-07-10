@@ -20,9 +20,9 @@ const formatDate = (dateString?: string) => {
 
 const getSeverityColor = (severity: string) => {
   switch (severity) {
-    case 'minor': return '#10B981';
-    case 'moderate': return '#F59E0B';
-    case 'major': return '#EF4444';
+    case 'minor': return colors.verified;
+    case 'moderate': return colors.warning;
+    case 'major': return colors.error;
     default: return colors.lightGrey;
   }
 };

@@ -8,6 +8,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 
+// Helper function to check if cleaning is due (more than 7 days since last cleaned)
+const isCleaningDue = (lastCleaned: string | null): boolean => {
+  if (!lastCleaned) return false;
+  const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+  return new Date().getTime() - new Date(lastCleaned).getTime() > sevenDaysInMs;
+};
+
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -157,8 +164,7 @@ export const FleetVehicleCard: React.FC<FleetVehicleCardProps> = ({
             <Text style={styles.alertText}>Insurance Expiring</Text>
           </View>
         )}
-        {vehicle.lastCleaned && 
-         new Date().getTime() - new Date(vehicle.lastCleaned).getTime() > 7 * 24 * 60 * 60 * 1000 && (
+        {isCleaningDue(vehicle.lastCleaned) && (
           <View style={[styles.alert, { backgroundColor: colors.info }]}>
             <Ionicons name="sparkles" size={12} color={colors.white} />
             <Text style={styles.alertText}>Cleaning Due</Text>

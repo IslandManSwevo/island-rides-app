@@ -42,98 +42,106 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
   getPhotoTypeColor,
   getPhotoTypeIcon,
 }) => {
-  const renderPhoto = (photo: PhotoUpload) => (
+  const renderPhotoItem = (
+    photo: PhotoUpload | VehiclePhoto,
+    config: {
+      imageUri: string;
+      photoType: string;
+      showEditActions?: boolean;
+      showCaption?: boolean;
+      caption?: string;
+      isUploading?: boolean;
+      hasError?: boolean;
+      onSetPrimary: (id: string | number) => void;
+      onRemove: (id: string | number) => void;
+      onEditType?: (id: string) => void;
+      onEditCaption?: (id: string) => void;
+    }
+  ) => (
     <View key={photo.id} style={styles.photoContainer}>
-      <Image source={{ uri: photo.uri }} style={styles.photoImage} />
+      <Image source={{ uri: config.imageUri }} style={styles.photoImage} />
       
-      <View style={[styles.typeBadge, { backgroundColor: getPhotoTypeColor(photo.type) }]}>
-        <Ionicons name={getPhotoTypeIcon(photo.type)} size={12} color={colors.white} />
+      <View style={[styles.typeBadge, { backgroundColor: getPhotoTypeColor(config.photoType) }]}>
+        <Ionicons name={getPhotoTypeIcon(config.photoType)} size={12} color={colors.white} />
       </View>
 
       {photo.isPrimary && (
         <View style={styles.primaryBadge}>
-          <Ionicons name="star" size={12} color="#F59E0B" />
+          <Ionicons name="star" size={12} color={colors.star} />
         </View>
       )}
 
-      {photo.isUploading && (
+      {config.isUploading && (
         <View style={styles.uploadOverlay}>
           <ActivityIndicator size="small" color={colors.white} />
           <Text style={styles.uploadText}>Uploading...</Text>
         </View>
       )}
 
-      {photo.error && (
+      {config.hasError && (
         <View style={styles.errorOverlay}>
-          <Ionicons name="warning" size={16} color="#EF4444" />
+          <Ionicons name="warning" size={16} color={colors.error} />
         </View>
       )}
 
-      <View style={styles.photoActions}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => onEditType(photo.id)}>
-          <Ionicons name="pricetag-outline" size={16} color={colors.white} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton} onPress={() => onEditCaption(photo.id)}>
-          <Ionicons name="text-outline" size={16} color={colors.white} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, photo.isPrimary && styles.actionButtonActive]}
-          onPress={() => onSetPrimary(photo.id)}
-        >
-          <Ionicons name="star-outline" size={16} color={colors.white} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.removeButton]}
-          onPress={() => onRemovePhoto(photo.id)}
-        >
-          <Ionicons name="trash-outline" size={16} color={colors.white} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderServerPhoto = (photo: VehiclePhoto) => (
-    <View key={photo.id} style={styles.photoContainer}>
-      <Image source={{ uri: photo.photoUrl }} style={styles.photoImage} />
-      
-      <View style={[styles.typeBadge, { backgroundColor: getPhotoTypeColor(photo.photoType) }]}>
-        <Ionicons name={getPhotoTypeIcon(photo.photoType)} size={12} color={colors.white} />
-      </View>
-
-      {photo.isPrimary && (
-        <View style={styles.primaryBadge}>
-          <Ionicons name="star" size={12} color="#F59E0B" />
-        </View>
-      )}
-
-      {photo.caption && (
+      {config.showCaption && config.caption && (
         <View style={styles.captionOverlay}>
           <Text style={styles.captionText} numberOfLines={2}>
-            {photo.caption}
+            {config.caption}
           </Text>
         </View>
       )}
 
       <View style={styles.photoActions}>
+        {config.showEditActions && config.onEditType && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => config.onEditType!(String(photo.id))}>
+            <Ionicons name="pricetag-outline" size={16} color={colors.white} />
+          </TouchableOpacity>
+        )}
+
+        {config.showEditActions && config.onEditCaption && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => config.onEditCaption!(String(photo.id))}>
+            <Ionicons name="text-outline" size={16} color={colors.white} />
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           style={[styles.actionButton, photo.isPrimary && styles.actionButtonActive]}
-          onPress={() => onSetServerPrimary(photo.id)}
+          onPress={() => config.onSetPrimary(photo.id)}
         >
           <Ionicons name="star-outline" size={16} color={colors.white} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.actionButton, styles.removeButton]}
-          onPress={() => onRemoveServerPhoto(photo.id)}
+          onPress={() => config.onRemove(photo.id)}
         >
           <Ionicons name="trash-outline" size={16} color={colors.white} />
         </TouchableOpacity>
       </View>
     </View>
   );
+
+  const renderPhoto = (photo: PhotoUpload) => renderPhotoItem(photo, {
+    imageUri: photo.uri,
+    photoType: photo.type,
+    showEditActions: true,
+    isUploading: photo.isUploading,
+    hasError: !!photo.error,
+    onSetPrimary: (id) => onSetPrimary(id as string),
+    onRemove: (id) => onRemovePhoto(id as string),
+    onEditType: onEditType,
+    onEditCaption: onEditCaption,
+  });
+
+  const renderServerPhoto = (photo: VehiclePhoto) => renderPhotoItem(photo, {
+    imageUri: photo.photoUrl,
+    photoType: photo.photoType,
+    showCaption: true,
+    caption: photo.caption,
+    onSetPrimary: (id) => onSetServerPrimary(id as number),
+    onRemove: (id) => onRemoveServerPhoto(id as number),
+  });
 
   return (
     <ScrollView style={styles.photosContainer} showsVerticalScrollIndicator={false}>
@@ -190,11 +198,11 @@ const styles = StyleSheet.create({
     right: spacing.sm,
     padding: spacing.xs,
     borderRadius: borderRadius.full,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
   },
   uploadOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -209,7 +217,7 @@ const styles = StyleSheet.create({
     right: spacing.sm,
     padding: spacing.xs,
     borderRadius: borderRadius.full,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
   },
   photoActions: {
     position: 'absolute',
@@ -218,24 +226,26 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: colors.overlay + '66',
     paddingVertical: spacing.sm,
   },
   actionButton: {
     padding: spacing.xs,
   },
   actionButtonActive: {
-    color: colors.primary,
+    backgroundColor: colors.primary,
+    borderRadius: 4,
   },
   removeButton: {
-    color: colors.danger,
+    backgroundColor: colors.error,
+    borderRadius: 4,
   },
   captionOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
     padding: spacing.sm,
   },
   captionText: {

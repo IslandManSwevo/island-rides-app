@@ -8,25 +8,17 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../styles/theme';
+import { PhotoType, photoTypeOptions } from '../../constants/photoTypes';
 
 interface PhotoTypeModalProps {
   visible: boolean;
   onClose: () => void;
-  onSelectType: (type: 'exterior' | 'interior' | 'engine' | 'dashboard' | 'trunk' | 'other') => void;
-  allowedTypes: ('exterior' | 'interior' | 'engine' | 'dashboard' | 'trunk' | 'other')[];
+  onSelectType: (type: PhotoType) => void;
+  allowedTypes: PhotoType[];
 }
 
-const photoTypeOptions = [
-  { key: 'exterior', label: 'Exterior', icon: 'car-outline', color: '#3B82F6' },
-  { key: 'interior', label: 'Interior', icon: 'car-seat', color: '#10B981' },
-  { key: 'engine', label: 'Engine', icon: 'hardware-chip-outline', color: '#F59E0B' },
-  { key: 'dashboard', label: 'Dashboard', icon: 'speedometer-outline', color: '#8B5CF6' },
-  { key: 'trunk', label: 'Trunk', icon: 'cube-outline', color: '#EF4444' },
-  { key: 'other', label: 'Other', icon: 'image-outline', color: '#6B7280' }
-];
-
 export const PhotoTypeModal: React.FC<PhotoTypeModalProps> = ({ visible, onClose, onSelectType, allowedTypes }) => {
-  const filteredOptions = photoTypeOptions.filter(option => allowedTypes.includes(option.key as any));
+  const filteredOptions = photoTypeOptions.filter(option => allowedTypes.includes(option.key));
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -38,9 +30,9 @@ export const PhotoTypeModal: React.FC<PhotoTypeModalProps> = ({ visible, onClose
             <TouchableOpacity
               key={option.key}
               style={styles.typeOption}
-              onPress={() => onSelectType(option.key as any)}
+              onPress={() => onSelectType(option.key)}
             >
-              <Ionicons name={option.icon as any} size={20} color={option.color} />
+              <Ionicons name={option.icon} size={20} color={option.color} />
               <Text style={styles.typeOptionText}>{option.label}</Text>
             </TouchableOpacity>
           ))}
@@ -61,7 +53,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
   },
   modal: {
     backgroundColor: colors.white,
@@ -70,7 +62,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   modalTitle: {
-    ...typography.heading2,
+    ...typography.heading1,
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
@@ -91,7 +83,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButtonText: {
-    ...typography.button,
+    ...typography.body,
     color: colors.primary,
   },
 });

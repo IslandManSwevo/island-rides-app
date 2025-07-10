@@ -38,10 +38,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: colors.lightGrey,
     marginHorizontal: 4,
   },
   activeIndicator: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
 });

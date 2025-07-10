@@ -10,10 +10,42 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '../styles/theme';
 
-const AddExpenseModal = ({ 
-  showExpenseModal, 
-  setShowExpenseModal, 
-  newExpense, 
+interface Expense {
+  vehicleId: number;
+  expenseType: string;
+  amount: number | null;
+  description: string;
+  expenseDate: string;
+  taxDeductible: boolean;
+}
+
+interface Vehicle {
+  id: number;
+  make: string;
+  model: string;
+  year: number;
+}
+
+interface ExpenseType {
+  label: string;
+  value: string;
+}
+
+interface AddExpenseModalProps {
+  showExpenseModal: boolean;
+  setShowExpenseModal: (value: boolean) => void;
+  newExpense: Expense;
+  setNewExpense: React.Dispatch<React.SetStateAction<Expense>>;
+  vehicles: Vehicle[];
+  expenseTypes: ExpenseType[];
+  handleAddExpense: () => void;
+  styles: any;
+}
+
+const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ 
+  showExpenseModal,
+  setShowExpenseModal,
+  newExpense,
   setNewExpense, 
   vehicles, 
   expenseTypes, 
@@ -72,8 +104,17 @@ const AddExpenseModal = ({
           <Text style={styles.inputLabel}>Amount</Text>
           <TextInput
             style={styles.input}
-            value={newExpense.amount.toString()}
-            onChangeText={(text) => setNewExpense({ ...newExpense, amount: parseFloat(text) || 0 })}
+            value={newExpense.amount !== null ? String(newExpense.amount) : ''}
+            onChangeText={(text) => {
+              if (text.trim() === '') {
+                setNewExpense({ ...newExpense, amount: null });
+                return;
+              }
+              const num = Number(text);
+              if (!isNaN(num)) {
+                setNewExpense({ ...newExpense, amount: num });
+              }
+            }}
             placeholder="Enter amount"
             keyboardType="numeric"
           />

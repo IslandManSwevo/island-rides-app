@@ -5,7 +5,7 @@ import { colors, spacing } from '../styles/theme';
 
 interface SeatingCapacityFilterProps {
   minSeatingCapacity: number;
-  onUpdateFilter: (key: string, value: any) => void;
+  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
 }
 
 const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = ({ minSeatingCapacity, onUpdateFilter }) => {
@@ -18,6 +18,8 @@ const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = ({ minSeatin
         <TouchableOpacity
           style={styles.sliderButton}
           onPress={() => onUpdateFilter('minSeatingCapacity', Math.max(1, minSeatingCapacity - 1))}
+          accessibilityRole="button"
+          accessibilityLabel="Decrease seating capacity"
         >
           <Ionicons name="remove" size={16} color={colors.primary} />
         </TouchableOpacity>
@@ -29,6 +31,8 @@ const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = ({ minSeatin
         <TouchableOpacity
           style={styles.sliderButton}
           onPress={() => onUpdateFilter('minSeatingCapacity', Math.min(8, minSeatingCapacity + 1))}
+          accessibilityRole="button"
+          accessibilityLabel="Increase seating capacity"
         >
           <Ionicons name="add" size={16} color={colors.primary} />
         </TouchableOpacity>
@@ -45,7 +49,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: spacing.md,
-    color: colors.dark,
+    color: colors.darkGrey,
   },
   sliderContainer: {
     flexDirection: 'row',
@@ -53,7 +57,7 @@ const styles = StyleSheet.create({
   },
   sliderButton: {
     padding: spacing.sm,
-    backgroundColor: colors.light,
+    backgroundColor: colors.white,
     borderRadius: 20,
   },
   sliderTrack: {

@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { colors, typography, spacing } from '../styles/theme';
 import { VehiclePhoto } from '../types';
+import { photoTypeOptions, PhotoType } from '../constants/photoTypes';
 import { usePhotoUpload } from './VehiclePhotoUpload/usePhotoUpload';
 import { PhotoGrid } from './VehiclePhotoUpload/PhotoGrid';
 import { PhotoTypeModal } from './VehiclePhotoUpload/PhotoTypeModal';
@@ -18,17 +19,8 @@ interface VehiclePhotoUploadProps {
   existingPhotos?: VehiclePhoto[];
   onPhotosUpdated?: (photos: VehiclePhoto[]) => void;
   maxPhotos?: number;
-  allowedTypes?: ('exterior' | 'interior' | 'engine' | 'dashboard' | 'trunk' | 'other')[];
+  allowedTypes?: PhotoType[];
 }
-
-const photoTypeOptions = [
-    { key: 'exterior', label: 'Exterior', icon: 'car-outline', color: '#3B82F6' },
-    { key: 'interior', label: 'Interior', icon: 'car-seat', color: '#10B981' },
-    { key: 'engine', label: 'Engine', icon: 'hardware-chip-outline', color: '#F59E0B' },
-    { key: 'dashboard', label: 'Dashboard', icon: 'speedometer-outline', color: '#8B5CF6' },
-    { key: 'trunk', label: 'Trunk', icon: 'cube-outline', color: '#EF4444' },
-    { key: 'other', label: 'Other', icon: 'image-outline', color: '#6B7280' }
-  ];
 
 export const VehiclePhotoUpload: React.FC<VehiclePhotoUploadProps> = ({
   vehicleId,
@@ -74,7 +66,7 @@ export const VehiclePhotoUpload: React.FC<VehiclePhotoUploadProps> = ({
     setShowTypeModal(true);
   };
 
-  const handleSelectType = (type: 'exterior' | 'interior' | 'engine' | 'dashboard' | 'trunk' | 'other') => {
+  const handleSelectType = (type: PhotoType) => {
     if (selectedPhotoForType) {
       setPhotoType(selectedPhotoForType, type);
     }
@@ -96,7 +88,7 @@ export const VehiclePhotoUpload: React.FC<VehiclePhotoUploadProps> = ({
   };
 
   const getPhotoTypeColor = (type: string) => {
-    return photoTypeOptions.find(option => option.key === type)?.color || '#6B7280';
+    return photoTypeOptions.find(option => option.key === type)?.color || colors.grey;
   };
 
   const getPhotoTypeIcon = (type: string) => {

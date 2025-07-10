@@ -2,7 +2,8 @@ import { BaseService } from './base/BaseService';
 import { apiService } from './apiService';
 import { 
   VehicleFeature, 
-  VehicleFeatureCategory
+  VehicleFeatureCategory,
+  Vehicle
 } from '../types';
 
 interface VehicleFeatureResponse {
@@ -47,6 +48,49 @@ class VehicleFeatureService extends BaseService {
       acc[categoryName].push(feature);
       return acc;
     }, {} as Record<string, VehicleFeature[]>);
+  }
+
+  // Vehicle analysis methods
+  isPremiumVehicle(vehicle: Vehicle): boolean {
+    // Check if vehicle has premium features
+    const hasPremiumFeatures = vehicle.features?.some(feature => feature.isPremium) || false;
+    
+    // Check if vehicle has premium characteristics
+    const isPremiumType = vehicle.vehicleType === 'convertible' || vehicle.vehicleType === 'coupe';
+    const isHighEndBrand = ['BMW', 'Mercedes', 'Audi', 'Lexus', 'Porsche', 'Tesla'].includes(vehicle.make);
+    const isHighDailyRate = vehicle.dailyRate > 150;
+    const isNewVehicle = vehicle.year >= new Date().getFullYear() - 3;
+    
+    return hasPremiumFeatures || isPremiumType || isHighEndBrand || (isHighDailyRate && isNewVehicle);
+  }
+
+  getVehicleConditionText(conditionRating: number): string {
+    if (conditionRating >= 4.5) return 'Excellent';
+    if (conditionRating >= 4.0) return 'Very Good';
+    if (conditionRating >= 3.5) return 'Good';
+    if (conditionRating >= 3.0) return 'Fair';
+    if (conditionRating >= 2.0) return 'Poor';
+    return 'Very Poor';
+  }
+
+  getVerificationStatusText(verificationStatus?: string): string {
+    switch (verificationStatus) {
+      case 'verified': return 'Verified';
+      case 'pending': return 'Pending Verification';
+      case 'rejected': return 'Verification Failed';
+      case 'expired': return 'Verification Expired';
+      default: return 'Not Verified';
+    }
+  }
+
+  getVerificationStatusColor(verificationStatus?: string): string {
+    switch (verificationStatus) {
+      case 'verified': return '#4CAF50'; // Green
+      case 'pending': return '#FF9800'; // Orange
+      case 'rejected': return '#F44336'; // Red
+      case 'expired': return '#9E9E9E'; // Grey
+      default: return '#9E9E9E'; // Grey
+    }
   }
 }
 

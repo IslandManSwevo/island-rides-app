@@ -31,7 +31,7 @@ export const ConditionRatingSection: React.FC<Props> = ({ rating, onUpdateRating
             <Ionicons
               name={star <= rating ? 'star' : 'star-outline'}
               size={28}
-              color={star <= rating ? '#F59E0B' : colors.lightGrey}
+              color={star <= rating ? colors.star : colors.lightGrey}
             />
           </TouchableOpacity>
         ))}

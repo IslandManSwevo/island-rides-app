@@ -52,7 +52,7 @@ interface Expense {
   id?: number;
   vehicleId: number;
   expenseType: string;
-  amount: number;
+  amount: number | null;
   description: string;
   expenseDate: string;
   receiptUrl?: string;
@@ -79,7 +79,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
   const [newExpense, setNewExpense] = useState<Expense>({
     vehicleId: 0,
     expenseType: 'maintenance',
-    amount: 0,
+    amount: null,
     description: '',
     expenseDate: new Date().toISOString().split('T')[0],
     taxDeductible: false,
@@ -114,7 +114,13 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
     try {
       setLoading(true);
       
-      const response = await apiService.get(
+      interface FinancialDataResponse {
+        success: boolean;
+        data: FinancialData;
+        message?: string;
+      }
+      
+      const response = await apiService.get<FinancialDataResponse>(
         `/owner/reports/financial?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`
       );
       
@@ -133,7 +139,18 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
 
   const loadVehicles = async () => {
     try {
-      const response = await apiService.get('/owner/vehicles/performance');
+      interface VehiclesResponse {
+        success: boolean;
+        data: Array<{
+          id: number;
+          make: string;
+          model: string;
+          year: number;
+        }>;
+        message?: string;
+      }
+      
+      const response = await apiService.get<VehiclesResponse>('/owner/vehicles/performance');
       if (response.success) {
         setVehicles(response.data.map((v: any) => ({
           id: v.id,
@@ -155,12 +172,17 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
 
   const handleAddExpense = async () => {
     try {
-      if (!newExpense.vehicleId || !newExpense.amount || !newExpense.description) {
+      if (!newExpense.vehicleId || newExpense.amount === null || newExpense.amount <= 0 || !newExpense.description) {
         Alert.alert('Error', 'Please fill in all required fields');
         return;
       }
 
-      const response = await apiService.post(
+      interface AddExpenseResponse {
+        success: boolean;
+        message?: string;
+      }
+
+      const response = await apiService.post<AddExpenseResponse>(
         `/owner/vehicles/${newExpense.vehicleId}/expenses`,
         newExpense
       );
@@ -170,7 +192,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
         setNewExpense({
           vehicleId: 0,
           expenseType: 'maintenance',
-          amount: 0,
+          amount: null,
           description: '',
           expenseDate: new Date().toISOString().split('T')[0],
           taxDeductible: false,
@@ -193,19 +215,16 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
 
   const getExpenseTypeColor = (type: string) => {
     const colorsMap: { [key: string]: string } = {
-      maintenance: '#FF6B6B',
-      insurance: '#4ECDC4',
-      fuel: '#45B7D1',
-      cleaning: '#96CEB4',
-      repairs: '#FFEAA7',
-      registration: '#DDA0DD',
-      other: '#A8A8A8',
+      maintenance: colors.error,
+    insurance: colors.info,
+    fuel: colors.info,
+    cleaning: colors.success,
+    repairs: colors.warning,
+    registration: colors.tertiary,
+    other: colors.grey,
     };
     return colorsMap[type] || colors.lightGrey;
   };
@@ -494,9 +513,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sectionTitle: {
-    ...typography.heading2,
-    color: colors.black,
-  },
+      ...typography.heading2,
+      color: colors.black,
+    },
   table: {
     gap: spacing.xs,
   },
@@ -562,7 +581,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay + '80',
     justifyContent: 'center',
     padding: spacing.lg,
   },
@@ -573,9 +592,9 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
   },
   modalTitle: {
-    ...typography.heading2,
-    color: colors.black,
-    marginBottom: spacing.lg,
+      ...typography.heading2,
+      color: colors.black,
+      marginBottom: spacing.lg,
   },
   inputLabel: {
     ...typography.body,

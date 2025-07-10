@@ -5,14 +5,17 @@ import { colors, spacing } from '../styles/theme';
 
 interface ConditionRatingFilterProps {
   minConditionRating: number;
-  onUpdateFilter: (key: string, value: any) => void;
+  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
 }
 
 const ConditionRatingFilter: React.FC<ConditionRatingFilterProps> = ({ minConditionRating, onUpdateFilter }) => {
+  // Clamp minConditionRating to valid range (1-5)
+  const validatedRating = Math.max(1, Math.min(5, minConditionRating));
+  
   return (
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>
-        Minimum Condition Rating: {minConditionRating} star{minConditionRating !== 1 ? 's' : ''}
+        Minimum Condition Rating: {validatedRating} star{validatedRating !== 1 ? 's' : ''}
       </Text>
       <View style={styles.ratingContainer}>
         {[1, 2, 3, 4, 5].map(rating => (
@@ -20,11 +23,15 @@ const ConditionRatingFilter: React.FC<ConditionRatingFilterProps> = ({ minCondit
             key={rating}
             style={styles.starButton}
             onPress={() => onUpdateFilter('minConditionRating', rating)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={`Set minimum condition rating to ${rating} star${rating !== 1 ? 's' : ''}`}
           >
             <Ionicons
-              name={rating <= minConditionRating ? 'star' : 'star-outline'}
+              name={rating <= validatedRating ? 'star' : 'star-outline'}
               size={24}
-              color={rating <= minConditionRating ? '#F59E0B' : colors.lightGrey}
+              color={rating <= validatedRating ? colors.warning : colors.lightGrey}
+              accessible={false}
             />
           </TouchableOpacity>
         ))}

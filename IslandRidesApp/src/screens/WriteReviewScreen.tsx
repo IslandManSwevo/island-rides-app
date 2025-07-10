@@ -7,7 +7,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Image,
   SafeAreaView
 } from 'react-native';
@@ -21,6 +20,10 @@ import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
 type WriteReviewScreenProps = StackScreenProps<RootStackParamList, typeof ROUTES.WRITE_REVIEW>;
+
+interface UploadResponse {
+  url: string;
+}
 
 export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({ navigation, route }) => {
   const { booking } = route.params;
@@ -79,11 +82,7 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({ navigation
       type: `image/${fileType}`,
     } as any);
 
-    const response = await apiService.post('/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await apiService.uploadFile<UploadResponse>('/upload', formData);
 
     return response.url; // Assuming the API returns the URL of the uploaded photo
   };
@@ -309,7 +308,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,

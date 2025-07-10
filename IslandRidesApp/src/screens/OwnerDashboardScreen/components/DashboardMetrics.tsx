@@ -1,25 +1,14 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View } from 'react-native';
 import { styles } from '../styles';
 import { colors } from '../../../styles/theme';
 import { DashboardOverview } from '../types';
 import { formatCurrency, formatPercentage } from '../../../utils/formatters';
+import MetricCard from './MetricCard';
 
 interface Props {
   overview: DashboardOverview;
 }
-
-const MetricCard: React.FC<{ title: string; value: string; icon: any; color: string; subtitle?: string }> = ({ title, value, icon, color, subtitle }) => (
-  <View style={[styles.metricCard, { borderLeftColor: color }]}>
-    <View style={styles.metricHeader}>
-      <Text style={styles.metricTitle}>{title}</Text>
-      <Ionicons name={icon} size={20} color={color} />
-    </View>
-    <Text style={styles.metricValue}>{value}</Text>
-    {subtitle && <Text style={styles.metricSubtitle}>{subtitle}</Text>}
-  </View>
-);
 
 const DashboardMetrics: React.FC<Props> = ({ overview }) => {
   return (
@@ -53,7 +42,7 @@ const DashboardMetrics: React.FC<Props> = ({ overview }) => {
       />
       <MetricCard
         title="Average Rating"
-        value={`${overview.averageRating.toFixed(1)}`}
+        value={`${overview.averageRating != null ? overview.averageRating.toFixed(1) : '0.0'}`}
         icon="star-outline"
         color={colors.success}
         subtitle={`${overview.totalReviews} reviews`}

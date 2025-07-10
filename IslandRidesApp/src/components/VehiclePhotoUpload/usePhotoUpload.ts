@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { vehicleFeatureService } from '../../services/vehicleFeatureService';
+import { VehiclePhotoService } from '../../services/VehiclePhotoService';
 import { notificationService } from '../../services/notificationService';
 import { VehiclePhoto } from '../../types';
 
@@ -35,9 +35,12 @@ export const usePhotoUpload = ({
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    requestPermissions();
-    loadExistingPhotos();
-  }, []);
+    const initializePhotos = async () => {
+      await requestPermissions();
+      await loadExistingPhotos();
+    };
+    initializePhotos();
+  });
 
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -52,9 +55,10 @@ export const usePhotoUpload = ({
 
   const loadExistingPhotos = useCallback(async () => {
     try {
-      const vehiclePhotos = await vehicleFeatureService.getVehiclePhotos(vehicleId);
-      setServerPhotos(vehiclePhotos);
-      onPhotosUpdated?.(vehiclePhotos);
+      const vehiclePhotos = await VehiclePhotoService.getVehiclePhotos(vehicleId);
+      const photos = vehiclePhotos ?? [];
+      setServerPhotos(photos);
+      onPhotosUpdated?.(photos);
     } catch (error) {
       console.error('Failed to load existing photos:', error);
       notificationService.error('Failed to load existing photos');
@@ -171,7 +175,7 @@ export const usePhotoUpload = ({
           style: 'destructive',
           onPress: async () => {
             try {
-              await vehicleFeatureService.deleteVehiclePhoto(vehicleId, photoId);
+              await VehiclePhotoService.deleteVehiclePhoto(vehicleId, photoId);
               setServerPhotos(prev => prev.filter(p => p.id !== photoId));
               notificationService.success('Photo removed successfully');
               await loadExistingPhotos();
@@ -199,7 +203,7 @@ export const usePhotoUpload = ({
 
   const setServerPrimaryPhoto = async (photoId: number) => {
     try {
-      await vehicleFeatureService.setPrimaryPhoto(vehicleId, photoId);
+      await VehiclePhotoService.setPrimaryPhoto(vehicleId, photoId);
       await loadExistingPhotos();
       notificationService.success('Primary photo updated');
     } catch (error) {
@@ -248,7 +252,7 @@ export const usePhotoUpload = ({
       formData.append('caption', photo.caption);
       formData.append('isPrimary', photo.isPrimary.toString());
 
-      await vehicleFeatureService.uploadVehiclePhoto(vehicleId, formData);
+      await VehiclePhotoService.uploadVehiclePhoto(vehicleId, formData);
 
       setPhotos(prev => prev.map(p => 
         p.id === photo.id ? { ...p, isUploading: false, uploadProgress: 100 } : p

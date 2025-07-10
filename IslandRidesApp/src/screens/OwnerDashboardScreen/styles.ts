@@ -138,7 +138,7 @@ export const styles = StyleSheet.create({
   goalCard: {
     marginBottom: 12,
     padding: 12,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: colors.sectionBackground,
     borderRadius: 6,
   },
   goalHeader: {
@@ -223,7 +223,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: colors.offWhite,
     width: '30%',
   },
   actionText: {
@@ -233,7 +233,7 @@ export const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay + '80',
     justifyContent: 'center',
     alignItems: 'center',
   },

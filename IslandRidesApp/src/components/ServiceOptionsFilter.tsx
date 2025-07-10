@@ -6,7 +6,7 @@ import { colors, spacing } from '../styles/theme';
 interface ServiceOptionsFilterProps {
   deliveryAvailable: boolean;
   airportPickup: boolean;
-  onUpdateFilter: (key: string, value: any) => void;
+  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
 }
 
 const ServiceOptionsFilter: React.FC<ServiceOptionsFilterProps> = ({ deliveryAvailable, airportPickup, onUpdateFilter }) => {
@@ -20,6 +20,8 @@ const ServiceOptionsFilter: React.FC<ServiceOptionsFilterProps> = ({ deliveryAva
             deliveryAvailable && styles.serviceOptionSelected
           ]}
           onPress={() => onUpdateFilter('deliveryAvailable', !deliveryAvailable)}
+          accessibilityRole="button"
+          accessibilityLabel="Delivery Available option"
         >
           <Ionicons 
             name="car-outline" 
@@ -40,6 +42,8 @@ const ServiceOptionsFilter: React.FC<ServiceOptionsFilterProps> = ({ deliveryAva
             airportPickup && styles.serviceOptionSelected
           ]}
           onPress={() => onUpdateFilter('airportPickup', !airportPickup)}
+          accessibilityRole="button"
+          accessibilityLabel="Airport Pickup option"
         >
           <Ionicons 
             name="airplane-outline" 
@@ -66,7 +70,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: spacing.md,
-    color: colors.dark,
+    color: colors.darkGrey,
   },
   serviceOptionsContainer: {
     flexDirection: 'row',
@@ -79,7 +83,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
-    backgroundColor: colors.light,
+    backgroundColor: colors.offWhite,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.lightGrey,
@@ -91,7 +95,7 @@ const styles = StyleSheet.create({
   serviceOptionText: {
     marginLeft: spacing.sm,
     fontSize: 14,
-    color: colors.dark,
+    color: colors.darkGrey,
     fontWeight: '500',
   },
   serviceOptionTextSelected: {

@@ -42,7 +42,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <Text key={i} style={[styles.star, { color: i <= rating ? '#F59E0B' : '#E5E7EB' }]}>
+        <Text key={i} style={[styles.star, { color: i <= rating ? colors.star : colors.lightBorder }]}>
           ★
         </Text>
       );
@@ -71,7 +71,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
           {/* Verification Status */}
           {vehicle.verificationStatus === 'verified' && (
             <View style={styles.verifiedBadge}>
-              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+              <Ionicons name="checkmark-circle" size={16} color={colors.verified} />
               <Text style={styles.verifiedText}>Verified</Text>
             </View>
           )}
@@ -116,7 +116,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
               <View style={styles.specsRow}>
                 {vehicle.seatingCapacity && (
                   <View style={styles.specItem}>
-                    <Ionicons name="people-outline" size={14} color="#6B7280" />
+                    <Ionicons name="people-outline" size={14} color={colors.grey} />
                     <Text style={styles.specText}>{vehicle.seatingCapacity}</Text>
                   </View>
                 )}
@@ -167,14 +167,14 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
               <View style={styles.servicesRow}>
                 {vehicle.deliveryAvailable && (
                   <View style={styles.serviceItem}>
-                    <Ionicons name="car-outline" size={12} color="#10B981" />
+                    <Ionicons name="car-outline" size={12} color={colors.verified} />
                     <Text style={styles.serviceText}>Delivery</Text>
                   </View>
                 )}
                 
                 {vehicle.airportPickup && (
                   <View style={styles.serviceItem}>
-                    <Ionicons name="airplane-outline" size={12} color="#3B82F6" />
+                    <Ionicons name="airplane-outline" size={12} color={colors.blue} />
                     <Text style={styles.serviceText}>Airport</Text>
                   </View>
                 )}
@@ -212,7 +212,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
               <View style={styles.reviewsRow}>
                 <View style={styles.ratingContainer}>
                   <Text style={styles.ratingText}>{vehicle.averageRating.toFixed(1)}</Text>
-                  <Ionicons name="star" size={14} color="#F59E0B" />
+                  <Ionicons name="star" size={14} color={colors.star} />
                 </View>
                 <Text style={styles.reviewsText}>({vehicle.totalReviews} reviews)</Text>
               </View>
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.md,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   rhdBadge: {
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.error,
   },
   badgeIcon: {
     marginRight: 4,
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 20,
     padding: 8,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.md,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,

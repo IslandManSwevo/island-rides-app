@@ -6,7 +6,7 @@ import { RouteProp } from '@react-navigation/native';
 import { notificationService } from '../services/notificationService';
 import { reviewPromptService } from '../services/reviewPromptService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
-import { Button } from '../components/Button';
+import Button from '../components/Button';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { Vehicle } from '../types';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
@@ -40,8 +40,12 @@ export const BookingConfirmedScreen: React.FC<BookingConfirmedScreenProps> = ({ 
       const scheduleReviewPrompt = async () => {
         try {
           const bookingForReview = transformBookingForReview(booking);
-          await reviewPromptService.scheduleReviewPrompt(bookingForReview);
-          console.log('Review prompt scheduled successfully for booking:', booking.id);
+          if (bookingForReview) {
+            await reviewPromptService.scheduleReviewPrompt(bookingForReview);
+            console.log('Review prompt scheduled successfully for booking:', booking.id);
+          } else {
+            console.warn('Cannot schedule review prompt: Invalid booking data for booking:', booking.id);
+          }
         } catch (error) {
           console.error('Failed to schedule review prompt for booking:', booking.id, error);
           // Don't show error to user as this is a background process
@@ -251,7 +255,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   rhdBadge: {
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.error,
   },
   badgeText: {
     color: colors.white,

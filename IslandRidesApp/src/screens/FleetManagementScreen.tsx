@@ -84,7 +84,13 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
     try {
       setLoading(true);
       
-      const response = await apiService.get('/owner/fleet');
+      interface FleetResponse {
+        success: boolean;
+        data: Vehicle[];
+        message?: string;
+      }
+      
+      const response = await apiService.get<FleetResponse>('/owner/fleet');
       
       if (response.success) {
         setVehicles(response.data || []);
@@ -221,7 +227,6 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
       }
     });
   };
-
 
 
   const renderFilterButtons = () => (
@@ -548,7 +553,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   vehicleName: {
-    ...typography.heading3,
+    ...typography.subheading,
     color: colors.black,
     marginBottom: spacing.xs,
   },
@@ -657,7 +662,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     padding: spacing.lg,
   },

@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { NavigationProp } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius } from '../../styles/theme';
+import { RootStackParamList } from '../../navigation/routes';
 
 interface VehiclePerformance {
   id: number;
@@ -32,7 +34,7 @@ interface VehiclePerformanceCardProps {
   getPerformanceColor: (value: number, type: string) => string;
   getVerificationStatusColor: (status: string) => string;
   getVerificationStatusIcon: (status: string) => any;
-  navigation: any;
+  navigation: NavigationProp<RootStackParamList>;
 }
 
 export const VehiclePerformanceCard: React.FC<VehiclePerformanceCardProps> = ({ 
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   vehicleName: {
-    ...typography.heading3,
+    ...typography.heading1,
     color: colors.black,
     marginBottom: spacing.xs,
   },
@@ -210,7 +212,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   availabilityText: {
-    ...typography.caption,
+    ...typography.body,
+    fontSize: 12,
     color: colors.white,
     fontWeight: '600',
   },
@@ -220,11 +223,12 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   verificationText: {
-    ...typography.caption,
+    ...typography.body,
+    fontSize: 12,
     fontWeight: '600',
   },
   dailyRate: {
-    ...typography.heading3,
+    ...typography.heading1,
     color: colors.primary,
   },
   metricsRow: {
@@ -239,11 +243,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metricValue: {
-    ...typography.heading3,
+    ...typography.heading1,
     color: colors.black,
   },
   metricLabel: {
-    ...typography.caption,
+    ...typography.body,
+    fontSize: 12,
     color: colors.lightGrey,
     marginTop: spacing.xs,
   },
@@ -294,7 +299,8 @@ const styles = StyleSheet.create({
     color: colors.darkGrey,
   },
   maintenanceInfo: {
-    ...typography.caption,
+    ...typography.body,
+    fontSize: 12,
     color: colors.lightGrey,
   },
   cardActions: {

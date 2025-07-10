@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ScrollView, TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
 import { VehiclePhoto } from '../types';
+import { colors } from '../styles/theme';
 
 interface PhotoThumbnailsProps {
   photos: VehiclePhoto[];
@@ -58,7 +59,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   activeThumbnail: {
-    borderColor: '#007BFF',
+    borderColor: colors.primary,
   },
   thumbnailImage: {
     width: '100%',
@@ -68,12 +69,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: colors.overlay,
     borderRadius: 8,
     paddingHorizontal: 4,
   },
   thumbnailPrimaryText: {
-    color: '#FFD700',
+    color: colors.star,
     fontSize: 10,
     fontWeight: 'bold',
   },

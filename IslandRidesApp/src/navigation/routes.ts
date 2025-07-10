@@ -37,6 +37,7 @@ export const ROUTES = {
   VEHICLE_PHOTO_UPLOAD: 'VehiclePhotoUpload',
   VEHICLE_AVAILABILITY: 'VehicleAvailability',
   BULK_RATE_UPDATE: 'BulkRateUpdate',
+  COMPARE_VEHICLES: 'CompareVehicles',
 } as const;
 
 export type RouteNames = typeof ROUTES[keyof typeof ROUTES];
@@ -132,6 +133,9 @@ export type RootStackParamList = {
     vehicleId: number;
   };
   [ROUTES.BULK_RATE_UPDATE]: {
+    vehicleIds: number[];
+  };
+  [ROUTES.COMPARE_VEHICLES]: {
     vehicleIds: number[];
   };
 };

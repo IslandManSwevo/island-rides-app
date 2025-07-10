@@ -14,12 +14,21 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
-import { Button } from '../components/Button';
+import Button from '../components/Button';
 import { VehicleCard } from '../components/VehicleCard';
 import { vehicleService } from '../services/vehicleService';
 import { notificationService } from '../services/notificationService';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
 import { Island, VehicleRecommendation, VehicleFeature, VehicleFeatureCategory } from '../types';
+import DateFilter from '../components/DateFilter';
+import PriceRangeFilter from '../components/PriceRangeFilter';
+import OptionFilter from '../components/OptionFilter';
+import SeatingCapacityFilter from '../components/SeatingCapacityFilter';
+import ConditionRatingFilter from '../components/ConditionRatingFilter';
+import VerificationStatusFilter from '../components/VerificationStatusFilter';
+import FeaturesFilter from '../components/FeaturesFilter';
+import ServiceOptionsFilter from '../components/ServiceOptionsFilter';
+import { VEHICLE_TYPES, FUEL_TYPES, TRANSMISSION_TYPES, VERIFICATION_STATUS_OPTIONS, SORT_OPTIONS } from '../constants/filters';
 
 interface SearchScreenProps {
   navigation: any;
@@ -42,16 +51,6 @@ interface SearchFilters {
   airportPickup: boolean;
   sortBy: 'popularity' | 'price_low' | 'price_high' | 'rating' | 'newest' | 'condition';
 }
-
-import { VEHICLE_TYPES, FUEL_TYPES, TRANSMISSION_TYPES, VERIFICATION_STATUS_OPTIONS, SORT_OPTIONS } from '../constants/filters';
-import DateFilter from '../components/DateFilter';
-import PriceRangeFilter from '../components/PriceRangeFilter';
-import OptionFilter from '../components/OptionFilter';
-import SeatingCapacityFilter from '../components/SeatingCapacityFilter';
-import ConditionRatingFilter from '../components/ConditionRatingFilter';
-import VerificationStatusFilter from '../components/VerificationStatusFilter';
-import FeaturesFilter from '../components/FeaturesFilter';
-import ServiceOptionsFilter from '../components/ServiceOptionsFilter';
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
   const { island } = route.params || {};
@@ -159,7 +158,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
     }
   };
 
-  const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
+  const updateFilter = <K extends keyof any>(key: K, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
@@ -257,7 +256,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
         />
         <VerificationStatusFilter
           verificationStatus={filters.verificationStatus}
-          onToggleFilter={toggleArrayFilter}
+          onToggleFilter={(key, value) => toggleArrayFilter('verificationStatus', value)}
         />
         <FeaturesFilter
           features={filters.features}
@@ -715,7 +714,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   sortModal: {
@@ -836,7 +835,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#F59E0B',
+    backgroundColor: colors.warning,
     borderRadius: 8,
     width: 16,
     height: 16,

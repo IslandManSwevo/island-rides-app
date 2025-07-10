@@ -1,21 +1,14 @@
 import React from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { VehicleMaintenance } from '../../types';
 import { styles } from './styles';
+import { formatDate, formatCurrency } from '../../utils/formatters';
 
 interface Props {
   records: VehicleMaintenance[];
   onAddRecord: () => void;
 }
-
-const formatDate = (dateString?: string) => {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
 
 export const MaintenanceRecordsSection: React.FC<Props> = ({ records, onAddRecord }) => {
   return (
@@ -42,9 +35,10 @@ export const MaintenanceRecordsSection: React.FC<Props> = ({ records, onAddRecor
               <Text style={styles.recordDetail}>Service Provider: {record.serviceProvider}</Text>
             )}
             {record.cost && (
-              <Text style={styles.recordDetail}>Cost: ${record.cost}</Text>
-            )}
-            {record.mileageAtService && (
+              <Text style={styles.recordDetail}>
+                Cost: {formatCurrency(record.cost)}
+              </Text>
+            )}            {record.mileageAtService && (
               <Text style={styles.recordDetail}>Mileage: {record.mileageAtService.toLocaleString()} miles</Text>
             )}
             {record.notes && (

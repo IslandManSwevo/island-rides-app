@@ -179,9 +179,9 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
 
   const getVerificationColor = (status: string) => {
     switch (status) {
-      case 'premium': return '#10B981';
-      case 'verified': return '#3B82F6';
-      case 'partial': return '#F59E0B';
+      case 'premium': return colors.premium;
+      case 'verified': return colors.info;
+      case 'partial': return colors.partial;
       default: return colors.lightGrey;
     }
   };
@@ -303,7 +303,7 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
           <View style={styles.statCard}>
             <View style={styles.ratingContainer}>
               <Text style={styles.statNumber}>{profile.stats.average_rating_received}</Text>
-              <Ionicons name="star" size={16} color="#F59E0B" />
+              <Ionicons name="star" size={16} color={colors.star} />
             </View>
             <Text style={styles.statLabel}>Average Rating</Text>
           </View>
@@ -403,7 +403,7 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
                     key={star}
                     name={star <= (trip.trip_rating || 0) ? 'star' : 'star-outline'}
                     size={14}
-                    color="#F59E0B"
+                    color={colors.star}
                   />
                 ))}
               </View>
@@ -463,7 +463,7 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
                     key={star}
                     name={star <= review.rating ? 'star' : 'star-outline'}
                     size={14}
-                    color="#F59E0B"
+                    color={colors.star}
                   />
                 ))}
               </View>
@@ -508,7 +508,7 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
                 
                 {vehicle.average_rating && (
                   <View style={styles.vehicleRating}>
-                    <Ionicons name="star" size={14} color="#F59E0B" />
+                    <Ionicons name="star" size={14} color={colors.star} />
                     <Text style={styles.ratingText}>
                       {vehicle.average_rating.toFixed(1)} ({vehicle.total_reviews})
                     </Text>

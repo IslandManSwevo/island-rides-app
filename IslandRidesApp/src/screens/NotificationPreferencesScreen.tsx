@@ -15,7 +15,7 @@ import { notificationService } from '../services/notificationService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
-interface NotificationPreferences {
+interface NotificationPreferences extends Record<string, boolean> {
   pushEnabled: boolean;
   bookingConfirmations: boolean;
   bookingReminders: boolean;
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     padding: spacing.lg,
     paddingTop: spacing.xl,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,

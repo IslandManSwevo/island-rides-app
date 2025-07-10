@@ -5,7 +5,7 @@ import { colors, spacing } from '../styles/theme';
 
 interface PriceRangeFilterProps {
   priceRange: [number, number];
-  onUpdateFilter: (key: string, value: any) => void;
+  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
 }
 
 const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({ priceRange, onUpdateFilter }) => {
@@ -19,14 +19,20 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({ priceRange, onUpdat
         <View style={styles.priceSliderContainer}>
           <TouchableOpacity
             style={styles.priceButton}
-            onPress={() => onUpdateFilter('priceRange', [Math.max(25, priceRange[0] - 25), priceRange[1]])}
+            onPress={() => {
+              const newMin = Math.min(priceRange[0] + 25, priceRange[1]);
+              onUpdateFilter('priceRange', [newMin, priceRange[1]]);
+            }}
           >
             <Ionicons name="remove" size={16} color={colors.primary} />
           </TouchableOpacity>
           <View style={styles.priceBar} />
           <TouchableOpacity
             style={styles.priceButton}
-            onPress={() => onUpdateFilter('priceRange', [priceRange[0], Math.min(500, priceRange[1] + 25)])}
+            onPress={() => {
+              const newMax = Math.max(priceRange[1] - 25, priceRange[0]);
+              onUpdateFilter('priceRange', [priceRange[0], newMax]);
+            }}
           >
             <Ionicons name="add" size={16} color={colors.primary} />
           </TouchableOpacity>
@@ -45,7 +51,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: spacing.md,
-    color: colors.dark,
+    color: colors.darkGrey,
   },
   priceRangeContainer: {
     flexDirection: 'row',
@@ -60,7 +66,7 @@ const styles = StyleSheet.create({
   },
   priceButton: {
     padding: spacing.sm,
-    backgroundColor: colors.light,
+    backgroundColor: colors.white,
     borderRadius: 20,
   },
   priceBar: {
@@ -72,7 +78,7 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     fontSize: 16,
-    color: colors.grey,
+    color: colors.darkGrey,
   },
 });
 

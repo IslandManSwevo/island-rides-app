@@ -8,8 +8,9 @@ RUN npm install -g @expo/cli
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies first, then fix compatibility
 RUN npm install
+RUN npx expo install --fix
 
 # Copy source code
 COPY . .
