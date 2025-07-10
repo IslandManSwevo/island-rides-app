@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { transformToCamelCase, transformToSnakeCase } from '../utils/caseTransform';
+import { BaseService } from './base/BaseService';
 
-export class StorageService {
+export class StorageService extends BaseService {
   async set(key: string, value: any): Promise<void> {
     try {
       const snakeCaseValue = transformToSnakeCase(value);
@@ -82,15 +83,9 @@ export class StorageService {
     return this.get<T>('userPreferences');
   }
 
-  private static instance: StorageService;
-
-  private constructor() {}
-
-  public static getInstance(): StorageService {
-    if (!StorageService.instance) {
-      StorageService.instance = new StorageService();
-    }
-    return StorageService.instance;
+  protected async onInit(): Promise<void> {
+    // StorageService doesn't need special initialization
+    // AsyncStorage is ready to use immediately
   }
 }
 

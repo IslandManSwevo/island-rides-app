@@ -1,5 +1,5 @@
 import { apiService } from './apiService';
-import { LoggingService } from './LoggingService';
+import { loggingService } from './LoggingService';
 
 export interface PricingConfig {
   insuranceFeePerDay: number;
@@ -45,7 +45,7 @@ class PricingConfigService {
       this.configCacheExpiry = now + this.CACHE_DURATION;
       return config;
     } catch (error) {
-      LoggingService.getInstance().warn('Failed to fetch pricing config from API, using defaults:', error);
+      loggingService.warn('Failed to fetch pricing config from API, using defaults:', error);
       // Fallback to default values if API fails
       const defaultConfig: PricingConfig = {
         insuranceFeePerDay: 15,
@@ -71,7 +71,7 @@ class PricingConfigService {
       this.rulesCacheExpiry = now + this.CACHE_DURATION;
       return rules;
     } catch (error) {
-      LoggingService.getInstance().warn('Failed to fetch business rules from API, using defaults:', error);
+      loggingService.warn('Failed to fetch business rules from API, using defaults:', error);
       // Fallback to default values if API fails
       const defaultRules: BusinessRules = {
         minRentalDays: 1,

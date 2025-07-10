@@ -242,6 +242,12 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: colors.overlay + '80',
@@ -315,5 +321,39 @@ export const styles = StyleSheet.create({
   createButtonText: {
     color: colors.white,
     fontWeight: 'bold',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    borderRadius: 4,
+    padding: 12,
+    fontSize: 16,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 4,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    backgroundColor: colors.lightGrey,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  modalSubmitButton: {
+    backgroundColor: colors.primary,
+  },
+  modalSubmitButtonText: {
+    color: colors.white,
   },
 });

@@ -35,7 +35,6 @@ export const PhotoCaptionModal: React.FC<PhotoCaptionModalProps> = ({ visible, i
         <View 
           style={styles.modal}
           accessible={true}
-          accessibilityRole="dialog"
           accessibilityLabel="Add photo caption dialog"
         >
           <Text style={styles.modalTitle}>Add Caption</Text>
