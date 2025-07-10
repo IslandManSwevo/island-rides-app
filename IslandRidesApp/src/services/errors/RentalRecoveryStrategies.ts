@@ -11,6 +11,10 @@ export class AlternativeVehicleStrategy implements RecoveryStrategy {
   }
 
   async recover(error: BusinessLogicError): Promise<void> {
+    if (!error.meta || typeof error.meta.vehicleId !== 'string') {
+      console.error('Invalid error metadata for AlternativeVehicleStrategy, cannot recover.');
+      return;
+    }
     const { vehicleId } = error.meta as { vehicleId: string };
     
     try {
@@ -76,18 +80,34 @@ export class DateConflictStrategy implements RecoveryStrategy {
 
 export class PaymentRetryStrategy implements RecoveryStrategy {
   priority = 90;
-  private maxRetries = 3;
-  private retryCount = 0;
+  private static maxRetries = 3;
+  private static retryCounts = new Map<string, number>();
+
+  private getErrorId(error: BusinessLogicError): string | undefined {
+    return error.meta?.paymentId || error.meta?.transactionId;
+  }
 
   canRecover(error: BusinessLogicError): boolean {
-    return error.code === 'PAYMENT_FAILED' && this.retryCount < this.maxRetries;
+    const errorId = this.getErrorId(error);
+    if (error.code !== 'PAYMENT_FAILED' || !errorId) {
+      return false;
+    }
+    const retryCount = PaymentRetryStrategy.retryCounts.get(errorId) || 0;
+    return retryCount < PaymentRetryStrategy.maxRetries;
   }
 
   async recover(error: BusinessLogicError): Promise<void> {
-    this.retryCount++;
+    const errorId = this.getErrorId(error);
+    if (!errorId) {
+      throw new Error('Cannot recover payment without a unique error identifier.');
+    }
+
+    const currentRetry = (PaymentRetryStrategy.retryCounts.get(errorId) || 0) + 1;
+    PaymentRetryStrategy.retryCounts.set(errorId, currentRetry);
+
     return new Promise((resolve, reject) => {
       notificationService.warning(
-        `Payment failed. Would you like to try again? (Attempt ${this.retryCount}/${this.maxRetries})`,
+        `Payment failed. Would you like to try again? (Attempt ${currentRetry}/${PaymentRetryStrategy.maxRetries})`,
         {
           persistent: true,
           action: {

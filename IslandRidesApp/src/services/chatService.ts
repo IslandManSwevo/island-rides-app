@@ -19,7 +19,7 @@ class ChatService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000; // Start with 1 second
   private isReconnectingCancelled = false; // Flag to cancel reconnection attempts
-  private reconnectTimeoutId: NodeJS.Timeout | null = null; // Track timeout for cleanup
+  private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null; // Track timeout for cleanup
 
   /**
    * Connect to WebSocket server with JWT authentication
@@ -149,15 +149,7 @@ class ChatService {
       this.socket!.on('conversation_joined', handleJoined);
       this.socket!.emit('join_conversation', { conversationId });
 
-      // Fallback: If no backend confirmation available, resolve after a short delay
-      setTimeout(() => {
-        if (timeout) {
-          clearTimeout(timeout);
-          this.socket!.off('conversation_joined', handleJoined);
-          console.log('✅ Joined conversation (fallback)');
-          resolve();
-        }
-      }, 100);
+
     });
   }
 
@@ -181,7 +173,7 @@ class ChatService {
   /**
    * Send a message to the current conversation
    */
-  async sendMessage(text: string): Promise<void> {
+    async sendMessage(message: { text?: string; image?: string; audio?: string }): Promise<void> {
     if (!this.socket || !this.socket.connected) {
       throw new Error('Not connected to chat server');
     }
@@ -190,16 +182,15 @@ class ChatService {
       throw new Error('No active conversation');
     }
 
-    if (!text.trim()) {
+        if (!message.text?.trim() && !message.image && !message.audio) {
       throw new Error('Message cannot be empty');
     }
 
-    console.log(`📤 Sending message to conversation ${this.currentConversationId}:`, text);
+        console.log(`📤 Sending message to conversation ${this.currentConversationId}:`, message);
 
     this.socket.emit('send_message', {
       conversationId: this.currentConversationId,
-      content: text.trim(),
-      messageType: 'text'
+      ...message,
     });
   }
 
@@ -214,11 +205,16 @@ class ChatService {
         `/api/conversations/${conversationId}/messages?limit=${limit}`
       );
 
-      // Transform backend messages to GiftedChat format, filtering out invalid ones
-      return messages
-        .map(this.transformMessage)
-        .filter(message => message !== null)
-        .reverse() as ChatMessage[]; // Reverse for GiftedChat (newest first)
+      // Transform and filter messages in a single pass, then reverse
+      const validMessages = messages.reduce<ChatMessage[]>((acc, msg) => {
+        const transformed = this.transformMessage(msg);
+        if (transformed) {
+          acc.push(transformed);
+        }
+        return acc;
+      }, []);
+
+      return validMessages.reverse(); // Reverse for GiftedChat (newest first)
 
     } catch (error) {
       console.error('❌ Failed to load message history:', error);

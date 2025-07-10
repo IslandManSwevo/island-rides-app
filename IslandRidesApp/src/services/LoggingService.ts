@@ -29,13 +29,23 @@ const defaultConfig = {
 };
 
 class LoggingService extends BaseService {
+  private static instance: LoggingService;
+
   private logs: LogEntry[] = [];
   private readonly MAX_LOGS = 1000;
+  private readonly MAX_LOG_ENTRY_SIZE = 2048; // Approx 2KB
   private nativeLogger: any;
 
-  constructor() {
+  private constructor() {
     super();
     this.nativeLogger = logger.createLogger(defaultConfig);
+  }
+
+  static getInstance(): LoggingService {
+    if (!LoggingService.instance) {
+      LoggingService.instance = new LoggingService();
+    }
+    return LoggingService.instance;
   }
 
   private shouldLog(level: LogLevel): boolean {
@@ -53,15 +63,32 @@ class LoggingService extends BaseService {
   }
 
   private store(entry: LogEntry): void {
-    this.logs.push(entry);
+    try {
+      const entryString = JSON.stringify(entry);
+      if (entryString.length > this.MAX_LOG_ENTRY_SIZE) {
+        const dataPreview = JSON.stringify(entry.data).substring(0, 256);
+        const truncatedEntry: LogEntry = {
+          ...entry,
+          message: `${entry.message.substring(0, 1024)}... (message truncated)`,
+          data: `Log data truncated. Preview: ${dataPreview}...`,
+        };
+        this.logs.push(truncatedEntry);
+      } else {
+        this.logs.push(entry);
+      }
+    } catch (e) {
+      const errorEntry: LogEntry = {
+        ...entry,
+        data: 'Log data could not be serialized.',
+      };
+      this.logs.push(errorEntry);
+    }
+
     if (this.logs.length > this.MAX_LOGS) {
       this.logs.shift();
     }
 
-    if (environmentService.featureFlags.enableAnalytics) {
-      // Send logs to analytics service
-      // this.analyticsService.logEvent('app_log', entry);
-    }
+
   }
 
   debug(message: string, data?: any): void {

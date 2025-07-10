@@ -63,18 +63,7 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
   const savePreferences = useCallback(async () => {
     try {
       setSaving(true);
-      // Convert NotificationPreferences to Record<string, boolean>
-      const preferencesRecord: Record<string, boolean> = {
-        pushEnabled: preferences.pushEnabled,
-        bookingConfirmations: preferences.bookingConfirmations,
-        bookingReminders: preferences.bookingReminders,
-        reviewRequests: preferences.reviewRequests,
-        priceAlerts: preferences.priceAlerts,
-        newMessages: preferences.newMessages,
-        promotional: preferences.promotional,
-      };
-      
-      const success = await notificationService.updateNotificationPreferences(preferencesRecord);
+      const success = await notificationService.updateNotificationPreferences(preferences);
       
       if (success) {
         setHasChanges(false);
@@ -470,4 +459,4 @@ const styles = StyleSheet.create({
     color: colors.lightGrey,
     marginTop: spacing.md,
   },
-}); 
+});

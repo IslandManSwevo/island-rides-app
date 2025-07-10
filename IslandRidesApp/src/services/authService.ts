@@ -76,7 +76,7 @@ class AuthService extends BaseService {
       }
 
       // Check rate limiting
-      const rateLimit = this.checkRateLimit(credentials.email);
+      const rateLimit = await this.checkRateLimit(credentials.email);
       if (!rateLimit.allowed) {
         const waitSeconds = Math.ceil((rateLimit.waitTime || 0) / 1000);
         throw new AuthError(
@@ -237,26 +237,29 @@ class AuthService extends BaseService {
     }
   }
 
-  private checkRateLimit(identifier: string): { allowed: boolean; waitTime?: number } {
+  private async checkRateLimit(identifier: string): Promise<{ allowed: boolean; waitTime?: number }> {
     if (!this.failedAttempts.size) {
-      this.initializeFailedAttempts();
+      await this.initializeFailedAttempts();
     }
 
     const attempts = this.failedAttempts.get(identifier);
     if (!attempts) return { allowed: true };
-    
+
     const timeSinceLastAttempt = Date.now() - attempts.lastAttempt.getTime();
-    const waitTime = Math.min(attempts.count * 5000, 60000); // 5 seconds per attempt, max 1 minute
-    
+    // Exponential backoff: 2^count * 1000ms, with a max of 1 minute and some jitter
+    const backoffTime = Math.min(Math.pow(2, attempts.count) * 1000, 60000);
+    const jitter = Math.random() * 1000; // Add up to 1s of jitter
+    const waitTime = backoffTime + jitter;
+
     if (timeSinceLastAttempt < waitTime) {
       return { allowed: false, waitTime: waitTime - timeSinceLastAttempt };
     }
-    
+
     // If enough time has passed, clear the attempts
     if (timeSinceLastAttempt > waitTime * 2) {
       this.clearFailedAttempts(identifier);
     }
-    
+
     return { allowed: true };
   }
 
@@ -308,7 +311,7 @@ class AuthService extends BaseService {
       requireLowercase: true,
       requireNumbers: true,
       requireSpecialChars: true,
-      specialCharsPattern: /[!@#$%^&*(),.?":{}|<>]/,
+      specialCharsPattern: /[!@#$%^&*(),.?":{}|<>~`_+\-=\[\]\\';/]/,
       ...customRules
     };
 

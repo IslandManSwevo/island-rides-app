@@ -14,42 +14,13 @@ import { StackScreenProps } from '@react-navigation/stack';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { colors, typography, spacing } from '../styles/theme';
-
-interface PaymentMethod {
-  id: string;
-  name: string;
-  icon: string;
-  processingTime: string;
-}
-
-interface PaymentMethodsResponse {
-  methods: PaymentMethod[];
-}
-
-interface PaymentIntentResponse {
-  paymentUrl?: string;
-  instructions?: any;
-  reference?: string;
-  walletAddress?: string;
-  amount?: number;
-  currency?: string;
-  qrCode?: string;
-}
-
-type RootStackParamList = {
-  Payment: {
-    booking: {
-      id: number;
-      total_amount: number;
-      start_date: string;
-      end_date: string;
-      vehicle: any;
-    };
-  };
-  BookingConfirmed: { booking: any };
-  BankTransferInstructions: any;
-  CryptoPayment: any;
-};
+import {
+  IconName,
+  PaymentMethod,
+  PaymentMethodsResponse,
+  PaymentIntentResponse,
+  RootStackParamList
+} from '../types/payment';
 
 type PaymentScreenProps = StackScreenProps<RootStackParamList, 'Payment'>;
 
@@ -69,6 +40,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, navigation 
       const response = await apiService.get<PaymentMethodsResponse>('/payments/methods');
       setPaymentMethods(response.methods);
     } catch (error) {
+      notificationService.error('Failed to load payment methods. Please try again later.', {
+        duration: 5000
+      });
       console.error('Error fetching payment methods:', error);
     }
   };
@@ -183,7 +157,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, navigation 
             disabled={loading}
           >
             <Ionicons 
-              name={method.icon as any} 
+              name={method.icon as IconName} 
               size={32} 
               color={selectedMethod === method.id ? colors.primary : colors.darkGrey} 
             />
@@ -304,4 +278,4 @@ const styles = StyleSheet.create({
     color: colors.lightGrey,
     marginLeft: spacing.sm,
   },
-}); 
+});

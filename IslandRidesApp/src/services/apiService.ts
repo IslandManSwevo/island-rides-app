@@ -1,7 +1,11 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosError, AxiosRequestConfig } from 'axios';
 import { BaseService } from './base/BaseService';
 import { storageService } from './storageService';
 import { getEnvironmentConfig } from '../config/environment';
+
+interface RetryableAxiosRequestConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+}
 
 interface ApiErrorResponse {
   message: string;
@@ -56,7 +60,7 @@ export class ApiService extends BaseService {
     this.axiosInstance.interceptors.response.use(
       (response: AxiosResponse) => response,
       async (error: AxiosError) => {
-        const originalRequest = error.config as any;
+        const originalRequest = error.config as RetryableAxiosRequestConfig;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
@@ -113,9 +117,23 @@ export class ApiService extends BaseService {
     };
   }
 
+  public isAxiosError(error: unknown): error is AxiosError<ApiErrorResponse> {
+    return axios.isAxiosError(error);
+  }
+
   async get<T>(endpoint: string, params?: object): Promise<T> {
     await this.waitForInitialization();
     const response = await this.axiosInstance.get(endpoint, { params });
+    return response.data;
+  }
+
+  async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
+    await this.waitForInitialization();
+    const response = await this.axiosInstance.post(endpoint, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 

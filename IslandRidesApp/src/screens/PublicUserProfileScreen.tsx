@@ -15,7 +15,9 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 import { apiService } from '../services/apiService';
+import { vehicleService } from '../services/vehicleService';
 import { notificationService } from '../services/notificationService';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 interface PublicProfile {
   id: number;
@@ -108,6 +110,10 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [visibleTrips, setVisibleTrips] = useState(5);
+  const [visibleReviews, setVisibleReviews] = useState(5);
+  const [visibleVehicles, setVisibleVehicles] = useState(5);
+
   useEffect(() => {
     loadProfile();
   }, [userId]);
@@ -146,19 +152,14 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
     });
   };
 
-  const handleViewVehicle = (vehicle: Vehicle) => {
-    // Convert the public profile vehicle to the full Vehicle type expected by VehicleDetail
-    // Note: Some properties are not available in the public profile vehicle data
-    // and would need to be fetched from a complete vehicle details API endpoint
-    const fullVehicle = {
-      ...vehicle,
-      ownerId: profile?.id || 0, // Use the profile owner's ID instead of hardcoded 0
-      dailyRate: vehicle.daily_rate,
-      available: true, // Assuming available for public display, would need to be fetched
-      driveSide: 'LHD' as const, // Default to LHD, would need to be fetched from backend
-      createdAt: new Date().toISOString(), // Placeholder timestamp, would need actual creation date
-    };
-    navigation.navigate(ROUTES.VEHICLE_DETAIL, { vehicle: fullVehicle });
+  const handleViewVehicle = async (vehicle: Vehicle) => {
+    try {
+      const fullVehicle = await vehicleService.getVehicleById(vehicle.id.toString());
+      navigation.navigate(ROUTES.VEHICLE_DETAIL, { vehicle: fullVehicle.vehicle });
+    } catch (error) {
+      console.error('Error fetching vehicle details:', error);
+      notificationService.error('Could not load vehicle details.');
+    }
   };
 
   const formatMemberSince = (dateString: string) => {
@@ -370,10 +371,12 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
   const renderRecentTrips = () => {
     if (!profile?.recentTrips || profile.recentTrips.length === 0) return null;
 
+    const tripsToShow = profile.recentTrips.slice(0, visibleTrips);
+
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Trips</Text>
-        {profile.recentTrips.map((trip, index) => (
+        {tripsToShow.map((trip, index) => (
           <View key={trip.id} style={styles.tripCard}>
             {trip.show_destination && (
               <Text style={styles.tripDestination}>{trip.destination}</Text>
@@ -413,6 +416,11 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
             )}
           </View>
         ))}
+        {profile.recentTrips.length > visibleTrips && (
+          <TouchableOpacity style={styles.loadMoreButton} onPress={() => setVisibleTrips(visibleTrips + 5)}>
+            <Text style={styles.loadMoreButtonText}>Load More</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -420,10 +428,12 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
   const renderRecentReviews = () => {
     if (!profile?.recentReviews || profile.recentReviews.length === 0) return null;
 
+    const reviewsToShow = profile.recentReviews.slice(0, visibleReviews);
+
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Reviews</Text>
-        {profile.recentReviews.map((review, index) => (
+        {reviewsToShow.map((review, index) => (
           <View key={review.id} style={styles.reviewCard}>
             <View style={styles.reviewHeader}>
               <View style={styles.reviewerInfo}>
@@ -464,6 +474,11 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
             </Text>
           </View>
         ))}
+        {profile.recentReviews.length > visibleReviews && (
+          <TouchableOpacity style={styles.loadMoreButton} onPress={() => setVisibleReviews(visibleReviews + 5)}>
+            <Text style={styles.loadMoreButtonText}>Load More</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -471,10 +486,12 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
   const renderVehicles = () => {
     if (!profile?.vehicles || profile.vehicles.length === 0) return null;
 
+    const vehiclesToShow = profile.vehicles.slice(0, visibleVehicles);
+
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Vehicles</Text>
-        {profile.vehicles.map((vehicle, index) => (
+        {vehiclesToShow.map((vehicle, index) => (
           <TouchableOpacity 
             key={vehicle.id} 
             style={styles.vehicleCard}
@@ -503,6 +520,11 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
             <Ionicons name="chevron-forward" size={20} color={colors.primary} />
           </TouchableOpacity>
         ))}
+        {profile.vehicles.length > visibleVehicles && (
+          <TouchableOpacity style={styles.loadMoreButton} onPress={() => setVisibleVehicles(visibleVehicles + 5)}>
+            <Text style={styles.loadMoreButtonText}>Load More</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -535,13 +557,15 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {renderHeader()}
-      {renderBadges()}
-      {renderStats()}
-      {renderBio()}
-      {renderRecentTrips()}
-      {renderRecentReviews()}
-      {renderVehicles()}
+      <ErrorBoundary>
+        {renderHeader()}
+        {renderBadges()}
+        {renderStats()}
+        {renderBio()}
+        {renderRecentTrips()}
+        {renderRecentReviews()}
+        {renderVehicles()}
+      </ErrorBoundary>
     </ScrollView>
   );
 }; 
@@ -599,6 +623,16 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
+  },
+  loadMoreButton: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+  },
+  loadMoreButtonText: {
+    ...typography.body,
+    color: colors.primary,
+    fontWeight: '600',
   },
   placeholderImage: {
     width: 100,
@@ -889,4 +923,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: spacing.xs,
   },
-}); 
+});

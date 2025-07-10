@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Button } from '../components/Button';
@@ -10,6 +10,9 @@ import { FavoriteButton } from '../components/FavoriteButton';
 import { VehiclePhotoGallery } from '../components/VehiclePhotoGallery';
 import { VehicleFeatureList } from '../components/VehicleFeatureList';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
+import { VehicleHeader } from '../components/vehicle/VehicleHeader';
+import { VehicleSpecs } from '../components/vehicle/VehicleSpecs';
+import { VehicleReviews } from '../components/vehicle/VehicleReviews';
 
 interface Review {
   id: number;
@@ -29,12 +32,13 @@ interface VehicleAmenity {
   isAvailable?: boolean;
 }
 
+interface VehicleReviewsResponse {
+  reviews: Review[];
+  averageRating: number;
+}
+
 export const VehicleDetailScreen = ({ navigation, route }: any) => {
   const { vehicle } = route.params;
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loadingReviews, setLoadingReviews] = useState(true);
-  const [averageRating, setAverageRating] = useState(0);
-  const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     specs: true,
     features: true,
@@ -52,38 +56,16 @@ export const VehicleDetailScreen = ({ navigation, route }: any) => {
     'Automatic Transmission'
   ];
 
-  useEffect(() => {
-    fetchVehicleReviews();
-  }, []);
-
-  const fetchVehicleReviews = async () => {
-    try {
-      setLoadingReviews(true);
-      const response: any = await apiService.get(`/reviews/vehicle/${vehicle.id}`);
-      setReviews(response.reviews || []);
-      setAverageRating(response.averageRating || 0);
-    } catch (error: any) {
-      console.error('Error fetching reviews:', error);
-      notificationService.error('Failed to load reviews', { duration: 3000 });
-    } finally {
-      setLoadingReviews(false);
-    }
-  };
-
-  const handleBookNow = () => {
+  const handleBookNow = useCallback(() => {
     navigation.navigate('Checkout', { vehicle });
-  };
+  }, [navigation, vehicle]);
 
-  const handleToggleReviews = () => {
-    setShowAllReviews(!showAllReviews);
-  };
-
-  const toggleSection = (sectionName: string) => {
+  const toggleSection = useCallback((sectionName: string) => {
     setExpandedSections(prev => ({
       ...prev,
       [sectionName]: !prev[sectionName],
     }));
-  };
+  }, []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -112,89 +94,7 @@ export const VehicleDetailScreen = ({ navigation, route }: any) => {
   const renderVehicleSpecs = () => {
     if (!expandedSections.specs) return null;
 
-    return (
-      <View style={styles.specsGrid}>
-        {vehicle.vehicleType && (
-          <View style={styles.specItem}>
-            <Ionicons name="car-outline" size={20} color={colors.primary} />
-            <View style={styles.specContent}>
-              <Text style={styles.specLabel}>Type</Text>
-              <Text style={styles.specValue}>{vehicle.vehicleType}</Text>
-            </View>
-          </View>
-        )}
-
-        {vehicle.seatingCapacity && (
-          <View style={styles.specItem}>
-            <Ionicons name="people-outline" size={20} color={colors.primary} />
-            <View style={styles.specContent}>
-              <Text style={styles.specLabel}>Seating</Text>
-              <Text style={styles.specValue}>{vehicle.seatingCapacity} passengers</Text>
-            </View>
-          </View>
-        )}
-
-        {vehicle.fuelType && (
-          <View style={styles.specItem}>
-            <Ionicons name="flash-outline" size={20} color={colors.primary} />
-            <View style={styles.specContent}>
-              <Text style={styles.specLabel}>Fuel Type</Text>
-              <Text style={styles.specValue}>{vehicle.fuelType}</Text>
-            </View>
-          </View>
-        )}
-
-        {vehicle.transmissionType && (
-          <View style={styles.specItem}>
-            <Ionicons name="settings-outline" size={20} color={colors.primary} />
-            <View style={styles.specContent}>
-              <Text style={styles.specLabel}>Transmission</Text>
-              <Text style={styles.specValue}>{vehicle.transmissionType}</Text>
-            </View>
-          </View>
-        )}
-
-        {vehicle.engineType && (
-          <View style={styles.specItem}>
-            <Ionicons name="hardware-chip-outline" size={20} color={colors.primary} />
-            <View style={styles.specContent}>
-              <Text style={styles.specLabel}>Engine</Text>
-              <Text style={styles.specValue}>{vehicle.engineType}</Text>
-            </View>
-          </View>
-        )}
-
-        {vehicle.doors && (
-          <View style={styles.specItem}>
-            <Ionicons name="exit-outline" size={20} color={colors.primary} />
-            <View style={styles.specContent}>
-              <Text style={styles.specLabel}>Doors</Text>
-              <Text style={styles.specValue}>{vehicle.doors} doors</Text>
-            </View>
-          </View>
-        )}
-
-        {vehicle.color && (
-          <View style={styles.specItem}>
-            <Ionicons name="color-palette-outline" size={20} color={colors.primary} />
-            <View style={styles.specContent}>
-              <Text style={styles.specLabel}>Color</Text>
-              <Text style={styles.specValue}>{vehicle.color}</Text>
-            </View>
-          </View>
-        )}
-
-        {vehicle.mileage && (
-          <View style={styles.specItem}>
-            <Ionicons name="speedometer-outline" size={20} color={colors.primary} />
-            <View style={styles.specContent}>
-              <Text style={styles.specLabel}>Mileage</Text>
-              <Text style={styles.specValue}>{vehicle.mileage.toLocaleString()} miles</Text>
-            </View>
-          </View>
-        )}
-      </View>
-    );
+    return <VehicleSpecs vehicle={vehicle} />;
   };
 
   const renderConditionRating = () => {
@@ -347,93 +247,13 @@ export const VehicleDetailScreen = ({ navigation, route }: any) => {
     </View>
   );
 
-  const renderReviewItem = (review: Review) => (
-    <View key={review.id} style={styles.reviewItem}>
-      <View style={styles.reviewHeader}>
-        <View style={styles.reviewUserInfo}>
-          <View style={styles.userAvatar}>
-            <Text style={styles.userInitial}>
-              {review.user.first_name.charAt(0)}
-            </Text>
-          </View>
-          <View style={styles.userDetails}>
-            <Text style={styles.userName}>
-              {review.user.first_name} {review.user.last_name.charAt(0)}.
-            </Text>
-            <Text style={styles.reviewDate}>{formatDate(review.created_at)}</Text>
-          </View>
-        </View>
-        {renderStars(review.rating)}
-      </View>
-      <Text style={styles.reviewComment}>{review.comment}</Text>
-    </View>
-  );
-
   const renderReviewsSection = () => {
-    if (loadingReviews) {
-      return (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Reviews</Text>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading reviews...</Text>
-          </View>
-        </View>
-      );
-    }
-
-    if (reviews.length === 0) {
-      return (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Reviews</Text>
-          <View style={styles.emptyReviews}>
-            <Ionicons name="chatbubble-outline" size={48} color={colors.lightGrey} />
-            <Text style={styles.emptyReviewsText}>No reviews yet</Text>
-            <Text style={styles.emptyReviewsSubtext}>
-              Be the first to share your experience with this vehicle
-            </Text>
-          </View>
-        </View>
-      );
-    }
-
-    const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 2);
-
-    return (
-      <View style={styles.section}>
-        <View style={styles.reviewsHeader}>
-          <Text style={styles.sectionTitle}>Reviews</Text>
-          <View style={styles.ratingOverview}>
-            {renderStars(averageRating, 20)}
-            <Text style={styles.averageRating}>
-              {averageRating.toFixed(1)} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
-            </Text>
-          </View>
-        </View>
-
-        {displayedReviews.map(renderReviewItem)}
-
-        {reviews.length > 2 && (
-          <TouchableOpacity
-            style={styles.showMoreButton}
-            onPress={handleToggleReviews}
-          >
-            <Text style={styles.showMoreText}>
-              {showAllReviews ? 'Show Less' : `View All ${reviews.length} Reviews`}
-            </Text>
-            <Ionicons
-              name={showAllReviews ? 'chevron-up' : 'chevron-down'}
-              size={16}
-              color={colors.primary}
-            />
-          </TouchableOpacity>
-        )}
-      </View>
-    );
+    return <VehicleReviews vehicleId={vehicle.id} />;
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
       {/* Photo Gallery */}
       {vehicle.photos && vehicle.photos.length > 0 ? (
         <VehiclePhotoGallery 
@@ -457,26 +277,7 @@ export const VehicleDetailScreen = ({ navigation, route }: any) => {
 
       <View style={styles.infoContainer}>
         {/* Header Section */}
-        <View style={styles.headerRow}>
-          <Text style={styles.vehicleName}>
-            {vehicle.make} {vehicle.model}
-          </Text>
-          <View style={styles.headerActions}>
-            <FavoriteButton vehicleId={vehicle.id} size={24} style={styles.favoriteButton} />
-            <View style={[
-              styles.driveBadge,
-              (vehicle.driveSide || vehicle.drive_side) === 'LHD' ? styles.lhdBadge : styles.rhdBadge
-            ]}>
-              <Ionicons 
-                name="car-outline" 
-                size={16} 
-                color={colors.white} 
-                style={styles.badgeIcon}
-              />
-              <Text style={styles.badgeText}>{vehicle.driveSide || vehicle.drive_side}</Text>
-            </View>
-          </View>
-        </View>
+        <VehicleHeader vehicle={vehicle} />
 
         <Text style={styles.vehicleYear}>
           {vehicle.year} • {vehicle.vehicleType || 'Car'}
@@ -605,7 +406,9 @@ export const VehicleDetailScreen = ({ navigation, route }: any) => {
           />
         </View>
       </View>
+
     </ScrollView>
+    </SafeAreaView>
   );
 };
 

@@ -5,10 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import { colors, typography, spacing } from '../styles/theme';
 import { NavigationProp } from '@react-navigation/native';
 import { BusinessLogicError } from '../services/errors/BusinessLogicError';
+import { RootStackParamList } from '../navigation/routes';
 
 interface AppHeaderProps {
   title: string;
-  navigation: NavigationProp<any>;
+  navigation: NavigationProp<RootStackParamList>;
   showBackButton?: boolean;
   onBackPress?: () => void;
   showProfileButton?: boolean;

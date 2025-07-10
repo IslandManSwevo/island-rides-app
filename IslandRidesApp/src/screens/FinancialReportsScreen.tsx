@@ -11,10 +11,12 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
+import AddExpenseModal from './AddExpenseModal';
 
 interface FinancialData {
   period: {
@@ -67,10 +69,13 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [financialData, setFinancialData] = useState<FinancialData | null>(null);
-  const [startDate, setStartDate] = useState(getDefaultStartDate());
-  const [endDate, setEndDate] = useState(getDefaultEndDate());
+  const [startDate, setStartDate] = useState(new Date(getDefaultStartDate()));
+  const [endDate, setEndDate] = useState(new Date(getDefaultEndDate()));
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [vehicles, setVehicles] = useState<Array<{ id: number; make: string; model: string; year: number }>>([]);
+  const [showExpenseDatePicker, setShowExpenseDatePicker] = useState(false);
   const [newExpense, setNewExpense] = useState<Expense>({
     vehicleId: 0,
     expenseType: 'maintenance',
@@ -103,14 +108,14 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
   useEffect(() => {
     loadFinancialData();
     loadVehicles();
-  }, [startDate, endDate]);
+  }, []);
 
   const loadFinancialData = async () => {
     try {
       setLoading(true);
       
       const response = await apiService.get(
-        `/owner/reports/financial?start_date=${startDate}&end_date=${endDate}`
+        `/owner/reports/financial?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`
       );
       
       if (response.success) {
@@ -146,7 +151,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
     setRefreshing(true);
     await loadFinancialData();
     setRefreshing(false);
-  }, [startDate, endDate]);
+  }, []);
 
   const handleAddExpense = async () => {
     try {
@@ -193,7 +198,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
   };
 
   const getExpenseTypeColor = (type: string) => {
-    const colors_map: { [key: string]: string } = {
+    const colorsMap: { [key: string]: string } = {
       maintenance: '#FF6B6B',
       insurance: '#4ECDC4',
       fuel: '#45B7D1',
@@ -202,7 +207,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
       registration: '#DDA0DD',
       other: '#A8A8A8',
     };
-    return colors_map[type] || colors.lightGrey;
+    return colorsMap[type] || colors.lightGrey;
   };
 
   const renderSummaryCards = () => {
@@ -256,21 +261,39 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
       <View style={styles.dateRow}>
         <View style={styles.dateInput}>
           <Text style={styles.dateLabel}>From</Text>
-          <TextInput
-            style={styles.dateValue}
-            value={startDate}
-            onChangeText={setStartDate}
-            placeholder="YYYY-MM-DD"
-          />
+          <TouchableOpacity onPress={() => setShowStartDatePicker(true)} style={styles.dateValue}>
+            <Text>{startDate.toISOString().split('T')[0]}</Text>
+          </TouchableOpacity>
+          {showStartDatePicker && (
+            <DateTimePicker
+              value={startDate}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                const currentDate = selectedDate || startDate;
+                setShowStartDatePicker(false);
+                setStartDate(currentDate);
+              }}
+            />
+          )}
         </View>
         <View style={styles.dateInput}>
           <Text style={styles.dateLabel}>To</Text>
-          <TextInput
-            style={styles.dateValue}
-            value={endDate}
-            onChangeText={setEndDate}
-            placeholder="YYYY-MM-DD"
-          />
+          <TouchableOpacity onPress={() => setShowEndDatePicker(true)} style={styles.dateValue}>
+            <Text>{endDate.toISOString().split('T')[0]}</Text>
+          </TouchableOpacity>
+          {showEndDatePicker && (
+            <DateTimePicker
+              value={endDate}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                const currentDate = selectedDate || endDate;
+                setShowEndDatePicker(false);
+                setEndDate(currentDate);
+              }}
+            />
+          )}
         </View>
       </View>
     </View>
@@ -353,113 +376,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
     );
   };
 
-  const renderExpenseModal = () => (
-    <Modal visible={showExpenseModal} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modal}>
-          <Text style={styles.modalTitle}>Add Expense</Text>
-          
-          <Text style={styles.inputLabel}>Vehicle</Text>
-          <View style={styles.pickerContainer}>
-            {vehicles.map((vehicle) => (
-              <TouchableOpacity
-                key={vehicle.id}
-                style={[
-                  styles.pickerOption,
-                  newExpense.vehicleId === vehicle.id && styles.pickerOptionSelected
-                ]}
-                onPress={() => setNewExpense({ ...newExpense, vehicleId: vehicle.id })}
-              >
-                <Text style={[
-                  styles.pickerOptionText,
-                  newExpense.vehicleId === vehicle.id && styles.pickerOptionTextSelected
-                ]}>
-                  {vehicle.year} {vehicle.make} {vehicle.model}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
-          <Text style={styles.inputLabel}>Expense Type</Text>
-          <View style={styles.pickerContainer}>
-            {expenseTypes.map((type) => (
-              <TouchableOpacity
-                key={type.value}
-                style={[
-                  styles.pickerOption,
-                  newExpense.expenseType === type.value && styles.pickerOptionSelected
-                ]}
-                onPress={() => setNewExpense({ ...newExpense, expenseType: type.value })}
-              >
-                <Text style={[
-                  styles.pickerOptionText,
-                  newExpense.expenseType === type.value && styles.pickerOptionTextSelected
-                ]}>
-                  {type.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={styles.inputLabel}>Amount</Text>
-          <TextInput
-            style={styles.input}
-            value={newExpense.amount.toString()}
-            onChangeText={(text) => setNewExpense({ ...newExpense, amount: parseFloat(text) || 0 })}
-            placeholder="Enter amount"
-            keyboardType="numeric"
-          />
-
-          <Text style={styles.inputLabel}>Description</Text>
-          <TextInput
-            style={styles.input}
-            value={newExpense.description}
-            onChangeText={(text) => setNewExpense({ ...newExpense, description: text })}
-            placeholder="Enter description"
-            multiline
-          />
-
-          <Text style={styles.inputLabel}>Date</Text>
-          <TextInput
-            style={styles.input}
-            value={newExpense.expenseDate}
-            onChangeText={(text) => setNewExpense({ ...newExpense, expenseDate: text })}
-            placeholder="YYYY-MM-DD"
-          />
-
-          <TouchableOpacity
-            style={styles.checkboxRow}
-            onPress={() => setNewExpense({ 
-              ...newExpense, 
-              taxDeductible: !newExpense.taxDeductible 
-            })}
-          >
-            <Ionicons 
-              name={newExpense.taxDeductible ? 'checkbox' : 'square-outline'} 
-              size={20} 
-              color={colors.primary} 
-            />
-            <Text style={styles.checkboxLabel}>Tax deductible</Text>
-          </TouchableOpacity>
-
-          <View style={styles.modalActions}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowExpenseModal(false)}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={handleAddExpense}
-            >
-              <Text style={styles.addButtonText}>Add Expense</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
 
   if (loading) {
     return (
@@ -485,7 +402,16 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
         {renderExpenseBreakdown()}
       </ScrollView>
 
-      {renderExpenseModal()}
+      <AddExpenseModal
+        showExpenseModal={showExpenseModal}
+        setShowExpenseModal={setShowExpenseModal}
+        newExpense={newExpense}
+        setNewExpense={setNewExpense}
+        vehicles={vehicles}
+        expenseTypes={expenseTypes}
+        handleAddExpense={handleAddExpense}
+        styles={styles}
+      />
     </View>
   );
 };
@@ -723,4 +649,4 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: '600',
   },
-}); 
+});

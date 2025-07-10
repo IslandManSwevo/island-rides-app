@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import { Button } from '../components/Button';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { Vehicle } from '../types';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
+import { transformBookingForReview } from '../utils/bookingTransforms';
 
 type BookingConfirmedScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.BOOKING_CONFIRMED>;
 type BookingConfirmedScreenRouteProp = RouteProp<RootStackParamList, typeof ROUTES.BOOKING_CONFIRMED>;
@@ -38,19 +39,7 @@ export const BookingConfirmedScreen: React.FC<BookingConfirmedScreenProps> = ({ 
     if (booking.status === 'completed') {
       const scheduleReviewPrompt = async () => {
         try {
-          const bookingForReview = {
-            id: booking.id,
-            vehicle: {
-              id: booking.vehicle.id,
-              make: booking.vehicle.make,
-              model: booking.vehicle.model,
-              year: booking.vehicle.year
-            },
-            startDate: booking.start_date,
-            endDate: booking.end_date,
-            status: booking.status
-          };
-          
+          const bookingForReview = transformBookingForReview(booking);
           await reviewPromptService.scheduleReviewPrompt(bookingForReview);
           console.log('Review prompt scheduled successfully for booking:', booking.id);
         } catch (error) {
@@ -74,11 +63,12 @@ export const BookingConfirmedScreen: React.FC<BookingConfirmedScreenProps> = ({ 
   };
 
   const handleBackToHome = () => {
-    navigation.navigate('IslandSelection');
+    navigation.navigate(ROUTES.ISLAND_SELECTION);
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
       <View style={styles.header}>
         <View style={styles.successIcon}>
           <Ionicons name="checkmark-circle" size={80} color={colors.primary} />
@@ -181,7 +171,8 @@ export const BookingConfirmedScreen: React.FC<BookingConfirmedScreenProps> = ({ 
         bookingId={booking.id}
         onClose={() => setShowReceipt(false)}
       />
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

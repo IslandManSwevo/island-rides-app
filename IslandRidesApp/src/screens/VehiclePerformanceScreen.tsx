@@ -13,7 +13,10 @@ import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
-import { VehicleCard } from '../components/VehicleCard';
+import { VehicleSummaryCards } from '../components/vehiclePerformance/VehicleSummaryCards';
+import { VehicleSortControls } from '../components/vehiclePerformance/VehicleSortControls';
+import { VehiclePerformanceCard } from '../components/vehiclePerformance/VehiclePerformanceCard';
+import { VehicleEmptyState } from '../components/vehiclePerformance/VehicleEmptyState';
 
 interface VehiclePerformance {
   id: number;
@@ -178,158 +181,14 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
     });
   };
 
-  const renderSortControls = () => (
-    <View style={styles.sortControls}>
-      <Text style={styles.sortLabel}>Sort by:</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {sortOptions.map((option) => (
-          <TouchableOpacity
-            key={option.value}
-            style={[
-              styles.sortOption,
-              sortBy === option.value && styles.sortOptionActive
-            ]}
-            onPress={() => {
-              if (sortBy === option.value) {
-                setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
-              } else {
-                setSortBy(option.value);
-                setSortOrder('desc');
-              }
-            }}
-          >
-            <Text style={[
-              styles.sortOptionText,
-              sortBy === option.value && styles.sortOptionTextActive
-            ]}>
-              {option.label}
-            </Text>
-            {sortBy === option.value && (
-              <Ionicons 
-                name={sortOrder === 'desc' ? 'chevron-down' : 'chevron-up'} 
-                size={16} 
-                color={colors.white} 
-              />
-            )}
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-
-  const renderVehicleCard = (vehicle: VehiclePerformance) => (
-    <TouchableOpacity 
-      key={vehicle.id} 
-      style={styles.vehicleCard}
-      onPress={() => handleVehiclePress(vehicle)}
-    >
-      <View style={styles.vehicleHeader}>
-        <View style={styles.vehicleInfo}>
-          <Text style={styles.vehicleName}>
-            {vehicle.year} {vehicle.make} {vehicle.model}
-          </Text>
-          <View style={styles.statusRow}>
-            <View style={[
-              styles.availabilityBadge, 
-              { backgroundColor: vehicle.available ? colors.success : colors.error }
-            ]}>
-              <Text style={styles.availabilityText}>
-                {vehicle.available ? 'Available' : 'Unavailable'}
-              </Text>
-            </View>
-            <View style={styles.verificationBadge}>
-              <Ionicons 
-                name={getVerificationStatusIcon(vehicle.verificationStatus) as any} 
-                size={12} 
-                color={getVerificationStatusColor(vehicle.verificationStatus)} 
-              />
-              <Text style={[
-                styles.verificationText,
-                { color: getVerificationStatusColor(vehicle.verificationStatus) }
-              ]}>
-                {vehicle.verificationStatus?.charAt(0).toUpperCase() + vehicle.verificationStatus?.slice(1)}
-              </Text>
-            </View>
-          </View>
-        </View>
-        <Text style={styles.dailyRate}>{formatCurrency(vehicle.dailyRate)}/day</Text>
-      </View>
-
-      <View style={styles.metricsRow}>
-        <View style={styles.metric}>
-          <Text style={styles.metricValue}>{vehicle.totalBookings}</Text>
-          <Text style={styles.metricLabel}>Total Bookings</Text>
-        </View>
-        <View style={styles.metric}>
-          <Text style={styles.metricValue}>{formatCurrency(vehicle.totalRevenue)}</Text>
-          <Text style={styles.metricLabel}>Total Revenue</Text>
-        </View>
-        <View style={styles.metric}>
-          <Text style={[
-            styles.metricValue,
-            { color: getPerformanceColor(vehicle.averageRating, 'rating') }
-          ]}>
-            {vehicle.averageRating.toFixed(1)}⭐
-          </Text>
-          <Text style={styles.metricLabel}>{vehicle.reviewCount} reviews</Text>
-        </View>
-      </View>
-
-      <View style={styles.performanceRow}>
-        <View style={styles.performanceMetric}>
-          <Text style={styles.performanceLabel}>Occupancy Rate</Text>
-          <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progressBarFill, 
-                { 
-                  width: `${Math.min(vehicle.occupancyRate, 100)}%`,
-                  backgroundColor: getPerformanceColor(vehicle.occupancyRate, 'occupancy')
-                }
-              ]} 
-            />
-          </View>
-          <Text style={[
-            styles.performanceValue,
-            { color: getPerformanceColor(vehicle.occupancyRate, 'occupancy') }
-          ]}>
-            {formatPercentage(vehicle.occupancyRate)}
-          </Text>
-        </View>
-
-        <View style={styles.performanceMetric}>
-          <Text style={styles.performanceLabel}>Condition Rating</Text>
-          <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progressBarFill, 
-                { 
-                  width: `${(vehicle.conditionRating / 5) * 100}%`,
-                  backgroundColor: getPerformanceColor(vehicle.conditionRating, 'condition')
-                }
-              ]} 
-            />
-          </View>
-          <Text style={[
-            styles.performanceValue,
-            { color: getPerformanceColor(vehicle.conditionRating, 'condition') }
-          ]}>
-            {vehicle.conditionRating.toFixed(1)}/5
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.recentPerformance}>
-        <Text style={styles.recentTitle}>Last 30 Days</Text>
-        <View style={styles.recentMetrics}>
-          <Text style={styles.recentMetric}>
-            {vehicle.recentBookings} bookings • {formatCurrency(vehicle.recentRevenue)}
-          </Text>
-          {vehicle.maintenanceInfo.lastMaintenance && (
-            <Text style={styles.maintenanceInfo}>
-              Last maintenance: {new Date(vehicle.maintenanceInfo.lastMaintenance).toLocaleDateString()}
-            </Text>
-          )}
+  const handleSortChange = (newSortBy: string) => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('desc');
+    }
+  };
         </View>
       </View>
 
@@ -361,45 +220,7 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
     </TouchableOpacity>
   );
 
-  const renderSummaryCards = () => {
-    if (vehicles.length === 0) return null;
 
-    const totalRevenue = vehicles.reduce((sum, v) => sum + v.totalRevenue, 0);
-    const totalBookings = vehicles.reduce((sum, v) => sum + v.totalBookings, 0);
-    const avgOccupancy = vehicles.reduce((sum, v) => sum + v.occupancyRate, 0) / vehicles.length;
-    const avgRating = vehicles.reduce((sum, v) => sum + v.averageRating, 0) / vehicles.length;
-
-    return (
-      <View style={styles.summaryCards}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{formatCurrency(totalRevenue)}</Text>
-          <Text style={styles.summaryLabel}>Total Fleet Revenue</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{totalBookings}</Text>
-          <Text style={styles.summaryLabel}>Total Bookings</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={[
-            styles.summaryValue,
-            { color: getPerformanceColor(avgOccupancy, 'occupancy') }
-          ]}>
-            {formatPercentage(avgOccupancy)}
-          </Text>
-          <Text style={styles.summaryLabel}>Avg Occupancy</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={[
-            styles.summaryValue,
-            { color: getPerformanceColor(avgRating, 'rating') }
-          ]}>
-            {avgRating.toFixed(1)}⭐
-          </Text>
-          <Text style={styles.summaryLabel}>Avg Rating</Text>
-        </View>
-      </View>
-    );
-  };
 
   if (loading) {
     return (
@@ -415,24 +236,38 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
       
       <ScrollView
         style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {renderSummaryCards()}
-        {renderSortControls()}
+        <VehicleSummaryCards
+          vehicles={vehicles}
+          formatCurrency={formatCurrency}
+          formatPercentage={formatPercentage}
+          getPerformanceColor={getPerformanceColor}
+        />
+        <VehicleSortControls
+          sortOptions={sortOptions}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
+        />
 
         {vehicles.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="car-outline" size={64} color={colors.lightGrey} />
-            <Text style={styles.emptyStateTitle}>No vehicles found</Text>
-            <Text style={styles.emptyStateText}>
-              Add your first vehicle to start tracking performance
-            </Text>
-          </View>
+          <VehicleEmptyState />
         ) : (
           <View style={styles.vehiclesList}>
-            {sortVehicles(vehicles).map(renderVehicleCard)}
+            {sortVehicles(vehicles).map(vehicle => (
+              <VehiclePerformanceCard
+                key={vehicle.id}
+                vehicle={vehicle}
+                onPress={handleVehiclePress}
+                formatCurrency={formatCurrency}
+                formatPercentage={formatPercentage}
+                getPerformanceColor={getPerformanceColor}
+                getVerificationStatusColor={getVerificationStatusColor}
+                getVerificationStatusIcon={getVerificationStatusIcon}
+                navigation={navigation}
+              />
+            ))}
           </View>
         )}
       </ScrollView>
@@ -453,234 +288,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  summaryCards: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  summaryCard: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  summaryValue: {
-    ...typography.heading2,
-    color: colors.black,
-    marginBottom: spacing.xs,
-  },
-  summaryLabel: {
-    ...typography.caption,
-    color: colors.lightGrey,
-    textAlign: 'center',
-  },
-  sortControls: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.offWhite,
-  },
-  sortLabel: {
-    ...typography.body,
-    color: colors.darkGrey,
-    marginBottom: spacing.sm,
-    fontWeight: '600',
-  },
-  sortOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginRight: spacing.sm,
-    backgroundColor: colors.lightGrey,
-    borderRadius: borderRadius.md,
-    gap: spacing.xs,
-  },
-  sortOptionActive: {
-    backgroundColor: colors.primary,
-  },
-  sortOptionText: {
-    ...typography.caption,
-    color: colors.darkGrey,
-    fontWeight: '600',
-  },
-  sortOptionTextActive: {
-    color: colors.white,
-  },
   vehiclesList: {
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  vehicleCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    elevation: 3,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-  },
-  vehicleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  vehicleInfo: {
-    flex: 1,
-  },
-  vehicleName: {
-    ...typography.heading3,
-    color: colors.black,
-    marginBottom: spacing.sm,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  availabilityBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  availabilityText: {
-    ...typography.caption,
-    color: colors.white,
-    fontWeight: '600',
-    fontSize: 10,
-  },
-  verificationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  verificationText: {
-    ...typography.caption,
-    fontWeight: '600',
-    fontSize: 10,
-  },
-  dailyRate: {
-    ...typography.heading3,
-    color: colors.primary,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.offWhite,
-  },
-  metric: {
-    alignItems: 'center',
-  },
-  metricValue: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.black,
-    marginBottom: spacing.xs,
-  },
-  metricLabel: {
-    ...typography.caption,
-    color: colors.lightGrey,
-    textAlign: 'center',
-  },
-  performanceRow: {
-    gap: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  performanceMetric: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  performanceLabel: {
-    ...typography.caption,
-    color: colors.darkGrey,
-    width: 80,
-  },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: colors.offWhite,
-    borderRadius: 4,
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  performanceValue: {
-    ...typography.caption,
-    fontWeight: '600',
-    width: 50,
-    textAlign: 'right',
-  },
-  recentPerformance: {
-    marginBottom: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.offWhite,
-  },
-  recentTitle: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.darkGrey,
-    marginBottom: spacing.sm,
-  },
-  recentMetrics: {
-    gap: spacing.xs,
-  },
-  recentMetric: {
-    ...typography.caption,
-    color: colors.lightGrey,
-  },
-  maintenanceInfo: {
-    ...typography.caption,
-    color: colors.warning,
-    fontStyle: 'italic',
-  },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.offWhite,
   },
-  actionButtonText: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  emptyState: {
-    alignItems: 'center',
-    padding: spacing.xl,
-    marginTop: spacing.xl,
-  },
-  emptyStateTitle: {
-    ...typography.heading2,
-    color: colors.darkGrey,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  emptyStateText: {
-    ...typography.body,
-    color: colors.lightGrey,
-    textAlign: 'center',
-  },
-}); 
+});

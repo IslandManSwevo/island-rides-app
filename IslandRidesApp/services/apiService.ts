@@ -4,12 +4,10 @@ import { getEnvironmentConfig } from '../src/config/environment';
 export class ApiService {
   private static readonly TOKEN_KEY = 'auth_token';
   private baseUrl: string;
-  private token: string | null = null;
   private static instance: ApiService | null = null;
 
   constructor(baseUrl?: string) {
     this.baseUrl = baseUrl || 'http://localhost:3003/api'; // Fallback URL
-    this.initializeBaseUrl();
   }
 
   private async initializeBaseUrl(): Promise<void> {
@@ -34,7 +32,7 @@ export class ApiService {
   // Token management methods
   static async storeToken(token: string): Promise<void> {
     try {
-      await AsyncStorage.setItem(this.TOKEN_KEY, token);
+      await AsyncStorage.setItem(ApiService.TOKEN_KEY, token);
     } catch (error) {
       console.error('Failed to store auth token:', error);
       throw new Error('Could not store authentication token');
@@ -43,8 +41,7 @@ export class ApiService {
 
   static async getToken(): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem(this.TOKEN_KEY);
-    } catch (error) {
+      return await AsyncStorage.getItem(ApiService.TOKEN_KEY);    } catch (error) {
       console.error('Failed to retrieve auth token:', error);
       return null;
     }
@@ -52,7 +49,7 @@ export class ApiService {
 
   static async clearToken(): Promise<void> {
     try {
-      await AsyncStorage.removeItem(this.TOKEN_KEY);
+      await AsyncStorage.removeItem(ApiService.TOKEN_KEY);
     } catch (error) {
       console.error('Failed to clear auth token:', error);
       throw new Error('Could not clear authentication token');
@@ -68,8 +65,8 @@ export class ApiService {
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
         ...options.headers,
+        'Content-Type': 'application/json',
       },
     });
 

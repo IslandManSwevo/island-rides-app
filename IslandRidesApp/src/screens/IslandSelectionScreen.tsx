@@ -1,4 +1,5 @@
 import React from 'react';
+import React from 'react';
 import { View, StyleSheet, SafeAreaView, Alert, ScrollView, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../components/AppHeader';
@@ -7,41 +8,11 @@ import { useAuth } from '../context/AuthContext';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Island } from '../types';
 import { ROUTES } from '../navigation/routes';
-
-interface IslandOption {
-  id: Island;
-  name: string;
-  description: string;
-  emoji: string;
-  features: string[];
-}
-
-const islands: IslandOption[] = [
-  {
-    id: 'Nassau',
-    name: 'New Providence (Nassau)',
-    description: 'Capital city with beaches, resorts, and cultural attractions',
-    emoji: '🏙️',
-    features: ['City Life', 'Beaches', 'Shopping', 'Nightlife']
-  },
-  {
-    id: 'Freeport',
-    name: 'Grand Bahama (Freeport)', 
-    description: 'Duty-free shopping, pristine beaches, and water sports',
-    emoji: '🏖️',
-    features: ['Duty-Free Shopping', 'Water Sports', 'Beaches', 'Resorts']
-  },
-  {
-    id: 'Exuma',
-    name: 'Exuma',
-    description: 'Swimming pigs, iguanas, and crystal-clear waters',
-    emoji: '🐷',
-    features: ['Swimming Pigs', 'Nature', 'Adventures', 'Secluded Beaches']
-  },
-];
+import { islands, IslandOption } from '../constants/islands';
+import { NavigationProp } from '@react-navigation/native';
 
 interface IslandSelectionScreenProps {
-  navigation: any;
+  navigation: NavigationProp<any>;
 }
 
 const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({
@@ -148,19 +119,21 @@ const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({
         </View>
 
         {/* Test Section - Remove in production */}
-        <View style={styles.testSection}>
-          <Text style={styles.sectionTitle}>Development Testing</Text>
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={() => navigation.navigate('Chat', {
-              context: { participantId: 2 },
-              title: 'Test Chat'
-            })}
-          >
-            <Ionicons name="chatbubbles" size={20} color={colors.white} />
-            <Text style={styles.testButtonText}>Test Chat Feature</Text>
-          </TouchableOpacity>
-        </View>
+        {__DEV__ && (
+          <View style={styles.testSection}>
+            <Text style={styles.sectionTitle}>Development Testing</Text>
+            <TouchableOpacity
+              style={styles.testButton}
+              onPress={() => navigation.navigate('Chat', {
+                context: { participantId: 2 },
+                title: 'Test Chat'
+              })}
+            >
+              <Ionicons name="chatbubbles" size={20} color={colors.white} />
+              <Text style={styles.testButtonText}>Test Chat Feature</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

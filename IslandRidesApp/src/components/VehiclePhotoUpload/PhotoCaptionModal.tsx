@@ -1,0 +1,108 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+} from 'react-native';
+import { colors, typography, spacing, borderRadius } from '../../styles/theme';
+
+interface PhotoCaptionModalProps {
+  visible: boolean;
+  initialCaption: string;
+  onClose: () => void;
+  onSave: (caption: string) => void;
+}
+
+export const PhotoCaptionModal: React.FC<PhotoCaptionModalProps> = ({ visible, initialCaption, onClose, onSave }) => {
+  const [caption, setCaption] = useState(initialCaption);
+
+  useEffect(() => {
+    setCaption(initialCaption);
+  }, [initialCaption]);
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={styles.modalOverlay}>
+        <View style={styles.modal}>
+          <Text style={styles.modalTitle}>Add Caption</Text>
+          
+          <TextInput
+            style={styles.captionInput}
+            value={caption}
+            onChangeText={setCaption}
+            placeholder="Enter photo caption..."
+            multiline
+            maxLength={200}
+          />
+          
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={onClose}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={() => onSave(caption)}
+            >
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: spacing.lg,
+  },
+  modal: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+  },
+  modalTitle: {
+    ...typography.heading2,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  captionInput: {
+    ...typography.body,
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: spacing.lg,
+  },
+  cancelButton: {
+    padding: spacing.md,
+  },
+  cancelButtonText: {
+    ...typography.button,
+    color: colors.lightGrey,
+  },
+  saveButton: {
+    padding: spacing.md,
+    marginLeft: spacing.md,
+  },
+  saveButtonText: {
+    ...typography.button,
+    color: colors.primary,
+  },
+});

@@ -8,6 +8,7 @@ import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Button } from '../components/Button';
 import { Vehicle } from '../types';
 import { BookingService } from '../services/bookingService';
+import { pricingConfigService, PricingConfig, BusinessRules } from '../services/pricingConfigService';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
@@ -21,30 +22,100 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pricingConfig, setPricingConfig] = useState<PricingConfig | null>(null);
+  const [businessRules, setBusinessRules] = useState<BusinessRules | null>(null);
 
   const days = BookingService.calculateDays(
     startDate.toISOString().split('T')[0],
     endDate.toISOString().split('T')[0]
   );
   const basePrice = days * vehicle.dailyRate;
-  const insuranceFee = days * 15;
-  const serviceFee = 25;
-  const taxRate = 0.10;
+  const insuranceFee = pricingConfig ? days * pricingConfig.insuranceFeePerDay : days * 15;
+  const serviceFee = pricingConfig ? pricingConfig.serviceFee : 25;
+  const taxRate = pricingConfig ? pricingConfig.taxRate : 0.10;
   const subtotal = basePrice + insuranceFee + serviceFee;
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
+  const validateDateSelection = (newStartDate: Date, newEndDate: Date): { isValid: boolean; errorMessage?: string } => {
+    if (!businessRules) {
+      return { isValid: true }; // Allow if rules not loaded yet
+    }
+
+    const now = new Date();
+    const minAdvanceTime = new Date(now.getTime() + businessRules.minAdvanceBooking * 60 * 60 * 1000);
+    const maxAdvanceTime = new Date(now.getTime() + businessRules.maxAdvanceBooking * 24 * 60 * 60 * 1000);
+    
+    // Check minimum advance booking
+    if (newStartDate < minAdvanceTime) {
+      return {
+        isValid: false,
+        errorMessage: `Booking must be made at least ${businessRules.minAdvanceBooking} hours in advance`
+      };
+    }
+    
+    // Check maximum advance booking
+    if (newStartDate > maxAdvanceTime) {
+      return {
+        isValid: false,
+        errorMessage: `Booking cannot be made more than ${businessRules.maxAdvanceBooking} days in advance`
+      };
+    }
+    
+    // Check rental period length
+    const rentalDays = BookingService.calculateDays(
+      newStartDate.toISOString().split('T')[0],
+      newEndDate.toISOString().split('T')[0]
+    );
+    
+    if (rentalDays < businessRules.minRentalPeriod) {
+      return {
+        isValid: false,
+        errorMessage: `Minimum rental period is ${businessRules.minRentalPeriod} day${businessRules.minRentalPeriod > 1 ? 's' : ''}`
+      };
+    }
+    
+    if (rentalDays > businessRules.maxRentalPeriod) {
+      return {
+        isValid: false,
+        errorMessage: `Maximum rental period is ${businessRules.maxRentalPeriod} days`
+      };
+    }
+    
+    return { isValid: true };
+  };
+
   const handleDateChange = (event: any, selectedDate: Date | undefined, type: 'start' | 'end') => {
     if (selectedDate) {
+      let newStartDate = startDate;
+      let newEndDate = endDate;
+      
       if (type === 'start') {
-        setStartDate(selectedDate);
+        newStartDate = selectedDate;
         if (selectedDate >= endDate) {
-          setEndDate(new Date(selectedDate.getTime() + 24 * 60 * 60 * 1000));
+          newEndDate = new Date(selectedDate.getTime() + 24 * 60 * 60 * 1000);
         }
       } else {
         if (selectedDate > startDate) {
-          setEndDate(selectedDate);
+          newEndDate = selectedDate;
+        } else {
+          setShowStartPicker(false);
+          setShowEndPicker(false);
+          return; // Don't update if end date is not after start date
         }
+      }
+      
+      // Validate the new date selection
+      const validation = validateDateSelection(newStartDate, newEndDate);
+      
+      if (validation.isValid) {
+        setStartDate(newStartDate);
+        setEndDate(newEndDate);
+      } else {
+        notificationService.error(validation.errorMessage || 'Invalid date selection', {
+          title: 'Date Selection Error',
+          duration: 4000
+        });
       }
     }
     setShowStartPicker(false);
@@ -61,7 +132,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
           title: 'Authentication Required',
           duration: 4000
         });
-        navigation.navigate('Login');
+        navigation.navigate(ROUTES.LOGIN);
         return;
       }
 
@@ -73,10 +144,9 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
 
       const response = await BookingService.createBooking(bookingData);
       
-      navigation.navigate('Payment', {
+      navigation.navigate(ROUTES.PAYMENT, {
         booking: {
           ...response.booking,
-          total_amount: total,
           vehicle: vehicle
         }
       });
@@ -93,6 +163,23 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
 
   useEffect(() => {
     notificationService.setupNotificationListeners(navigation);
+    
+    // Load pricing configuration and business rules
+    const loadConfigurations = async () => {
+      try {
+        const [config, rules] = await Promise.all([
+          pricingConfigService.getPricingConfig(),
+          pricingConfigService.getBusinessRules()
+        ]);
+        setPricingConfig(config);
+        setBusinessRules(rules);
+      } catch (error) {
+        console.warn('Failed to load configurations:', error);
+        // Fallback values are handled in the service
+      }
+    };
+    
+    loadConfigurations();
   }, []);
 
   return (
@@ -164,7 +251,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
         </View>
         
         <View style={styles.priceRow}>
-          <Text style={styles.priceLabel}>Insurance ($15/day)</Text>
+          <Text style={styles.priceLabel}>Insurance (${pricingConfig?.insuranceFeePerDay || 15}/day)</Text>
           <Text style={styles.priceValue}>${insuranceFee.toFixed(2)}</Text>
         </View>
         
@@ -174,7 +261,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
         </View>
         
         <View style={styles.priceRow}>
-          <Text style={styles.priceLabel}>Tax (10%)</Text>
+          <Text style={styles.priceLabel}>Tax ({((pricingConfig?.taxRate || 0.10) * 100).toFixed(0)}%)</Text>
           <Text style={styles.priceValue}>${tax.toFixed(2)}</Text>
         </View>
         

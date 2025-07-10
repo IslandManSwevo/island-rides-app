@@ -333,31 +333,30 @@ const styles = StyleSheet.create({
   compactImage: {
     height: 150,
   },
-  premiumBadge: {
+  badge: {
     position: 'absolute',
     top: 10,
     right: 10,
     backgroundColor: colors.primary,
     borderRadius: 10,
     padding: 4,
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  premiumBadge: {
+    ...this.badge,
   },
   premiumBadgeText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
+    ...this.badgeText,
   },
   verifiedBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    padding: 4,
+    ...this.badge,
   },
   verifiedText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
+    ...this.badgeText,
   },
   advancedInfo: {
     marginBottom: spacing.md,

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DevSettings, View, Text, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import NotificationContainer from './src/components/NotificationContainer';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -18,78 +19,78 @@ const App: React.FC = () => {
   const [initError, setInitError] = useState<string | null>(null);
   const [initProgress, setInitProgress] = useState('Starting...');
 
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        console.log('Starting app initialization...');
-        setInitProgress('Initializing services...');
-        
-        // Initialize core services first
-        await serviceRegistry.initializeServices();
-        console.log('Service registry initialized');
-        
-        setInitProgress('Setting up notifications...');
-        
-        // Only register for push notifications if not in Expo Go
-        const isExpoGo = Constants.appOwnership === 'expo';
-        if (!isExpoGo) {
-          try {
-            await notificationService.registerForPushNotifications();
-          } catch (error) {
-            console.warn('Push notification registration failed:', error);
-          }
-        }
-
-        setInitProgress('Initializing review system...');
-        
-        // Initialize review prompt service (non-blocking)
+  const initializeApp = async () => {
+    try {
+      console.log('Starting app initialization...');
+      setInitProgress('Initializing services...');
+      
+      // Initialize core services first
+      await serviceRegistry.initializeServices();
+      console.log('Service registry initialized');
+      
+      setInitProgress('Setting up notifications...');
+      
+      // Only register for push notifications if not in Expo Go
+      const isExpoGo = Constants.appOwnership === 'expo';
+      if (!isExpoGo) {
         try {
-          await reviewPromptService.initialize();
+          await notificationService.registerForPushNotifications();
         } catch (error) {
-          console.warn('Review prompt service initialization failed:', error);
-        }
-
-        setInitProgress('Finalizing...');
-
-        // Run setup tests in development mode
-        if (__DEV__) {
-          setInitProgress('Running setup verification...');
-          try {
-            await runSetupTests();
-          } catch (error) {
-            console.warn('Setup tests failed (non-critical):', error);
-          }
-        }
-        
-        setIsInitialized(true);
-        console.log('App initialized successfully');
-
-        // Show welcome message
-        setTimeout(() => {
-          notificationService.info('Welcome to Island Rides! 🏝️', {
-            duration: 3000,
-            action: {
-              label: 'Get Started',
-              handler: () => {
-                // Navigation will be handled by AppNavigator
-              }
-            }
-          });
-        }, 1000);
-        
-      } catch (error) {
-        console.error('Failed to initialize app:', error);
-        setInitError(error instanceof Error ? error.message : 'Unknown initialization error');
-        
-        // Try to log the error if logging service is available
-        try {
-          loggingService.error('Failed to initialize app', error as Error);
-        } catch (logError) {
-          console.warn('Failed to log error:', logError);
+          console.warn('Push notification registration failed:', error);
         }
       }
-    };
 
+      setInitProgress('Initializing review system...');
+      
+      // Initialize review prompt service (non-blocking)
+      try {
+        await reviewPromptService.initialize();
+      } catch (error) {
+        console.warn('Review prompt service initialization failed:', error);
+      }
+
+      setInitProgress('Finalizing...');
+
+      // Run setup tests in development mode
+      if (__DEV__) {
+        setInitProgress('Running setup verification...');
+        try {
+          await runSetupTests();
+        } catch (error) {
+          console.warn('Setup tests failed (non-critical):', error);
+        }
+      }
+      
+      setIsInitialized(true);
+      console.log('App initialized successfully');
+
+      // Show welcome message
+      setTimeout(() => {
+        notificationService.info('Welcome to Island Rides! 🏝️', {
+          duration: 3000,
+          action: {
+            label: 'Get Started',
+            handler: () => {
+              // Navigation will be handled by AppNavigator
+            }
+          }
+        });
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Failed to initialize app:', error);
+      setInitError(error instanceof Error ? error.message : 'Unknown initialization error');
+      
+      // Try to log the error if logging service is available
+      try {
+        loggingService.error('Failed to initialize app', error as Error);
+      } catch (logError) {
+        console.warn('Failed to log error:', logError);
+      }
+    }
+  };
+
+  useEffect(() => {
     initializeApp();
   }, []);
 
@@ -127,6 +128,7 @@ const App: React.FC = () => {
       // For production, just re-initialize
       const timer = setTimeout(() => {
         setInitProgress('Starting...');
+        initializeApp();
       }, 500);
     }
   };
@@ -145,23 +147,25 @@ const App: React.FC = () => {
 
   if (!isInitialized) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.loadingText}>Loading Island Rides...</Text>
         <Text style={styles.progressText}>{initProgress}</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ErrorBoundary onError={handleError}>
-      <NavigationContainer ref={navigationRef}>
-        <AuthProvider>
-          <NotificationContainer />
-          <AppNavigator />
-        </AuthProvider>
-      </NavigationContainer>
-    </ErrorBoundary>
+    <SafeAreaProvider>
+      <ErrorBoundary onError={handleError}>
+        <NavigationContainer ref={navigationRef}>
+          <AuthProvider>
+            <NotificationContainer />
+            <AppNavigator />
+          </AuthProvider>
+        </NavigationContainer>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 };
 

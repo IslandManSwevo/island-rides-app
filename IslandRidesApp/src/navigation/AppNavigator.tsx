@@ -1,24 +1,26 @@
 import React from 'react';
+
+
 import { createStackNavigator } from '@react-navigation/stack';
-import { ActivityIndicator, View } from 'react-native';
-import IslandSelectionScreen from '../screens/IslandSelectionScreen';
-import { SearchResultsScreen } from '../screens/SearchResultsScreen';
-import { VehicleDetailScreen } from '../screens/VehicleDetailScreen';
-import { CheckoutScreen } from '../screens/CheckoutScreen';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { BookingConfirmedScreen } from '../screens/BookingConfirmedScreen';
-import { LoginScreen } from '../screens/LoginScreen';
-import { RegistrationScreen } from '../screens/RegistrationScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
-import { PaymentHistoryScreen } from '../screens/PaymentHistoryScreen';
-import ChatConversationScreen from '../screens/ChatConversationScreen';
-import { PaymentScreen } from '../screens/PaymentScreen';
+import { ChatConversationScreen } from '../screens/ChatConversationScreen';
+import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
-import { NotificationPreferencesScreen } from '../screens/NotificationPreferencesScreen';
-import { WriteReviewScreen } from '../screens/WriteReviewScreen';
-import { OwnerDashboardScreen } from '../screens/OwnerDashboardScreen';
-import { VehiclePerformanceScreen } from '../screens/VehiclePerformanceScreen';
 import { FinancialReportsScreen } from '../screens/FinancialReportsScreen';
 import { FleetManagementScreen } from '../screens/FleetManagementScreen';
+import { IslandSelectionScreen } from '../screens/IslandSelectionScreen';
+import { LoginScreen } from '../screens/LoginScreen';
+import { NotificationPreferencesScreen } from '../screens/NotificationPreferencesScreen';
+import { OwnerDashboardScreen } from '../screens/OwnerDashboardScreen';
+import { PaymentHistoryScreen } from '../screens/PaymentHistoryScreen';
+import { PaymentScreen } from '../screens/PaymentScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
+import { RegistrationScreen } from '../screens/RegistrationScreen';
+import { SearchResultsScreen } from '../screens/SearchResultsScreen';
+import { VehicleDetailScreen } from '../screens/VehicleDetailScreen';
+import { VehiclePerformanceScreen } from '../screens/VehiclePerformanceScreen';
+import { WriteReviewScreen } from '../screens/WriteReviewScreen';
 import { ROUTES, RootStackParamList } from './routes';
 import { useAuth } from '../context/AuthContext';
 
@@ -29,7 +31,7 @@ const AppNavigator: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -65,5 +67,13 @@ const AppNavigator: React.FC = () => {
     </Stack.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default AppNavigator;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import * as yup from 'yup';
 import { notificationService } from '../services/notificationService';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -16,26 +17,31 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [formErrors, setFormErrors] = useState<{ email?: string; password?: string }>({});
 
-  const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
-    
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+  const loginSchema = yup.object().shape({
+    email: yup.string().email('Please enter a valid email').required('Email is required'),
+    password: yup.string().required('Password is required'),
+  });
+
+  const validateForm = async () => {
+    try {
+      await loginSchema.validate({ email, password }, { abortEarly: false });
+      setFormErrors({});
+      return true;
+    } catch (err) {
+      if (err instanceof yup.ValidationError) {
+        const errors = err.inner.reduce((acc, current) => {
+          return { ...acc, [current.path!]: current.message };
+        }, {});
+        setFormErrors(errors);
+      }
+      return false;
     }
-    
-    if (!password) {
-      newErrors.password = 'Password is required';
-    }
-    
-    setFormErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleLogin = async () => {
     Keyboard.dismiss();
-    if (!validateForm()) return;
+    const isValid = await validateForm();
+    if (!isValid) return;
 
     // Clear any previous errors
     clearError();

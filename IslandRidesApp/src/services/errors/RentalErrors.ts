@@ -21,7 +21,7 @@ export class BookingConflictError extends BusinessLogicError {
 }
 
 export class PaymentFailedError extends BusinessLogicError {
-  constructor(message: string, details: any) {
+  constructor(details: any, message?: string) {
     super(
       message || 'Payment processing failed',
       'PAYMENT_FAILED',

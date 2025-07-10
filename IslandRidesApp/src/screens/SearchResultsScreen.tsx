@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { ROUTES } from '../navigation/routes';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView } from 'react-native';
 import { notificationService } from '../services/notificationService';
 import { colors, typography, spacing } from '../styles/theme';
 import { VehicleCard } from '../components/VehicleCard';
@@ -66,7 +67,7 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ naviga
   };
 
   const handleVehiclePress = (vehicle: VehicleRecommendation) => {
-    navigation.navigate('VehicleDetail', { vehicle: vehicle.vehicle });
+    navigation.navigate(ROUTES.VEHICLE_DETAIL, { vehicle: vehicle.vehicle });
   };
 
   const renderVehicleItem = ({ item }: { item: VehicleRecommendation }) => (
@@ -95,7 +96,7 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ naviga
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>🚗 Available in {island}</Text>
         <Text style={styles.subtitle}>
@@ -111,7 +112,7 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ naviga
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={renderEmptyState}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

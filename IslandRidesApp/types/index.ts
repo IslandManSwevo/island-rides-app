@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode, ErrorInfo } from 'react';
 
 // User role enum for type safety
 export enum UserRole {
@@ -66,9 +66,9 @@ export interface ApiErrorDetails {
 }
 
 export interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
   onReset?: () => void;
 }
 
@@ -101,5 +101,5 @@ export interface ErrorMeta {
   category?: ErrorCategory;
   code?: string;
   fields?: Record<string, string[]>;
-  [key: string]: any;
+  [key: string]: unknown;
 }

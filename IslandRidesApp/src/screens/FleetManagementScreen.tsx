@@ -19,6 +19,10 @@ import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
 
+import { FleetVehicleCard } from '../components/FleetVehicleCard';
+
+type IconName = keyof typeof Ionicons.glyphMap;
+
 interface Vehicle {
   id: number;
   make: string;
@@ -42,7 +46,7 @@ interface Vehicle {
 interface BulkAction {
   action: string;
   label: string;
-  icon: string;
+  icon: IconName;
   color: string;
 }
 
@@ -61,7 +65,8 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
   const [maintenanceVehicleId, setMaintenanceVehicleId] = useState<number | null>(null);
   const [maintenanceDate, setMaintenanceDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'unavailable' | 'maintenance'>('all');
+  type FilterStatus = 'all' | 'available' | 'unavailable' | 'maintenance';
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
 
   const bulkActions: BulkAction[] = [
     { action: 'toggle_availability', label: 'Toggle Availability', icon: 'swap-horizontal', color: colors.primary },
@@ -217,45 +222,7 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
     });
   };
 
-  const getStatusColor = (vehicle: Vehicle) => {
-    if (!vehicle.available) return colors.error;
-    if (vehicle.nextMaintenanceDate && new Date(vehicle.nextMaintenanceDate) <= new Date()) {
-      return colors.warning;
-    }
-    return colors.success;
-  };
 
-  const getStatusText = (vehicle: Vehicle) => {
-    if (!vehicle.available) return 'Unavailable';
-    if (vehicle.nextMaintenanceDate && new Date(vehicle.nextMaintenanceDate) <= new Date()) {
-      return 'Maintenance Due';
-    }
-    return 'Available';
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const isMaintenanceDue = (vehicle: Vehicle) => {
-    return vehicle.nextMaintenanceDate && new Date(vehicle.nextMaintenanceDate) <= new Date();
-  };
-
-  const isInsuranceExpiring = (vehicle: Vehicle) => {
-    if (!vehicle.insuranceExpiry) return false;
-    const expiryDate = new Date(vehicle.insuranceExpiry);
-    const warningDate = new Date();
-    warningDate.setDate(warningDate.getDate() + 30); // 30 days warning
-    return expiryDate <= warningDate;
-  };
 
   const renderFilterButtons = () => (
     <View style={styles.filterContainer}>
@@ -271,7 +238,7 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
             styles.filterButton,
             filterStatus === filter.key && styles.filterButtonActive
           ]}
-          onPress={() => setFilterStatus(filter.key as any)}
+          onPress={() => setFilterStatus(filter.key as FilterStatus)}
         >
           <Text style={[
             styles.filterButtonText,
@@ -316,12 +283,11 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
   };
 
   const renderVehicleCard = (vehicle: Vehicle) => (
-    <TouchableOpacity
+    <FleetVehicleCard
       key={vehicle.id}
-      style={[
-        styles.vehicleCard,
-        selectedVehicles.has(vehicle.id) && styles.vehicleCardSelected
-      ]}
+      vehicle={vehicle}
+      isSelected={selectedVehicles.has(vehicle.id)}
+      selectionMode={selectionMode}
       onPress={() => {
         if (selectionMode) {
           toggleVehicleSelection(vehicle.id);
@@ -346,111 +312,9 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
           toggleVehicleSelection(vehicle.id);
         }
       }}
-    >
-      {selectionMode && (
-        <View style={styles.selectionCheckbox}>
-          <Ionicons 
-            name={selectedVehicles.has(vehicle.id) ? 'checkbox' : 'square-outline'} 
-            size={20} 
-            color={colors.primary} 
-          />
-        </View>
-      )}
-
-      <View style={styles.vehicleHeader}>
-        <View style={styles.vehicleInfo}>
-          <Text style={styles.vehicleName}>
-            {vehicle.year} {vehicle.make} {vehicle.model}
-          </Text>
-          <Text style={styles.licensePlate}>{vehicle.licensePlate}</Text>
-        </View>
-        <View style={styles.vehicleStatus}>
-          <View style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(vehicle) }
-          ]}>
-            <Text style={styles.statusText}>{getStatusText(vehicle)}</Text>
-          </View>
-          <Text style={styles.dailyRate}>{formatCurrency(vehicle.dailyRate)}/day</Text>
-        </View>
-      </View>
-
-      <View style={styles.vehicleMetrics}>
-        <View style={styles.metric}>
-          <Ionicons name="location-outline" size={16} color={colors.lightGrey} />
-          <Text style={styles.metricText}>{vehicle.location}</Text>
-        </View>
-        <View style={styles.metric}>
-          <Ionicons name="speedometer-outline" size={16} color={colors.lightGrey} />
-          <Text style={styles.metricText}>{vehicle.mileage.toLocaleString()} miles</Text>
-        </View>
-        <View style={styles.metric}>
-          <Ionicons name="star-outline" size={16} color={colors.lightGrey} />
-          <Text style={styles.metricText}>{vehicle.conditionRating.toFixed(1)}/5</Text>
-        </View>
-      </View>
-
-      <View style={styles.bookingInfo}>
-        <Text style={styles.bookingText}>
-          Active: {vehicle.activeBookings} • Upcoming: {vehicle.upcomingBookings}
-        </Text>
-      </View>
-
-      {/* Alerts */}
-      <View style={styles.alerts}>
-        {isMaintenanceDue(vehicle) && (
-          <View style={[styles.alert, { backgroundColor: colors.warning }]}>
-            <Ionicons name="build" size={12} color={colors.white} />
-            <Text style={styles.alertText}>Maintenance Due</Text>
-          </View>
-        )}
-        {isInsuranceExpiring(vehicle) && (
-          <View style={[styles.alert, { backgroundColor: colors.error }]}>
-            <Ionicons name="shield" size={12} color={colors.white} />
-            <Text style={styles.alertText}>Insurance Expiring</Text>
-          </View>
-        )}
-        {vehicle.lastCleaned && 
-         new Date().getTime() - new Date(vehicle.lastCleaned).getTime() > 7 * 24 * 60 * 60 * 1000 && (
-          <View style={[styles.alert, { backgroundColor: colors.info }]}>
-            <Ionicons name="sparkles" size={12} color={colors.white} />
-            <Text style={styles.alertText}>Cleaning Due</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.quickActions}>
-        <TouchableOpacity 
-          style={styles.quickAction}
-          onPress={() => handleToggleAvailability(vehicle.id, vehicle.available)}
-        >
-          <Ionicons 
-            name={vehicle.available ? 'pause-circle' : 'play-circle'} 
-            size={16} 
-            color={colors.primary} 
-          />
-          <Text style={styles.quickActionText}>
-            {vehicle.available ? 'Disable' : 'Enable'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.quickAction}
-          onPress={() => navigation.navigate('VehicleConditionTracker', { vehicleId: vehicle.id })}
-        >
-          <Ionicons name="build-outline" size={16} color={colors.primary} />
-          <Text style={styles.quickActionText}>Maintenance</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.quickAction}
-          onPress={() => navigation.navigate('VehicleAvailability', { vehicleId: vehicle.id })}
-        >
-          <Ionicons name="calendar-outline" size={16} color={colors.primary} />
-          <Text style={styles.quickActionText}>Calendar</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      onToggleAvailability={() => handleToggleAvailability(vehicle.id, vehicle.available)}
+      navigation={navigation}
+    />
   );
 
   const renderBulkModal = () => (
@@ -468,7 +332,7 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
               style={styles.bulkActionButton}
               onPress={() => handleBulkAction(action.action)}
             >
-              <Ionicons name={action.icon as any} size={20} color={action.color} />
+              <Ionicons name={action.icon} size={20} color={action.color} />
               <Text style={styles.bulkActionText}>{action.label}</Text>
             </TouchableOpacity>
           ))}
@@ -882,4 +746,4 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.darkGrey,
   },
-}); 
+});

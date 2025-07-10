@@ -11,25 +11,27 @@ export const colors = {
   info: '#3498DB',
 };
 
+const lineHeightRatio = 1.5;
+
 export const typography = {
   fontFamily: 'Poppins',
   heading1: {
     fontSize: 28,
     fontWeight: '700' as const,
     color: colors.darkGrey,
-    lineHeight: 36,
+    lineHeight: 28 * lineHeightRatio,
   },
   subheading: {
     fontSize: 20,
     fontWeight: '600' as const,
     color: colors.darkGrey,
-    lineHeight: 28,
+    lineHeight: 20 * lineHeightRatio,
   },
   body: {
     fontSize: 16,
     fontWeight: '400' as const,
     color: colors.lightGrey,
-    lineHeight: 24,
+    lineHeight: 16 * lineHeightRatio,
   },
 };
 

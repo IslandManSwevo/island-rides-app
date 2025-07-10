@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Alert } from 'react-native';
 import {
   View,
   Text,
@@ -36,6 +37,7 @@ import { ChatContext, ChatMessage, ConversationResponse } from '../types';
 import { RootStackParamList } from '../navigation/routes';
 import conversationService from '../services/conversationService';
 import chatService from '../services/chatService';
+import { mediaUploadService } from '../services/mediaUploadService';
 import { AppHeader } from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
 import { colors, spacing, borderRadius } from '../styles/theme';
@@ -108,7 +110,11 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (cameraStatus !== 'granted' || libraryStatus !== 'granted') {
-        console.warn('Camera/Library permissions not granted');
+        Alert.alert(
+          'Permissions Denied',
+          'Camera and/or media library permissions are required to share photos. Please enable them in your device settings.',
+          [{ text: 'OK' }]
+        );
       }
     } catch (error) {
       console.error('Error requesting permissions:', error);
@@ -321,8 +327,11 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       return;
     }
 
-    const message = newMessages[0];
-    if (!message?.text?.trim() && !message?.image && !message?.audio) return;
+        const message = newMessages[0];
+    if (!message) return;
+
+    // Do not send empty messages
+    if (!message.text?.trim() && !message.image && !message.audio) return;
 
     try {
       // Optimistically update UI
@@ -331,7 +340,11 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       );
 
       // Send via WebSocket
-      await chatService.sendMessage(message.text || '');
+      await chatService.sendMessage({
+        text: message.text || '',
+        image: message.image || undefined,
+        audio: message.audio || undefined,
+      });
       
       console.log('✅ Message sent successfully');
 
@@ -388,18 +401,29 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
             quality: 0.8,
           });
 
-      if (!result.canceled && result.assets[0]) {
+            if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
         
-        const message: IMessage = {
-          _id: Math.round(Math.random() * 1000000),
-          text: '',
-          createdAt: new Date(),
-          user: getCurrentUser(),
-          image: imageUri,
-        };
-        
-        onSend([message]);
+        // Show a loading indicator while uploading
+        notificationService.info('Uploading image...', { duration: 0 });
+
+        try {
+          const imageUrl = await mediaUploadService.uploadImage(imageUri);
+          notificationService.hide();
+
+          const message: IMessage = {
+            _id: Math.round(Math.random() * 1000000),
+            text: '',
+            createdAt: new Date(),
+            user: getCurrentUser(),
+            image: imageUrl,
+          };
+          
+          onSend([message]);
+        } catch (uploadError) {
+          console.error('Image upload failed:', uploadError);
+          notificationService.error('Failed to upload image. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -445,19 +469,30 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       setIsRecording(false);
       await recording.stopAndUnloadAsync();
       
-      const uri = recording.getURI();
+            const uri = recording.getURI();
       setRecording(null);
 
       if (uri) {
-        const message: IMessage = {
-          _id: Math.round(Math.random() * 1000000),
-          text: '',
-          createdAt: new Date(),
-          user: getCurrentUser(),
-          audio: uri,
-        };
-        
-        onSend([message]);
+        // Show a loading indicator while uploading
+        notificationService.info('Uploading audio...', { duration: 0 });
+
+        try {
+          const audioUrl = await mediaUploadService.uploadAudio(uri);
+          notificationService.hide();
+
+          const message: IMessage = {
+            _id: Math.round(Math.random() * 1000000),
+            text: '',
+            createdAt: new Date(),
+            user: getCurrentUser(),
+            audio: audioUrl,
+          };
+          
+          onSend([message]);
+        } catch (uploadError) {
+          console.error('Audio upload failed:', uploadError);
+          notificationService.error('Failed to upload audio. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
@@ -486,13 +521,13 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   /**
    * Cleanup function
    */
-  const cleanup = () => {
+    const cleanup = async () => {
     console.log('🧹 Cleaning up chat screen...');
     
     try {
       chatService.disconnect();
       if (recording) {
-        recording.stopAndUnloadAsync();
+        await recording.stopAndUnloadAsync();
       }
     } catch (error) {
       console.error('❌ Error during cleanup:', error);

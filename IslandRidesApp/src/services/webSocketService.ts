@@ -2,8 +2,12 @@ import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '../types';
 import { notificationService } from './notificationService';
 import { getEnvironmentConfig } from '../config/environment';
+import { authService } from './authService';
 
 // Define the event types for better type safety
+
+export type WebSocketEvent = keyof ServerToClientEvents | keyof ClientToServerEvents;
+
 interface ServerToClientEvents {
   new_message: (message: ChatMessage) => void;
   'typing:start': (data: { userId: string; userName: string }) => void;
@@ -77,11 +81,33 @@ class WebSocketService {
       }
     });
 
-    this.socket.on('connect_error', (error) => {
-      notificationService.error(error.message || 'Chat error occurred', {
-        title: 'Chat Error',
-        duration: 4000,
-      });
+    this.socket.on('connect_error', async (error) => {
+      if (error.message.includes('Authentication error')) {
+        try {
+          console.log('WebSocket authentication error, attempting to refresh token...');
+          const newToken = await authService.refreshToken();
+          if (newToken && this.socket) {
+            this.socket.auth = { ...this.socket.auth, token: newToken };
+            this.socket.connect();
+            notificationService.info('Reconnecting with new token...', { duration: 2000 });
+          } else {
+            notificationService.error('Session expired. Please log in again.', {
+              title: 'Authentication Failed',
+            });
+          }
+        } catch (refreshError) {
+          console.error('Failed to refresh token:', refreshError);
+          notificationService.error('Session expired. Please log in again.', {
+            title: 'Authentication Failed',
+          });
+          this.disconnect();
+        }
+      } else {
+        notificationService.error(error.message || 'Chat error occurred', {
+          title: 'Chat Error',
+          duration: 4000,
+        });
+      }
     });
   }
 
@@ -99,8 +125,9 @@ class WebSocketService {
 
     // Remove custom event listeners
     this.eventListeners.forEach((listeners, eventName) => {
+      const event = eventName as WebSocketEvent;
       listeners.forEach(listener => {
-        this.socket?.off(eventName as any, listener as any);
+        this.socket?.off(event, listener as (...args: any[]) => void);
       });
     });
     this.eventListeners.clear();
@@ -221,11 +248,12 @@ class WebSocketService {
   }
 
   // Method to clean up specific event listeners without disconnecting
-  public removeListeners(eventName: keyof ServerToClientEvents): void {
+  public removeListeners(eventName: WebSocketEvent): void {
     if (!this.socket) return;
-    
-    this.socket.off(eventName);
-    this.eventListeners.delete(eventName);
+
+    const event = eventName as any;
+    this.socket.off(event);
+    this.eventListeners.delete(event);
   }
 
   // Method to clean up all listeners without disconnecting

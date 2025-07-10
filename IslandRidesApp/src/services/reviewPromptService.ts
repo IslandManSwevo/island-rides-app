@@ -382,7 +382,10 @@ class ReviewPromptService {
   private async getBookingDetails(bookingId: number): Promise<BookingForReview | null> {
     try {
       const response = await apiService.get<{ booking: BookingForReview }>(`/bookings/${bookingId}`);
-      return response.booking;
+      if (response && response.booking) {
+        return response.booking;
+      }
+      return null;
     } catch (error) {
       console.error(`Failed to get booking details for ${bookingId}:`, error);
       return null;
@@ -391,7 +394,7 @@ class ReviewPromptService {
 
   private navigateToWriteReview(booking: BookingForReview): void {
     if (navigationRef.current) {
-      (navigationRef.current as any).navigate(ROUTES.WRITE_REVIEW, { booking });
+      navigationRef.current.navigate(ROUTES.WRITE_REVIEW, { booking });
     }
   }
 

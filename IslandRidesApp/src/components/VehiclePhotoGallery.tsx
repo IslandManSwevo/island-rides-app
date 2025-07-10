@@ -4,17 +4,17 @@ import {
   Text,
   Image,
   ScrollView,
-  Dimensions,
   TouchableOpacity,
-  Modal,
   StyleSheet,
-  SafeAreaView,
-  StatusBar,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  useWindowDimensions,
 } from 'react-native';
 import { VehiclePhoto } from '../types';
 import { colors } from '../styles/theme';
+import { PhotoIndicators } from './PhotoIndicators';
+import { PhotoThumbnails } from './PhotoThumbnails';
+import { FullscreenModal } from './FullscreenModal';
 
 interface VehiclePhotoGalleryProps {
   photos: VehiclePhoto[];
@@ -51,7 +51,7 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Get screen width dynamically within component
-  const screenWidth = Dimensions.get('window').width;
+  const { width: screenWidth } = useWindowDimensions();
 
   if (!photos || photos.length === 0) {
     return (
@@ -100,180 +100,92 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
     return PHOTO_TYPE_COLORS[photoType as keyof typeof PHOTO_TYPE_COLORS] || PHOTO_TYPE_COLORS.default;
   };
 
-  const renderMainGallery = () => (
-    <View style={[styles.container, { height }, style]}>
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
-        style={styles.scrollView}
-      >
-        {photos.map((photo, index) => (
-          <TouchableOpacity
-            key={photo.id}
-            style={[styles.photoContainer, { width: screenWidth }]}
-            onPress={() => openFullscreen(index)}
-            activeOpacity={0.9}
-          >
-            <Image
-              source={{ uri: photo.photoUrl }}
-              style={styles.photo}
-              resizeMode="cover"
-            />
-            
-            {/* Photo type badge */}
-            <View
-              style={[
-                styles.typeBadge,
-                { backgroundColor: getPhotoTypeColor(photo.photoType) }
-              ]}
-            >
-              <Text style={styles.typeBadgeText}>
-                {getPhotoTypeLabel(photo.photoType)}
-              </Text>
-            </View>
-
-            {/* Primary photo indicator */}
-            {photo.isPrimary && (
-              <View style={styles.primaryBadge}>
-                <Text style={styles.primaryBadgeText}>★</Text>
-              </View>
-            )}
-
-            {/* Caption overlay */}
-            {photo.caption && (
-              <View style={styles.captionOverlay}>
-                <Text style={styles.captionText} numberOfLines={2}>
-                  {photo.caption}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Photo indicators */}
-      {showIndicators && photos.length > 1 && (
-        <View style={styles.indicatorContainer}>
-          {photos.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.indicator,
-                index === currentIndex && styles.activeIndicator,
-              ]}
-              onPress={() => scrollToPhoto(index)}
-            />
-          ))}
-        </View>
-      )}
-
-      {/* Photo counter */}
-      {photos.length > 1 && (
-        <View style={styles.counterContainer}>
-          <Text style={styles.counterText}>
-            {currentIndex + 1} / {photos.length}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
-
-  const renderThumbnails = () => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.thumbnailContainer}
-      contentContainerStyle={styles.thumbnailContent}
-    >
-      {photos.map((photo, index) => (
-        <TouchableOpacity
-          key={photo.id}
-          style={[
-            styles.thumbnail,
-            index === currentIndex && styles.activeThumbnail,
-          ]}
-          onPress={() => scrollToPhoto(index)}
-        >
-          <Image
-            source={{ uri: photo.photoUrl }}
-            style={styles.thumbnailImage}
-            resizeMode="cover"
-          />
-          {photo.isPrimary && (
-            <View style={styles.thumbnailPrimaryIndicator}>
-              <Text style={styles.thumbnailPrimaryText}>★</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  );
-
-  const renderFullscreenModal = () => (
-    <Modal
-      visible={fullscreenVisible}
-      transparent={false}
-      animationType="fade"
-      onRequestClose={() => setFullscreenVisible(false)}
-    >
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
-      <SafeAreaView style={styles.fullscreenContainer}>
-        <View style={styles.fullscreenHeader}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setFullscreenVisible(false)}
-          >
-            <Text style={styles.closeButtonText}>✕</Text>
-          </TouchableOpacity>
-          <Text style={styles.fullscreenTitle}>
-            {getPhotoTypeLabel(photos[fullscreenIndex]?.photoType)}
-          </Text>
-          <Text style={styles.fullscreenCounter}>
-            {fullscreenIndex + 1} / {photos.length}
-          </Text>
-        </View>
-
+  return (
+    <View>
+      <View style={[styles.container, { height }, style]}>
         <ScrollView
+          ref={scrollViewRef}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
-            const index = Math.round(
-              event.nativeEvent.contentOffset.x / screenWidth
-            );
-            setFullscreenIndex(index);
-          }}
-          contentOffset={{ x: fullscreenIndex * screenWidth, y: 0 }}
+          onMomentumScrollEnd={handleScroll}
+          style={styles.scrollView}
         >
-          {photos.map((photo) => (
-            <View key={photo.id} style={[styles.fullscreenPhotoContainer, { width: screenWidth }]}>
+          {photos.map((photo, index) => (
+            <TouchableOpacity
+              key={photo.id}
+              style={[styles.photoContainer, { width: screenWidth }]}
+              onPress={() => openFullscreen(index)}
+              activeOpacity={0.9}
+            >
               <Image
                 source={{ uri: photo.photoUrl }}
-                style={styles.fullscreenPhoto}
-                resizeMode="contain"
+                style={styles.photo}
+                resizeMode="cover"
               />
+              
+              <View
+                style={[
+                  styles.typeBadge,
+                  { backgroundColor: getPhotoTypeColor(photo.photoType) }
+                ]}
+              >
+                <Text style={styles.typeBadgeText}>
+                  {getPhotoTypeLabel(photo.photoType)}
+                </Text>
+              </View>
+
+              {photo.isPrimary && (
+                <View style={styles.primaryBadge}>
+                  <Text style={styles.primaryBadgeText}>★</Text>
+                </View>
+              )}
+
               {photo.caption && (
-                <View style={styles.fullscreenCaption}>
-                  <Text style={styles.fullscreenCaptionText}>
+                <View style={styles.captionOverlay}>
+                  <Text style={styles.captionText} numberOfLines={2}>
                     {photo.caption}
                   </Text>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
-      </SafeAreaView>
-    </Modal>
-  );
 
-  return (
-    <View>
-      {renderMainGallery()}
-      {showThumbnails && renderThumbnails()}
-      {renderFullscreenModal()}
+        {showIndicators && photos.length > 1 && (
+          <PhotoIndicators
+            count={photos.length}
+            currentIndex={currentIndex}
+            onPress={scrollToPhoto}
+          />
+        )}
+
+        {photos.length > 1 && (
+          <View style={styles.counterContainer}>
+            <Text style={styles.counterText}>
+              {currentIndex + 1} / {photos.length}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {showThumbnails && (
+        <PhotoThumbnails
+          photos={photos}
+          currentIndex={currentIndex}
+          onPress={scrollToPhoto}
+        />
+      )}
+
+      {enableFullscreen && (
+        <FullscreenModal
+          photos={photos}
+          visible={fullscreenVisible}
+          startIndex={fullscreenIndex}
+          onClose={() => setFullscreenVisible(false)}
+          getPhotoTypeLabel={getPhotoTypeLabel}
+        />
+      )}
     </View>
   );
 };
@@ -349,26 +261,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
   },
-  indicatorContainer: {
-    position: 'absolute',
-    bottom: 16,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginHorizontal: 4,
-  },
-  activeIndicator: {
-    backgroundColor: '#fff',
-    width: 24,
-  },
   counterContainer: {
     position: 'absolute',
     top: 12,
@@ -383,105 +275,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  thumbnailContainer: {
-    marginTop: 12,
-    height: 60,
-  },
-  thumbnailContent: {
-    paddingHorizontal: 16,
-  },
-  thumbnail: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 8,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  activeThumbnail: {
-    borderColor: '#00b4d8',
-  },
-  thumbnailImage: {
-    width: '100%',
-    height: '100%',
-  },
-  thumbnailPrimaryIndicator: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: '#f59e0b',
-    borderRadius: 8,
-    width: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  thumbnailPrimaryText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  fullscreenContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  fullscreenHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  fullscreenTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
-  },
-  fullscreenCounter: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-    minWidth: 44,
-    textAlign: 'right',
-  },
-  fullscreenPhotoContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullscreenPhoto: {
-    width: '100%',
-    height: '100%',
-  },
-  fullscreenCaption: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    padding: 16,
-  },
-  fullscreenCaptionText: {
-    color: '#fff',
-    fontSize: 16,
-    lineHeight: 22,
-    textAlign: 'center',
-  },
-}); 
+});

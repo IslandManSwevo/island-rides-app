@@ -58,9 +58,6 @@ const Button: React.FC<ButtonProps> = ({
 // Wrap with React.memo for performance optimization
 export default React.memo(Button);
 
-// Named export for backward compatibility
-export { Button };
-
 const styles = StyleSheet.create({
   button: {
     paddingVertical: 14,
@@ -87,7 +84,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    fontSize: typography?.body?.fontSize || 16,
+    fontSize: typography.body.fontSize,
     fontWeight: '600',
   },
   primaryButtonText: {

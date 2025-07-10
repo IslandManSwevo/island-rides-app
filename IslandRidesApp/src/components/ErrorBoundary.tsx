@@ -29,7 +29,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
     // Log error to logging service
     console.error('Error caught by boundary:', error, errorInfo);
 
-    // Show error notification
+    // Show error notification.
+    // A duration of 0 makes the notification persistent until the user interacts with it.
+    // This is intentional for critical application errors.
     notificationService.error('An unexpected error occurred', {
       title: 'Application Error',
       duration: 0,

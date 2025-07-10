@@ -19,6 +19,7 @@ import { ProfileData, ProfileBooking } from '../types';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { AppHeader } from '../components/AppHeader';
 import { ROUTES, RootStackParamList } from '../navigation/routes';
+import { createDevOnlyFunction } from '../utils/development';
 
 type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.PROFILE>;
 
@@ -92,7 +93,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   };
 
   // Development-only function for testing review prompts
-  const testReviewPrompts = __DEV__ ? async () => {
+  const testReviewPrompts = createDevOnlyFunction(async () => {
     try {
       // Get completed bookings and show some test prompts
       await reviewPromptService.checkForCompletedBookings();
@@ -107,7 +108,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       console.error('Failed to test review prompts:', error);
       Alert.alert('Error', 'Failed to test review prompts');
     }
-  } : undefined;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -163,7 +164,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             style={styles.reviewButton}
             onPress={() => {
               const vehicle = item.vehicle!; // Safe since we check item.vehicle above
-              navigation.navigate('WriteReview', { 
+              navigation.navigate(ROUTES.WRITE_REVIEW, { 
                 booking: {
                   id: item.id,
                   vehicle: {

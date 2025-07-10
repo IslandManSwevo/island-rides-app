@@ -5,7 +5,11 @@ export function toCamelCase(str: string): string {
 }
 
 export function toSnakeCase(str: string): string {
-  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+  if (!str) return '';
+  return String(str)
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1_$2')
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+    .toLowerCase();
 }
 
 export function transformKeys(obj: any, transform: (key: string) => string): any {

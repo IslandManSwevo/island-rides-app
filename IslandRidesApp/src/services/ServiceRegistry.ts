@@ -10,17 +10,40 @@ import { SessionRecoveryStrategy } from './errors/RecoveryStrategy';
 
 class ServiceRegistry extends BaseService {
   private initializedServices: Set<string> = new Set();
+  private readonly SERVICE_INIT_TIMEOUT = 10000; // 10 seconds
+
+  private async timeout<T>(promise: Promise<T>, serviceName: string): Promise<T> {
+    return new Promise(async (resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`Service '${serviceName}' initialization timed out`));
+      }, this.SERVICE_INIT_TIMEOUT);
+
+      try {
+        const result = await promise;
+        clearTimeout(timeoutId);
+        resolve(result);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        reject(error);
+      }
+    });
+  }
 
   async initializeServices(): Promise<void> {
     try {
-      // Initialize core services in order
-      await this.initializePlatform();
-      await this.initializeEnvironment();
-      await this.initializeStorage();
-      await this.initializeLogging();
-      await this.initializeApi();
-      await this.initializeAuth();
-      await this.initializeErrorRecovery();
+      const servicesToInitialize = [
+        { name: 'platform', init: this.initializePlatform.bind(this) },
+        { name: 'environment', init: this.initializeEnvironment.bind(this) },
+        { name: 'storage', init: this.initializeStorage.bind(this) },
+        { name: 'logging', init: this.initializeLogging.bind(this) },
+        { name: 'api', init: this.initializeApi.bind(this) },
+        { name: 'auth', init: this.initializeAuth.bind(this) },
+        { name: 'errorRecovery', init: this.initializeErrorRecovery.bind(this) },
+      ];
+
+      for (const service of servicesToInitialize) {
+        await this.timeout(service.init(), service.name);
+      }
 
       // Mark initialization as complete
       this.initializedServices.add('core');
@@ -50,9 +73,9 @@ class ServiceRegistry extends BaseService {
     }
   }
 
-  private async initializeStorage(): Promise<void> {
+    private async initializeStorage(): Promise<void> {
     try {
-      await storageService.getUserPreferences();
+      await storageService.waitForInitialization();
       this.initializedServices.add('storage');
     } catch (error) {
       console.error('Failed to initialize storage service:', error);
@@ -60,10 +83,11 @@ class ServiceRegistry extends BaseService {
     }
   }
 
-  private async initializeLogging(): Promise<void> {
+    private async initializeLogging(): Promise<void> {
     try {
-      loggingService.info('Services initialized successfully');
+      await loggingService.waitForInitialization();
       this.initializedServices.add('logging');
+      loggingService.info('Logging service initialized successfully');
     } catch (error) {
       console.error('Failed to initialize logging service:', error);
       throw error;

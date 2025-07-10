@@ -4,6 +4,7 @@ import { AuthError } from '../services/authService';
 import { ApiErrorCode, ErrorBoundaryProps } from '../types';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
+import { navigationRef } from '../navigation/navigationRef';
 
 interface State {
   hasError: boolean;
@@ -92,7 +93,9 @@ export class ApiErrorBoundary extends Component<ErrorBoundaryProps, State> {
     await apiService.clearToken();
     
     // Use your navigation method here
-    // navigation.navigate('Login');
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('Login' as never);
+    }
     
     // For now, just reset the error state
     this.setState({ 

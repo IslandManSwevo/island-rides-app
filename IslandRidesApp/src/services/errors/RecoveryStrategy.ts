@@ -44,7 +44,7 @@ export abstract class BaseRecoveryStrategy extends BaseService implements Recove
 }
 
 export class SessionRecoveryStrategy extends BaseRecoveryStrategy {
-  priority = environmentService.authConfig.refreshThreshold;
+  priority = 10;
 
   canRecover(error: BusinessLogicError): boolean {
     return error.code === 'SESSION_EXPIRED';

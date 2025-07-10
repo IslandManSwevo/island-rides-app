@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  Alert
+  Alert,
+  SafeAreaView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { VehicleCard } from '../components/VehicleCard';
@@ -15,6 +16,9 @@ import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Vehicle } from '../types';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+
 
 interface FavoriteVehicle extends Vehicle {
   favoriteId: number;
@@ -23,8 +27,10 @@ interface FavoriteVehicle extends Vehicle {
   previousPrice?: number;
 }
 
+type FavoritesScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Favorites'>;
+
 interface FavoritesScreenProps {
-  navigation: any;
+  navigation: FavoritesScreenNavigationProp;
 }
 
 export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
@@ -129,6 +135,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         <VehicleCard
           vehicle={item}
           onPress={() => handleVehiclePress(item)}
+          onFavoriteToggle={handleFavoriteToggle}
         />
         {compareMode && (
           <View style={styles.selectionIndicator}>
@@ -217,15 +224,15 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading your favorites...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {renderHeader()}
       {renderCompareBar()}
       
@@ -248,7 +255,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
         ]}
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -432,4 +439,4 @@ const styles = StyleSheet.create({
     color: colors.lightGrey,
     marginTop: spacing.md,
   },
-}); 
+});

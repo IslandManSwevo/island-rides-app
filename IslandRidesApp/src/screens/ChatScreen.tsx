@@ -40,6 +40,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   const socketRef = useRef<Socket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const mounted = useRef(false);
   const maxReconnectAttempts = 5;
   const reconnectDelayBase = 1000; // Start with 1 second, exponential backoff
 
@@ -63,23 +64,26 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
   // Reconnection mechanism
   const attemptReconnection = useCallback(async () => {
-    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-      console.log('Max reconnection attempts reached');
+    if (!mounted.current || reconnectAttemptsRef.current >= maxReconnectAttempts) {
+      if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+        console.log('Max reconnection attempts reached');
+        notificationService.error('Unable to reconnect to chat. Please refresh the page.', {
+          duration: 0, // Persistent notification
+          closable: true
+        });
+      }
       setIsReconnecting(false);
-      notificationService.error('Unable to reconnect to chat. Please refresh the page.', {
-        duration: 0, // Persistent notification
-        closable: true
-      });
       return;
     }
 
     setIsReconnecting(true);
     reconnectAttemptsRef.current += 1;
-    
+
     const delay = reconnectDelayBase * Math.pow(2, reconnectAttemptsRef.current - 1); // Exponential backoff
     console.log(`Attempting reconnection ${reconnectAttemptsRef.current}/${maxReconnectAttempts} in ${delay}ms`);
 
     reconnectTimeoutRef.current = setTimeout(async () => {
+      if (!mounted.current) return;
       try {
         if (socketRef.current) {
           socketRef.current.disconnect();
@@ -87,7 +91,9 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
         await initializeSocket();
       } catch (error) {
         console.error('Reconnection attempt failed:', error);
-        attemptReconnection(); // Try again
+        if (mounted.current) {
+          attemptReconnection(); // Try again
+        }
       }
     }, delay);
   }, []);
@@ -195,6 +201,13 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
       attemptReconnection();
     }
   }, [conversationId, currentUserId, attemptReconnection, clearReconnectTimeout]);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   // Initialize WebSocket connection
   useEffect(() => {

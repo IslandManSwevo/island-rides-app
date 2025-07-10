@@ -1,5 +1,6 @@
 import { BusinessLogicError } from './BusinessLogicError';
 import { RecoveryStrategy } from './RecoveryStrategy';
+import { loggingService } from '../LoggingService';
 
 export class ErrorRecoveryManager {
   private static instance: ErrorRecoveryManager;
@@ -21,17 +22,21 @@ export class ErrorRecoveryManager {
   }
 
   async attemptRecovery(error: BusinessLogicError): Promise<boolean> {
+    loggingService.info(`Attempting recovery for error: ${error.message}`, { error });
     for (const strategy of this.strategies) {
       if (strategy.canRecover(error)) {
+        loggingService.info(`Selected recovery strategy: ${strategy.constructor.name}`);
         try {
           await strategy.recover(error);
+          loggingService.info(`Successfully recovered using strategy: ${strategy.constructor.name}`);
           return true;
         } catch (recoveryError) {
-          console.error('Recovery strategy failed:', recoveryError);
+          loggingService.error(`Recovery strategy ${strategy.constructor.name} failed`, { recoveryError });
           continue;
         }
       }
     }
+    loggingService.warn(`No suitable recovery strategy found for error: ${error.message}`);
     return false;
   }
 }

@@ -15,7 +15,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.sequence([
+    const animation = Animated.sequence([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 300,
@@ -27,7 +27,17 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         duration: 300,
         useNativeDriver: true,
       }),
-    ]).start(() => onDismiss());
+    ]);
+
+    animation.start(({ finished }) => {
+      if (finished) {
+        onDismiss();
+      }
+    });
+
+    return () => {
+      animation.stop();
+    };
   }, [notification.duration, onDismiss]);
 
   const getBackgroundColor = () => {

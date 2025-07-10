@@ -45,6 +45,23 @@ export type RouteNames = typeof ROUTES[keyof typeof ROUTES];
  * Root Stack Parameter List
  * Defines the parameters for each route in the navigation stack
  */
+
+/**
+ * Shared types for navigation routes to reduce duplication
+ */
+type BookingVehicle = {
+  id: number;
+  make: string;
+  model: string;
+  year: number;
+};
+
+type BookingInfo = {
+  id: number;
+  start_date: string;
+  end_date: string;
+};
+
 export type RootStackParamList = {
   [ROUTES.LOGIN]: undefined;
   [ROUTES.REGISTRATION]: undefined;
@@ -63,17 +80,10 @@ export type RootStackParamList = {
     endDate: string;
   };
   [ROUTES.BOOKING_CONFIRMED]: {
-    booking: {
-      id: number;
+    booking: BookingInfo & {
       status: string;
       total_amount: number;
-      start_date: string;
-      end_date: string;
-      vehicle: {
-        id: number;
-        make: string;
-        model: string;
-        year: number;
+      vehicle: BookingVehicle & {
         location: string;
         daily_rate: number;
       };
@@ -92,19 +102,20 @@ export type RootStackParamList = {
   [ROUTES.FAVORITES]: undefined;
   [ROUTES.NOTIFICATION_PREFERENCES]: undefined;
   [ROUTES.WRITE_REVIEW]: {
-    booking: {
-      id: number;
-      vehicle: {
-        id: number;
-        make: string;
-        model: string;
-        year: number;
-      };
-      start_date: string;
-      end_date: string;
+    booking: BookingInfo & {
+      vehicle: BookingVehicle;
     };
   };
-  Payment: { booking: any };
+  [ROUTES.PAYMENT]: {
+    booking: {
+      id: number;
+      total_amount: number;
+      vehicle: {
+        make: string;
+        model: string;
+      };
+    };
+  };
   
   // Owner Dashboard routes
   [ROUTES.OWNER_DASHBOARD]: undefined;

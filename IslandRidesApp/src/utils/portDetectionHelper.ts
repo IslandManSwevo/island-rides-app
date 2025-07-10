@@ -149,7 +149,14 @@ export class PortDetectionHelper {
       }
     } catch (error) {
       console.log('❌ API Server: Connection error');
-      console.log(`   Error: ${error}`);
+      if (error instanceof Error) {
+        console.log(`   Message: ${error.message}`);
+        if (error.stack) {
+          console.log(`   Stack: ${error.stack}`);
+        }
+      } else {
+        console.log(`   Error: ${String(error)}`);
+      }
       return false;
     }
   }
@@ -157,4 +164,4 @@ export class PortDetectionHelper {
 
 // Export helper functions for development use
 export const debugPortDetection = PortDetectionHelper.printDebugInfo;
-export const testConfiguration = PortDetectionHelper.testCurrentConfiguration; 
+export const testConfiguration = PortDetectionHelper.testCurrentConfiguration;

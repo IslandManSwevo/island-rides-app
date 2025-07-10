@@ -98,9 +98,14 @@ class EnvironmentService extends BaseService {
       return development;
     }
 
-    // Check for staging environment
-    if (process.env.ENVIRONMENT === 'staging') {
+    const environment = Constants.expoConfig?.extra?.environment;
+
+    if (environment === 'staging') {
       return staging;
+    }
+
+    if (environment === 'production') {
+      return production;
     }
 
     return production;

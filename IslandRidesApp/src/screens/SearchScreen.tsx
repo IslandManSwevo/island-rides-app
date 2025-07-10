@@ -43,43 +43,15 @@ interface SearchFilters {
   sortBy: 'popularity' | 'price_low' | 'price_high' | 'rating' | 'newest' | 'condition';
 }
 
-const VEHICLE_TYPES = [
-  'sedan',
-  'suv', 
-  'truck',
-  'van',
-  'convertible',
-  'coupe',
-  'hatchback'
-];
-
-const FUEL_TYPES = [
-  'gasoline',
-  'diesel',
-  'electric',
-  'hybrid'
-];
-
-const TRANSMISSION_TYPES = [
-  'automatic',
-  'manual',
-  'cvt'
-];
-
-const VERIFICATION_STATUS_OPTIONS = [
-  { key: 'verified', label: 'Verified Only', icon: 'checkmark-circle' },
-  { key: 'pending', label: 'Pending Verification', icon: 'time' },
-  { key: 'rejected', label: 'Verification Failed', icon: 'close-circle' }
-];
-
-const SORT_OPTIONS = [
-  { key: 'popularity', label: 'Most Popular', icon: 'trending-up' },
-  { key: 'price_low', label: 'Price: Low to High', icon: 'arrow-up' },
-  { key: 'price_high', label: 'Price: High to Low', icon: 'arrow-down' },
-  { key: 'rating', label: 'Highest Rated', icon: 'star' },
-  { key: 'condition', label: 'Best Condition', icon: 'shield-checkmark' },
-  { key: 'newest', label: 'Newest First', icon: 'time' }
-];
+import { VEHICLE_TYPES, FUEL_TYPES, TRANSMISSION_TYPES, VERIFICATION_STATUS_OPTIONS, SORT_OPTIONS } from '../constants/filters';
+import DateFilter from '../components/DateFilter';
+import PriceRangeFilter from '../components/PriceRangeFilter';
+import OptionFilter from '../components/OptionFilter';
+import SeatingCapacityFilter from '../components/SeatingCapacityFilter';
+import ConditionRatingFilter from '../components/ConditionRatingFilter';
+import VerificationStatusFilter from '../components/VerificationStatusFilter';
+import FeaturesFilter from '../components/FeaturesFilter';
+import ServiceOptionsFilter from '../components/ServiceOptionsFilter';
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
   const { island } = route.params || {};
@@ -247,298 +219,58 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
   const renderFilterSection = () => (
     <View style={styles.filtersContainer}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Date Selection */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterTitle}>Rental Dates</Text>
-          <View style={styles.dateRow}>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowDatePicker('start')}
-            >
-              <Ionicons name="calendar-outline" size={20} color={colors.primary} />
-              <Text style={styles.dateButtonText}>{formatDate(filters.startDate)}</Text>
-            </TouchableOpacity>
-            <Text style={styles.dateArrow}>→</Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowDatePicker('end')}
-            >
-              <Ionicons name="calendar-outline" size={20} color={colors.primary} />
-              <Text style={styles.dateButtonText}>{formatDate(filters.endDate)}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Price Range */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterTitle}>
-            Price Range: ${filters.priceRange[0]} - ${filters.priceRange[1]}/day
-          </Text>
-          <View style={styles.priceRangeContainer}>
-            <Text style={styles.priceLabel}>${filters.priceRange[0]}</Text>
-            <View style={styles.priceSliderContainer}>
-              {/* Simple price adjustment buttons - in a real app, use a proper slider */}
-              <TouchableOpacity
-                style={styles.priceButton}
-                onPress={() => updateFilter('priceRange', [Math.max(25, filters.priceRange[0] - 25), filters.priceRange[1]])}
-              >
-                <Ionicons name="remove" size={16} color={colors.primary} />
-              </TouchableOpacity>
-              <View style={styles.priceBar} />
-              <TouchableOpacity
-                style={styles.priceButton}
-                onPress={() => updateFilter('priceRange', [filters.priceRange[0], Math.min(500, filters.priceRange[1] + 25)])}
-              >
-                <Ionicons name="add" size={16} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.priceLabel}>${filters.priceRange[1]}</Text>
-          </View>
-        </View>
-
-        {/* Vehicle Types */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterTitle}>Vehicle Type</Text>
-          <View style={styles.optionsGrid}>
-            {VEHICLE_TYPES.map(type => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionChip,
-                  filters.vehicleTypes.includes(type) && styles.optionChipSelected
-                ]}
-                onPress={() => toggleArrayFilter('vehicleTypes', type)}
-              >
-                <Text style={[
-                  styles.optionChipText,
-                  filters.vehicleTypes.includes(type) && styles.optionChipTextSelected
-                ]}>
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Fuel Types */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterTitle}>Fuel Type</Text>
-          <View style={styles.optionsGrid}>
-            {FUEL_TYPES.map(type => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionChip,
-                  filters.fuelTypes.includes(type) && styles.optionChipSelected
-                ]}
-                onPress={() => toggleArrayFilter('fuelTypes', type)}
-              >
-                <Text style={[
-                  styles.optionChipText,
-                  filters.fuelTypes.includes(type) && styles.optionChipTextSelected
-                ]}>
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Transmission Types */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterTitle}>Transmission Type</Text>
-          <View style={styles.optionsGrid}>
-            {TRANSMISSION_TYPES.map(type => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionChip,
-                  filters.transmissionTypes.includes(type) && styles.optionChipSelected
-                ]}
-                onPress={() => toggleArrayFilter('transmissionTypes', type)}
-              >
-                <Text style={[
-                  styles.optionChipText,
-                  filters.transmissionTypes.includes(type) && styles.optionChipTextSelected
-                ]}>
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-                 {/* Seating Capacity */}
-         <View style={styles.filterSection}>
-           <Text style={styles.filterTitle}>
-             Minimum Seating: {filters.minSeatingCapacity} passenger{filters.minSeatingCapacity !== 1 ? 's' : ''}
-           </Text>
-           <View style={styles.sliderContainer}>
-             <TouchableOpacity
-               style={styles.sliderButton}
-               onPress={() => updateFilter('minSeatingCapacity', Math.max(1, filters.minSeatingCapacity - 1))}
-             >
-               <Ionicons name="remove" size={16} color={colors.primary} />
-             </TouchableOpacity>
-             <View style={styles.sliderTrack}>
-               <View 
-                 style={[styles.sliderProgress, { width: `${(filters.minSeatingCapacity - 1) * 14.28}%` }]} 
-               />
-             </View>
-             <TouchableOpacity
-               style={styles.sliderButton}
-               onPress={() => updateFilter('minSeatingCapacity', Math.min(8, filters.minSeatingCapacity + 1))}
-             >
-               <Ionicons name="add" size={16} color={colors.primary} />
-             </TouchableOpacity>
-           </View>
-         </View>
-
-         {/* Condition Rating */}
-         <View style={styles.filterSection}>
-           <Text style={styles.filterTitle}>
-             Minimum Condition Rating: {filters.minConditionRating} star{filters.minConditionRating !== 1 ? 's' : ''}
-           </Text>
-           <View style={styles.ratingContainer}>
-             {[1, 2, 3, 4, 5].map(rating => (
-               <TouchableOpacity
-                 key={rating}
-                 style={styles.starButton}
-                 onPress={() => updateFilter('minConditionRating', rating)}
-               >
-                 <Ionicons
-                   name={rating <= filters.minConditionRating ? 'star' : 'star-outline'}
-                   size={24}
-                   color={rating <= filters.minConditionRating ? '#F59E0B' : colors.lightGrey}
-                 />
-               </TouchableOpacity>
-             ))}
-           </View>
-         </View>
-
-         {/* Verification Status */}
-         <View style={styles.filterSection}>
-           <Text style={styles.filterTitle}>Verification Status</Text>
-           <View style={styles.optionsGrid}>
-             {VERIFICATION_STATUS_OPTIONS.map(option => (
-               <TouchableOpacity
-                 key={option.key}
-                 style={[
-                   styles.verificationChip,
-                   filters.verificationStatus.includes(option.key) && styles.verificationChipSelected
-                 ]}
-                 onPress={() => toggleArrayFilter('verificationStatus', option.key)}
-               >
-                 <Ionicons 
-                   name={option.icon as any} 
-                   size={16} 
-                   color={filters.verificationStatus.includes(option.key) ? colors.white : colors.primary} 
-                 />
-                 <Text style={[
-                   styles.verificationChipText,
-                   filters.verificationStatus.includes(option.key) && styles.verificationChipTextSelected
-                 ]}>
-                   {option.label}
-                 </Text>
-               </TouchableOpacity>
-             ))}
-           </View>
-         </View>
-
-         {/* Features */}
-         {!loadingFeatures && availableFeatures.length > 0 && (
-           <View style={styles.filterSection}>
-             <Text style={styles.filterTitle}>
-               Features ({filters.features.length} selected)
-             </Text>
-             <ScrollView 
-               style={styles.featuresScrollView}
-               showsVerticalScrollIndicator={false}
-               nestedScrollEnabled
-             >
-               {featureCategories.map(category => {
-                 const categoryFeatures = availableFeatures.filter(f => f.categoryId === category.id);
-                 if (categoryFeatures.length === 0) return null;
-                 
-                 return (
-                   <View key={category.id} style={styles.featureCategorySection}>
-                     <Text style={styles.featureCategoryTitle}>{category.name}</Text>
-                     <View style={styles.featuresGrid}>
-                       {categoryFeatures.map(feature => (
-                         <TouchableOpacity
-                           key={feature.id}
-                           style={[
-                             styles.featureChip,
-                             filters.features.includes(feature.id) && styles.featureChipSelected
-                           ]}
-                           onPress={() => toggleFeature(feature.id)}
-                         >
-                           <Text style={[
-                             styles.featureChipText,
-                             filters.features.includes(feature.id) && styles.featureChipTextSelected
-                           ]}>
-                             {feature.name}
-                           </Text>
-                           {feature.isPremium && (
-                             <View style={styles.premiumBadge}>
-                               <Text style={styles.premiumBadgeText}>★</Text>
-                             </View>
-                           )}
-                         </TouchableOpacity>
-                       ))}
-                     </View>
-                   </View>
-                 );
-               })}
-             </ScrollView>
-           </View>
-         )}
-
-         {/* Service Options */}
-         <View style={styles.filterSection}>
-           <Text style={styles.filterTitle}>Service Options</Text>
-           <View style={styles.serviceOptionsContainer}>
-             <TouchableOpacity
-               style={[
-                 styles.serviceOption,
-                 filters.deliveryAvailable && styles.serviceOptionSelected
-               ]}
-               onPress={() => updateFilter('deliveryAvailable', !filters.deliveryAvailable)}
-             >
-               <Ionicons 
-                 name="car-outline" 
-                 size={20} 
-                 color={filters.deliveryAvailable ? colors.white : colors.primary} 
-               />
-               <Text style={[
-                 styles.serviceOptionText,
-                 filters.deliveryAvailable && styles.serviceOptionTextSelected
-               ]}>
-                 Delivery Available
-               </Text>
-             </TouchableOpacity>
-             
-             <TouchableOpacity
-               style={[
-                 styles.serviceOption,
-                 filters.airportPickup && styles.serviceOptionSelected
-               ]}
-               onPress={() => updateFilter('airportPickup', !filters.airportPickup)}
-             >
-               <Ionicons 
-                 name="airplane-outline" 
-                 size={20} 
-                 color={filters.airportPickup ? colors.white : colors.primary} 
-               />
-               <Text style={[
-                 styles.serviceOptionText,
-                 filters.airportPickup && styles.serviceOptionTextSelected
-               ]}>
-                 Airport Pickup
-               </Text>
-             </TouchableOpacity>
-           </View>
-         </View>
+        <DateFilter
+          startDate={filters.startDate}
+          endDate={filters.endDate}
+          onShowDatePicker={setShowDatePicker}
+          formatDate={formatDate}
+        />
+        <PriceRangeFilter
+          priceRange={filters.priceRange}
+          onUpdateFilter={updateFilter}
+        />
+        <OptionFilter
+          title="Vehicle Type"
+          options={VEHICLE_TYPES}
+          selectedOptions={filters.vehicleTypes}
+          onToggleOption={(type) => toggleArrayFilter('vehicleTypes', type)}
+        />
+        <OptionFilter
+          title="Fuel Type"
+          options={FUEL_TYPES}
+          selectedOptions={filters.fuelTypes}
+          onToggleOption={(type) => toggleArrayFilter('fuelTypes', type)}
+        />
+        <OptionFilter
+          title="Transmission Type"
+          options={TRANSMISSION_TYPES}
+          selectedOptions={filters.transmissionTypes}
+          onToggleOption={(type) => toggleArrayFilter('transmissionTypes', type)}
+        />
+        <SeatingCapacityFilter
+          minSeatingCapacity={filters.minSeatingCapacity}
+          onUpdateFilter={updateFilter}
+        />
+        <ConditionRatingFilter
+          minConditionRating={filters.minConditionRating}
+          onUpdateFilter={updateFilter}
+        />
+        <VerificationStatusFilter
+          verificationStatus={filters.verificationStatus}
+          onToggleFilter={toggleArrayFilter}
+        />
+        <FeaturesFilter
+          features={filters.features}
+          availableFeatures={availableFeatures}
+          featureCategories={featureCategories}
+          loadingFeatures={loadingFeatures}
+          onToggleFeature={toggleFeature}
+        />
+        <ServiceOptionsFilter
+          deliveryAvailable={filters.deliveryAvailable}
+          airportPickup={filters.airportPickup}
+          onUpdateFilter={updateFilter}
+        />
 
         {/* Filter Actions */}
         <View style={styles.filterActions}>
@@ -634,7 +366,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
                 filters.sortBy === option.key && styles.sortOptionSelected
               ]}
               onPress={() => {
-                updateFilter('sortBy', option.key as any);
+                updateFilter('sortBy', option.key);
                 setShowSortModal(false);
                 if (hasSearched) performSearch();
               }}

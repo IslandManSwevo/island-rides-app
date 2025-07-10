@@ -129,7 +129,7 @@ export const PaymentHistoryScreen: React.FC<PaymentHistoryScreenProps> = ({ navi
               color={colors.lightGrey} 
             />
             <Text style={styles.detailText}>
-              {item.paymentMethod || 'Transfi'} • {formatDate(item.paymentDate)}
+              {item.paymentMethod || 'Transfer'} • {formatDate(item.paymentDate)}
             </Text>
           </View>
           <TouchableOpacity 
@@ -326,4 +326,4 @@ const styles = StyleSheet.create({
     color: colors.lightGrey,
     lineHeight: 22,
   },
-}); 
+});

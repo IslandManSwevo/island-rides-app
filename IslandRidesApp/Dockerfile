@@ -8,8 +8,8 @@ RUN npm install -g @expo/cli
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (use install instead of ci to handle package.json changes)
-RUN npm install --legacy-peer-deps
+# Install dependencies
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -25,4 +25,4 @@ ENV CI=1
 EXPOSE 19006 19001
 
 # Use correct Expo start options for Docker
-CMD ["npx", "expo", "start", "--port", "19006", "--host", "lan", "--clear"] 
+CMD ["npx", "expo", "start", "--port", "19006", "--lan", "--clear"]

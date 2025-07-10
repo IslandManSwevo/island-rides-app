@@ -55,7 +55,10 @@ class VehicleService {
     const averageRating = vehicle.average_rating || vehicle.averageRating || 0;
     const conditionRating = vehicle.condition_rating || vehicle.conditionRating || 0;
 
-    // A more realistic scoring model
+    // The recommendation score is a weighted average of several factors:
+    // - 50% from the vehicle's average rating.
+    // - 30% from its condition rating.
+    // - 20% from the logarithm of the total number of reviews (to reward popularity while diminishing returns).
     const recommendationScore = (averageRating * 0.5) + (conditionRating * 0.3) + (Math.log1p(totalReviews) * 0.2);
 
     return {
@@ -147,7 +150,7 @@ class VehicleService {
       
       // Transform backend vehicle data to VehicleRecommendation format
       const vehicles = response.vehicles || [];
-      return vehicles.map(this.mapVehicleFields);
+      return vehicles.map((vehicle) => this.mapVehicleFields(vehicle));
     } catch (error) {
       throw new Error(`Failed to search vehicles: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
     }

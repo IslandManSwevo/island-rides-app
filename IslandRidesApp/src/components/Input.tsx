@@ -1,4 +1,4 @@
-import React from 'react';
+In IslandRidesApp/.gitignore between lines 12 and 38, the file currently lacks entries to ignore common iOS and Android build artifacts for a React-Native app. Add the following lines to the .gitignore to keep the CI environment clean: android/app/build/, ios/build/, ios/Pods/, and *.keystore. This will prevent these build directories and keystore files from being tracked by git.import React from 'react';
 import { TextInput, Text, View, StyleSheet } from 'react-native';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 
@@ -36,7 +36,7 @@ export const Input: React.FC<InputProps> = ({
         keyboardType={keyboardType}
         placeholderTextColor={colors.lightGrey}
       />
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={styles.errorText} accessibilityLiveRegion="polite">{error}</Text>}
     </View>
   );
 };

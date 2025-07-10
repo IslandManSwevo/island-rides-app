@@ -49,10 +49,10 @@ export abstract class BaseService {
       if (!BaseService.initializationPromises.has(name) && instance.onInit) {
         const initPromise = instance.onInit()
           .then(() => {
-          BaseService.initialized.add(name);
+            BaseService.initialized.add(name);
           })
           .catch(error => {
-          console.error(`Failed to initialize ${name}:`, error);
+            console.error(`Failed to initialize ${name}:`, error);
             // Remove the failed promise so it can be retried
             BaseService.initializationPromises.delete(name);
             throw error;
@@ -81,7 +81,7 @@ export abstract class BaseService {
     const name = this.constructor.name;
     
     // If already initialized, return immediately
-        if (this.isInitialized()) {
+    if (this.isInitialized()) {
       return;
     }
     
@@ -90,7 +90,7 @@ export abstract class BaseService {
     if (initPromise) {
       await initPromise;
       return;
-        }
+    }
     
     // If no initialization is in progress and service is not initialized,
     // it means the service doesn't have an onInit method or wasn't properly initialized
