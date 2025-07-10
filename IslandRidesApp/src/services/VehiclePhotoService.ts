@@ -3,6 +3,18 @@ import { apiService } from './apiService';
 import { VehiclePhoto } from '../types';
 
 class VehiclePhotoService extends BaseService {
+  static getVehiclePhotos(vehicleId: number) {
+    throw new Error('Method not implemented.');
+  }
+  static deleteVehiclePhoto(vehicleId: number, photoId: number) {
+    throw new Error('Method not implemented.');
+  }
+  static setPrimaryPhoto(vehicleId: number, photoId: number) {
+    throw new Error('Method not implemented.');
+  }
+  static uploadVehiclePhoto(vehicleId: number, formData: FormData) {
+    throw new Error('Method not implemented.');
+  }
   constructor() {
     super();
   }

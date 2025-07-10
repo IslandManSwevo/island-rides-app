@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   modalTitle: {
-    ...typography.heading2,
+    ...typography.heading1,
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   cancelButtonText: {
-    ...typography.button,
+    ...typography.body,
     color: colors.lightGrey,
   },
   saveButton: {
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.md,
   },
   saveButtonText: {
-    ...typography.button,
+    ...typography.body,
     color: colors.primary,
   },
 });

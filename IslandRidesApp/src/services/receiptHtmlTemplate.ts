@@ -1,6 +1,6 @@
 import { Receipt } from './receiptService';
 import { colors } from '../styles/theme';
-import { colors } from '../styles/theme';
+
 
 // Helper function to safely format dates with null/undefined checks
 const formatDate = (dateString: string | null | undefined) => {

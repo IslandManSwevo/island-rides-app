@@ -19,14 +19,14 @@ export const ConditionRatingSection: React.FC<Props> = ({ rating, onUpdateRating
   };
 
   return (
-    <View style={styles.ratingContainer}>
+    <View style={styles.sectionContainer}>
       <Text style={styles.sectionTitle}>Condition Rating</Text>
-      <View style={styles.starsContainer}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
         {[1, 2, 3, 4, 5].map(star => (
           <TouchableOpacity
             key={star}
             onPress={() => onUpdateRating(star)}
-            style={styles.starButton}
+            style={{ padding: 5 }}
           >
             <Ionicons
               name={star <= rating ? 'star' : 'star-outline'}
@@ -36,7 +36,7 @@ export const ConditionRatingSection: React.FC<Props> = ({ rating, onUpdateRating
           </TouchableOpacity>
         ))}
       </View>
-      <Text style={styles.ratingText}>
+      <Text style={{ textAlign: 'center', fontSize: 16, marginTop: 8 }}>
         {rating}/5 - {getRatingText()}
       </Text>
     </View>

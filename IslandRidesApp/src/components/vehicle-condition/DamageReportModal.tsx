@@ -27,7 +27,7 @@ interface Props {
 export const DamageReportModal: React.FC<Props> = ({ visible, onClose, onSave }) => {
   const [damageType, setDamageType] = useState('');
   const [description, setDescription] = useState('');
-  const [severity, setSeverity] = useState('minor');
+  const [severity, setSeverity] = useState<'minor' | 'moderate' | 'major'>('minor');
   const [repairCost, setRepairCost] = useState<number | undefined>();
 
   const handleSave = () => {

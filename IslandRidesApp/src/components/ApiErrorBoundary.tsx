@@ -5,6 +5,7 @@ import { ApiErrorCode, ErrorBoundaryProps } from '../types';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { navigationRef } from '../navigation/navigationRef';
+import { colors } from '../styles/theme';
 
 interface State {
   hasError: boolean;
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   buttonText: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },

@@ -174,7 +174,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
                 
                 {vehicle.airportPickup && (
                   <View style={styles.serviceItem}>
-                    <Ionicons name="airplane-outline" size={12} color={colors.blue} />
+                    <Ionicons name="airplane-outline" size={12} color={colors.primary} />
                     <Text style={styles.serviceText}>Airport</Text>
                   </View>
                 )}
@@ -341,22 +341,36 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 4,
   },
-  badgeText: {
+  baseBadgeText: {
     color: colors.white,
     fontSize: 12,
     fontWeight: '600',
   },
   premiumBadge: {
-    ...this.badge,
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    padding: 4,
   },
   premiumBadgeText: {
-    ...this.badgeText,
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
   },
   verifiedBadge: {
-    ...this.badge,
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    padding: 4,
   },
   verifiedText: {
-    ...this.badgeText,
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
   },
   advancedInfo: {
     marginBottom: spacing.md,

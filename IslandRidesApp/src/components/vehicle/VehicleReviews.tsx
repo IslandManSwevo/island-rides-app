@@ -163,43 +163,43 @@ export const VehicleReviews: React.FC<VehicleReviewsProps> = ({ vehicleId }) => 
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: spacing.large,
-    paddingHorizontal: spacing.medium,
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   sectionTitle: {
-    ...typography.h3,
-    marginBottom: spacing.medium,
+    ...typography.heading1,
+    marginBottom: spacing.md,
   },
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.large,
+    paddingVertical: spacing.lg,
   },
   loadingText: {
     ...typography.body,
-    marginLeft: spacing.medium,
-    color: colors.textSecondary,
+    marginLeft: spacing.md,
+    color: colors.darkGrey,
   },
   emptyReviews: {
     alignItems: 'center',
-    paddingVertical: spacing.large,
+    paddingVertical: spacing.lg,
   },
   emptyReviewsText: {
-    ...typography.h4,
-    marginTop: spacing.medium,
+    ...typography.heading1,
+    marginTop: spacing.md,
   },
   emptyReviewsSubtext: {
     ...typography.body,
-    color: colors.textSecondary,
+    color: colors.darkGrey,
     textAlign: 'center',
-    marginTop: spacing.small,
+    marginTop: spacing.sm,
   },
   reviewsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.medium,
+    marginBottom: spacing.md,
   },
   ratingOverview: {
     flexDirection: 'row',
@@ -207,17 +207,17 @@ const styles = StyleSheet.create({
   },
   averageRating: {
     ...typography.body,
-    marginLeft: spacing.small,
+    marginLeft: spacing.sm,
     fontWeight: '600',
   },
   reviewItem: {
-    marginBottom: spacing.large,
+    marginBottom: spacing.lg,
   },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.small,
+    marginBottom: spacing.sm,
   },
   reviewUserInfo: {
     flexDirection: 'row',
@@ -230,10 +230,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.medium,
+    marginRight: spacing.md,
   },
   userInitial: {
-    ...typography.h4,
+    ...typography.heading1,
     color: colors.white,
   },
   userDetails: {},
@@ -242,8 +242,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   reviewDate: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    ...typography.body,
+    fontSize: 12,
+    color: colors.darkGrey,
   },
   reviewComment: {
     ...typography.body,
@@ -255,12 +256,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.medium,
+    paddingVertical: spacing.md,
   },
   showMoreText: {
     ...typography.body,
     color: colors.primary,
     fontWeight: '600',
-    marginRight: spacing.small,
+    marginRight: spacing.sm,
   },
 });

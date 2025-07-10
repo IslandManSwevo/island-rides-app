@@ -241,8 +241,8 @@ const styles = StyleSheet.create({
         flex: 1,
       },
       vehicleName: {
-        ...typography.h4,
-        color: colors.textPrimary,
+        ...typography.displayMedium,
+        color: colors.text,
       },
       licensePlate: {
         ...typography.body,
@@ -254,17 +254,18 @@ const styles = StyleSheet.create({
       statusBadge: {
         paddingHorizontal: spacing.sm,
         paddingVertical: spacing.xs,
-        borderRadius: borderRadius.pill,
+        borderRadius: borderRadius.full,
         marginBottom: spacing.xs,
       },
       statusText: {
-        ...typography.caption,
+        fontSize: 12,
+        lineHeight: 16,
         color: colors.white,
         fontWeight: 'bold',
       },
       dailyRate: {
-        ...typography.h5,
-        color: colors.textPrimary,
+        ...typography.displayMedium,
+        color: colors.text,
       },
       vehicleMetrics: {
         flexDirection: 'row',
@@ -302,12 +303,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: spacing.sm,
         paddingVertical: spacing.xs,
-        borderRadius: borderRadius.pill,
+        borderRadius: borderRadius.full,
         marginRight: spacing.sm,
         marginBottom: spacing.sm,
       },
       alertText: {
-        ...typography.caption,
+        fontSize: 12,
+        lineHeight: 16,
         color: colors.white,
         marginLeft: spacing.xs,
       },

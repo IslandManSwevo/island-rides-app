@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { VehicleFeature, VehicleFeatureCategory } from '../types';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
+import { colors } from '../styles/theme';
 
 interface VehicleFeatureListProps {
   features: VehicleFeature[];
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
   },
   noFeaturesText: {
     fontSize: 16,
-    color: colors.grey,
+    color: '#666666',
     textAlign: 'center',
     fontStyle: 'italic',
     padding: 20,
@@ -257,14 +258,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: colors.sectionBackground,
+    backgroundColor: '#F5F5F5',
     borderRadius: 8,
     marginBottom: 8,
   },
   categoryTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.darkText,
+    color: '#333333',
   },
   categoryMeta: {
     flexDirection: 'row',

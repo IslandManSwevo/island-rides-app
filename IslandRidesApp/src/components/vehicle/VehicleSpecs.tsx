@@ -103,19 +103,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: spacing.medium,
+    marginTop: spacing.md,
   },
   specItem: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '48%',
-    marginBottom: spacing.medium,
+    marginBottom: spacing.md,
   },
   specContent: {
-    marginLeft: spacing.small,
+    marginLeft: spacing.sm,
   },
   specLabel: {
-    ...typography.caption,
+    ...typography.body,
     color: colors.textSecondary,
   },
   specValue: {

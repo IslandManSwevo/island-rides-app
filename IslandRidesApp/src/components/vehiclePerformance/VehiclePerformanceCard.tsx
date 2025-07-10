@@ -12,6 +12,7 @@ interface VehiclePerformance {
   year: number;
   dailyRate: number;
   totalBookings: number;
+  confirmedBookings: number;
   totalRevenue: number;
   averageRating: number;
   reviewCount: number;
@@ -19,6 +20,7 @@ interface VehiclePerformance {
   recentBookings: number;
   recentRevenue: number;
   maintenanceInfo: {
+    maintenanceCount: number;
     lastMaintenance: string | null;
   };
   available: boolean;

@@ -45,6 +45,12 @@ interface VehiclePerformanceScreenProps {
   navigation: any;
 }
 
+interface VehiclePerformanceResponse {
+  success: boolean;
+  data: VehiclePerformance[];
+  message?: string;
+}
+
 export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,7 +74,7 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
     try {
       setLoading(true);
       
-      const response = await apiService.get('/owner/vehicles/performance');
+      const response = await apiService.get('/owner/vehicles/performance') as VehiclePerformanceResponse;
       
       if (response.success) {
         setVehicles(response.data || []);
@@ -182,43 +188,13 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
   };
 
   const handleSortChange = (newSortBy: string) => {
-    if (sortBy === newSortBy) {
-      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
-    } else {
-      setSortBy(newSortBy);
-      setSortOrder('desc');
-    }
+    setSortBy(newSortBy);
+    setSortOrder('desc');
   };
-        </View>
-      </View>
 
-      <View style={styles.cardActions}>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('VehicleConditionTracker', { vehicleId: vehicle.id })}
-        >
-          <Ionicons name="build-outline" size={16} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Maintenance</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('VehiclePhotoUpload', { vehicleId: vehicle.id })}
-        >
-          <Ionicons name="camera-outline" size={16} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Photos</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('VehicleAvailability', { vehicleId: vehicle.id })}
-        >
-          <Ionicons name="calendar-outline" size={16} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Calendar</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+  const handleOrderChange = () => {
+    setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+  };
 
 
 
@@ -249,6 +225,7 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSortChange={handleSortChange}
+          onOrderChange={handleOrderChange}
         />
 
         {vehicles.length === 0 ? (

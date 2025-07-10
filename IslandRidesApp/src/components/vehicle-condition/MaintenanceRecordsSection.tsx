@@ -1,5 +1,4 @@
 import React from 'react';
-import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { VehicleMaintenance } from '../../types';
 import { styles } from './styles';

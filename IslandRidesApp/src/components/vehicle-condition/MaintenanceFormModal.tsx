@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { styles } from './styles';
-import { parseNumericInput } from '../../utils/inputUtils';
+const parseNumericInput = (text: string): number | undefined => {
+  const parsedValue = parseFloat(text);
+  return isNaN(parsedValue) ? undefined : parsedValue;
+};
 import { VehicleMaintenance } from '../../types';
 
 // Interface for the maintenance record form data (without auto-generated fields)
