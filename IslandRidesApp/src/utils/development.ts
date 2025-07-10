@@ -5,7 +5,7 @@
  * @param devFunction The function to be available in development.
  * @returns The function in development, otherwise undefined.
  */
-export const createDevOnlyFunction = <T extends (...args: any[]) => any>(
+export const createDevOnlyFunction = <T extends (...args: unknown[]) => any>(
   devFunction: T
 ): T | undefined => {
   return __DEV__ ? devFunction : undefined;

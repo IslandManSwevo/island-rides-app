@@ -108,15 +108,19 @@ export const VehiclePhotoUpload: React.FC<VehiclePhotoUploadProps> = ({
         photos={photos}
         serverPhotos={serverPhotos}
         maxPhotos={maxPhotos}
-        onAddPhoto={showPhotoOptions}
-        onRemovePhoto={removePhoto}
-        onRemoveServerPhoto={removeServerPhoto}
-        onSetPrimary={setPrimaryPhoto}
-        onSetServerPrimary={setServerPrimaryPhoto}
-        onEditType={handleEditType}
-        onEditCaption={handleEditCaption}
-        getPhotoTypeColor={getPhotoTypeColor}
-        getPhotoTypeIcon={getPhotoTypeIcon}
+        handlers={{
+          onAddPhoto: showPhotoOptions,
+          onRemovePhoto: removePhoto,
+          onRemoveServerPhoto: removeServerPhoto,
+          onSetPrimary: setPrimaryPhoto,
+          onSetServerPrimary: setServerPrimaryPhoto,
+          onEditType: handleEditType,
+          onEditCaption: handleEditCaption,
+        }}
+        utilities={{
+          getPhotoTypeColor,
+          getPhotoTypeIcon,
+        }}
       />
 
       <PhotoUploadProgress

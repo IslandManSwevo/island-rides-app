@@ -18,6 +18,7 @@ export const PhotoIndicators: React.FC<PhotoIndicatorsProps> = ({ count, current
             index === currentIndex && styles.activeIndicator,
           ]}
           onPress={() => onPress(index)}
+          accessibilityLabel={`Photo indicator ${index + 1}`}
         />
       ))}
     </View>

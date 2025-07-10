@@ -11,6 +11,10 @@ interface DateFilterProps {
 }
 
 const DateFilter: React.FC<DateFilterProps> = ({ startDate, endDate, onShowDatePicker, formatDate }) => {
+  // Validate dates and provide safe fallbacks
+  const safeStartDate = startDate instanceof Date && !isNaN(startDate.getTime()) ? startDate : null;
+  const safeEndDate = endDate instanceof Date && !isNaN(endDate.getTime()) ? endDate : null;
+
   return (
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>Rental Dates</Text>
@@ -18,17 +22,19 @@ const DateFilter: React.FC<DateFilterProps> = ({ startDate, endDate, onShowDateP
         <TouchableOpacity
           style={styles.dateButton}
           onPress={() => onShowDatePicker('start')}
+          accessibilityLabel="Select start date"
         >
           <Ionicons name="calendar-outline" size={20} color={colors.primary} />
-          <Text style={styles.dateButtonText}>{formatDate(startDate)}</Text>
+          <Text style={styles.dateButtonText}>{formatDate(safeStartDate)}</Text>
         </TouchableOpacity>
         <Text style={styles.dateArrow}>→</Text>
         <TouchableOpacity
           style={styles.dateButton}
           onPress={() => onShowDatePicker('end')}
+          accessibilityLabel="Select end date"
         >
           <Ionicons name="calendar-outline" size={20} color={colors.primary} />
-          <Text style={styles.dateButtonText}>{formatDate(endDate)}</Text>
+          <Text style={styles.dateButtonText}>{formatDate(safeEndDate)}</Text>
         </TouchableOpacity>
       </View>
     </View>

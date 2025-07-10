@@ -1,11 +1,14 @@
 /**
  * Filter constants for various components
  */
+import { Ionicons } from '@expo/vector-icons';
+
+export type IconName = keyof typeof Ionicons.glyphMap;
 
 export interface VerificationStatusOption {
   key: string;
   label: string;
-  icon: string;
+  icon: IconName;
 }
 
 export const VERIFICATION_STATUS_OPTIONS: VerificationStatusOption[] = [

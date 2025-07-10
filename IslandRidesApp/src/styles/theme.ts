@@ -239,6 +239,16 @@ const typography = {
     color: colors.onSurfaceVariant,
   },
   
+  // Button style (for button text)
+  button: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    fontWeight: '500' as const,
+    lineHeight: 20,
+    letterSpacing: 0.1,
+    color: colors.onSurface,
+  },
+  
   // Legacy typography mappings for backward compatibility
   heading1: {
     fontFamily: 'Poppins',

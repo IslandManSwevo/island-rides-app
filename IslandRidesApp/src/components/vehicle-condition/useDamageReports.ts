@@ -3,6 +3,20 @@ import { VehicleDamageReport } from '../../types';
 import { vehicleFeatureService } from '../../services/vehicleFeatureService';
 import { notificationService } from '../../services/notificationService';
 
+interface DamageReportInput {
+  vehicleId: number;
+  bookingId?: number;
+  reportedBy: number;
+  damageType: string;
+  description: string;
+  severity: 'minor' | 'moderate' | 'major';
+  repairCost?: number;
+  photos?: string[];
+  insuranceClaimNumber?: string;
+  resolvedAt?: string;
+  resolutionNotes?: string;
+}
+
 export const useDamageReports = (vehicleId: number) => {
   const [reports, setReports] = useState<VehicleDamageReport[]>([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +38,7 @@ export const useDamageReports = (vehicleId: number) => {
     fetchReports();
   }, [fetchReports]);
 
-  const addReport = async (report: Omit<VehicleDamageReport, 'id' | 'createdAt' | 'updatedAt' | 'reportedBy'> & { reportedBy: number }) => {
+  const addReport = async (report: DamageReportInput) => {
     try {
       const newReport = await vehicleFeatureService.reportVehicleDamage(vehicleId, report);
       setReports(prev => [newReport, ...prev]);

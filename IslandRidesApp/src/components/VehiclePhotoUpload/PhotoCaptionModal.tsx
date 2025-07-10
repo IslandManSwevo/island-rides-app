@@ -24,9 +24,20 @@ export const PhotoCaptionModal: React.FC<PhotoCaptionModalProps> = ({ visible, i
   }, [initialCaption]);
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal 
+      visible={visible} 
+      transparent 
+      animationType="slide"
+      accessibilityViewIsModal={true}
+      onRequestClose={onClose}
+    >
       <View style={styles.modalOverlay}>
-        <View style={styles.modal}>
+        <View 
+          style={styles.modal}
+          accessible={true}
+          accessibilityRole="dialog"
+          accessibilityLabel="Add photo caption dialog"
+        >
           <Text style={styles.modalTitle}>Add Caption</Text>
           
           <TextInput
@@ -36,12 +47,27 @@ export const PhotoCaptionModal: React.FC<PhotoCaptionModalProps> = ({ visible, i
             placeholder="Enter photo caption..."
             multiline
             maxLength={200}
+            accessible={true}
+            accessibilityLabel="Photo caption text input"
+            accessibilityHint="Enter a caption for your photo, maximum 200 characters"
           />
+          
+          <Text 
+            style={styles.characterCount}
+            accessible={true}
+            accessibilityLabel={`Character count: ${caption.length} of 200 characters used`}
+          >
+            {caption.length}/200
+          </Text>
           
           <View style={styles.modalActions}>
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={onClose}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+              accessibilityHint="Close the caption dialog without saving"
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -49,6 +75,10 @@ export const PhotoCaptionModal: React.FC<PhotoCaptionModalProps> = ({ visible, i
             <TouchableOpacity
               style={styles.saveButton}
               onPress={() => onSave(caption)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Save caption"
+              accessibilityHint="Save the entered caption for this photo"
             >
               <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
@@ -84,6 +114,12 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  characterCount: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'right',
+    marginTop: spacing.xs,
   },
   modalActions: {
     flexDirection: 'row',

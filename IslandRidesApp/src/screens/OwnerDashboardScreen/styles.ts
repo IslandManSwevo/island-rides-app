@@ -135,6 +135,17 @@ export const styles = StyleSheet.create({
     color: colors.textSecondary,
     paddingVertical: 20,
   },
+  noDataContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noDataSubtext: {
+    textAlign: 'center',
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginTop: 8,
+    paddingHorizontal: 20,
+  },
   goalCard: {
     marginBottom: 12,
     padding: 12,

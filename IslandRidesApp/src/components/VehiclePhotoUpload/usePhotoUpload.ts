@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { v4 as uuidv4 } from 'uuid';
 import { VehiclePhotoService } from '../../services/VehiclePhotoService';
 import { notificationService } from '../../services/notificationService';
 import { VehiclePhoto } from '../../types';
@@ -17,11 +18,19 @@ export interface PhotoUpload {
   error?: string;
 }
 
+interface ImageProcessingOptions {
+  aspectRatio?: [number, number];
+  quality?: number;
+  resizeWidth?: number;
+  compressQuality?: number;
+}
+
 interface UsePhotoUploadProps {
   vehicleId: number;
   existingPhotos?: VehiclePhoto[];
   onPhotosUpdated?: (photos: VehiclePhoto[]) => void;
   maxPhotos?: number;
+  imageOptions?: ImageProcessingOptions;
 }
 
 export const usePhotoUpload = ({
@@ -29,6 +38,12 @@ export const usePhotoUpload = ({
   existingPhotos = [],
   onPhotosUpdated,
   maxPhotos = 10,
+  imageOptions = {
+    aspectRatio: [16, 9],
+    quality: 0.8,
+    resizeWidth: 1200,
+    compressQuality: 0.8,
+  },
 }: UsePhotoUploadProps) => {
   const [photos, setPhotos] = useState<PhotoUpload[]>([]);
   const [serverPhotos, setServerPhotos] = useState<VehiclePhoto[]>(existingPhotos);
@@ -65,7 +80,7 @@ export const usePhotoUpload = ({
     }
   }, [vehicleId, onPhotosUpdated]);
 
-  const generatePhotoId = () => `photo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const generatePhotoId = () => `photo_${uuidv4()}`;
 
   const checkPhotoLimit = (): boolean => {
     if (photos.length + serverPhotos.length >= maxPhotos) {
@@ -88,8 +103,8 @@ export const usePhotoUpload = ({
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [16, 9],
-        quality: 0.8,
+        aspect: imageOptions.aspectRatio,
+        quality: imageOptions.quality,
         allowsMultipleSelection: false,
       });
       await handleImageResult(result);
@@ -111,8 +126,8 @@ export const usePhotoUpload = ({
 
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
-        aspect: [16, 9],
-        quality: 0.8,
+        aspect: imageOptions.aspectRatio,
+        quality: imageOptions.quality,
       });
       await handleImageResult(result);
     } catch (error) {
@@ -125,8 +140,8 @@ export const usePhotoUpload = ({
     try {
       const manipulatedImage = await ImageManipulator.manipulateAsync(
         uri,
-        [{ resize: { width: 1200 } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        [{ resize: { width: imageOptions.resizeWidth } }],
+        { compress: imageOptions.compressQuality, format: ImageManipulator.SaveFormat.JPEG }
       );
 
       const photoId = generatePhotoId();

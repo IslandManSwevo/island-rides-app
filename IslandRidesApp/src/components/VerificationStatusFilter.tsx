@@ -4,12 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../styles/theme';
 import { VERIFICATION_STATUS_OPTIONS, VerificationStatusOption } from '../constants/filters';
 
-interface VerificationStatusFilterProps {
+interface VerificationStatusFilterProps<K extends string = string> {
   verificationStatus: string[];
-  onToggleFilter: (key: string, value: string) => void;
+  onToggleFilter: (key: K, value: string) => void;
+  filterKey: K;
 }
 
-const VerificationStatusFilter: React.FC<VerificationStatusFilterProps> = ({ verificationStatus, onToggleFilter }) => {
+const VerificationStatusFilter = <K extends string = 'verificationStatus'>({ verificationStatus, onToggleFilter, filterKey }: VerificationStatusFilterProps<K>) => {
   return (
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>Verification Status</Text>
@@ -21,13 +22,13 @@ const VerificationStatusFilter: React.FC<VerificationStatusFilterProps> = ({ ver
               styles.verificationChip,
               verificationStatus.includes(option.key) && styles.verificationChipSelected
             ]}
-            onPress={() => onToggleFilter('verificationStatus', option.key)}
+            onPress={() => onToggleFilter(filterKey, option.key)}
             accessibilityRole="button"
             accessibilityLabel={`${option.label} verification status filter`}
             accessibilityState={{ selected: verificationStatus.includes(option.key) }}
           >
             <Ionicons 
-              name={option.icon as any} 
+              name={option.icon} 
               size={16} 
               color={verificationStatus.includes(option.key) ? colors.white : colors.primary} 
             />

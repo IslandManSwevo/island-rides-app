@@ -69,6 +69,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                   newExpense.vehicleId === vehicle.id && styles.pickerOptionSelected
                 ]}
                 onPress={() => setNewExpense({ ...newExpense, vehicleId: vehicle.id })}
+                accessibilityLabel={`Select vehicle ${vehicle.year} ${vehicle.make} ${vehicle.model}`}
               >
                 <Text style={[
                   styles.pickerOptionText,
@@ -90,6 +91,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                   newExpense.expenseType === type.value && styles.pickerOptionSelected
                 ]}
                 onPress={() => setNewExpense({ ...newExpense, expenseType: type.value })}
+                accessibilityLabel={`Select expense type ${type.label}`}
               >
                 <Text style={[
                   styles.pickerOptionText,
@@ -134,13 +136,21 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
           </TouchableOpacity>
           {showDatePicker && (
             <DateTimePicker
-              value={new Date(newExpense.expenseDate)}
+              value={(() => {
+                const date = new Date(newExpense.expenseDate);
+                return isNaN(date.getTime()) ? new Date() : date;
+              })()}
               mode="date"
               display="default"
               onChange={(event, selectedDate) => {
-                const currentDate = selectedDate || new Date(newExpense.expenseDate);
                 setShowDatePicker(false);
-                setNewExpense({ ...newExpense, expenseDate: currentDate.toISOString().split('T')[0] });
+                if (selectedDate && !isNaN(selectedDate.getTime())) {
+                  setNewExpense({ ...newExpense, expenseDate: selectedDate.toISOString().split('T')[0] });
+                } else {
+                  // Fallback to current date if selectedDate is invalid
+                  const fallbackDate = new Date();
+                  setNewExpense({ ...newExpense, expenseDate: fallbackDate.toISOString().split('T')[0] });
+                }
               }}
             />
           )}

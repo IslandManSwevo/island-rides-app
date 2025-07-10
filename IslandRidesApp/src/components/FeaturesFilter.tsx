@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { colors, spacing } from '../styles/theme';
 import { VehicleFeature, VehicleFeatureCategory } from '../types';
@@ -12,6 +12,9 @@ interface FeaturesFilterProps {
 }
 
 const FeaturesFilter: React.FC<FeaturesFilterProps> = ({ features, availableFeatures, featureCategories, loadingFeatures, onToggleFeature }) => {
+  // Convert features array to Set for O(1) lookup performance
+  const featuresSet = useMemo(() => new Set(features), [features]);
+
   if (loadingFeatures || availableFeatures.length === 0) {
     return null;
   }
@@ -27,7 +30,10 @@ const FeaturesFilter: React.FC<FeaturesFilterProps> = ({ features, availableFeat
         nestedScrollEnabled
       >
         {featureCategories.map(category => {
-          const categoryFeatures = availableFeatures.filter(f => f.categoryId === category.id);
+          const categoryFeatures = useMemo(
+            () => availableFeatures.filter(f => f.categoryId === category.id),
+            [availableFeatures, category.id]
+          );
           if (categoryFeatures.length === 0) return null;
           
           return (
@@ -35,7 +41,7 @@ const FeaturesFilter: React.FC<FeaturesFilterProps> = ({ features, availableFeat
               <Text style={styles.featureCategoryTitle}>{category.name}</Text>
               <View style={styles.featuresGrid}>
                 {categoryFeatures.map(feature => {
-                  const isSelected = features.includes(feature.id);
+                  const isSelected = featuresSet.has(feature.id);
                   const accessibilityLabel = `${feature.name}${feature.isPremium ? ', premium feature' : ''}${isSelected ? ', selected' : ', not selected'}`;
                   
                   return (
@@ -52,7 +58,7 @@ const FeaturesFilter: React.FC<FeaturesFilterProps> = ({ features, availableFeat
                     >
                     <Text style={[
                       styles.featureChipText,
-                      features.includes(feature.id) && styles.featureChipTextSelected
+                      featuresSet.has(feature.id) && styles.featureChipTextSelected
                     ]}>
                       {feature.name}
                     </Text>
@@ -125,7 +131,7 @@ const styles = StyleSheet.create({
   },
   premiumBadge: {
     marginLeft: spacing.sm,
-    backgroundColor: 'gold',
+    backgroundColor: colors.star,
     borderRadius: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing } from '../../styles/theme';
+import { formatCountWithWord } from '../../utils/formatters';
 
 interface PhotoUploadProgressProps {
   uploading: boolean;
@@ -33,7 +34,7 @@ export const PhotoUploadProgress: React.FC<PhotoUploadProgressProps> = ({ upload
           <Ionicons name="cloud-upload-outline" size={20} color={colors.white} />
         )}
         <Text style={styles.uploadButtonText}>
-          {uploading ? 'Uploading...' : `Upload ${photoCount} Photo${photoCount !== 1 ? 's' : ''}`}
+          {uploading ? 'Uploading...' : `Upload ${formatCountWithWord(photoCount, 'Photo')}`}
         </Text>
       </TouchableOpacity>
     </View>

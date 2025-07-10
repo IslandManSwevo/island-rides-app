@@ -2,6 +2,18 @@ import { BaseService } from './base/BaseService';
 import { apiService } from './apiService';
 import { VehiclePhoto } from '../types';
 
+interface VehiclePhotoUploadData extends FormData {
+  append(name: 'photo', value: {
+    uri: string;
+    type: string;
+    name: string;
+  }): void;
+  append(name: 'photoType', value: string): void;
+  append(name: 'caption', value: string): void;
+  append(name: 'isPrimary', value: string): void;
+  append(name: string, value: string | Blob): void;
+}
+
 class VehiclePhotoService extends BaseService {
   static getVehiclePhotos(vehicleId: number) {
     throw new Error('Method not implemented.');
@@ -12,13 +24,9 @@ class VehiclePhotoService extends BaseService {
   static setPrimaryPhoto(vehicleId: number, photoId: number) {
     throw new Error('Method not implemented.');
   }
-  static uploadVehiclePhoto(vehicleId: number, formData: FormData) {
+  static uploadVehiclePhoto(vehicleId: number, formData: VehiclePhotoUploadData) {
     throw new Error('Method not implemented.');
   }
-  constructor() {
-    super();
-  }
-
   protected async onInit(): Promise<void> {
     await apiService.waitForInitialization();
   }
@@ -27,7 +35,7 @@ class VehiclePhotoService extends BaseService {
     return await apiService.get<VehiclePhoto[]>(`/api/vehicles/${vehicleId}/photos`);
   }
 
-  async uploadVehiclePhoto(vehicleId: number, photoData: FormData): Promise<VehiclePhoto> {
+  async uploadVehiclePhoto(vehicleId: number, photoData: VehiclePhotoUploadData): Promise<VehiclePhoto> {
     return await apiService.post<VehiclePhoto>(`/api/vehicles/${vehicleId}/photos`, photoData);
   }
 

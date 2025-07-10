@@ -1,11 +1,15 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { styles } from '../styles';
 import { colors } from '../../../styles/theme';
+import { RootStackParamList } from '../../../navigation/routes';
+
+type QuickActionsNavigationProp = StackNavigationProp<RootStackParamList>;
 
 interface Props {
-  navigation: any;
+  navigation: QuickActionsNavigationProp;
 }
 
 const QuickActions: React.FC<Props> = ({ navigation }) => {
@@ -15,7 +19,14 @@ const QuickActions: React.FC<Props> = ({ navigation }) => {
       <View style={styles.quickActions}>
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => navigation.navigate('VehiclePerformance')}
+          onPress={() => {
+            try {
+              navigation.navigate('VehiclePerformance');
+            } catch (error) {
+              console.error('Navigation error to VehiclePerformance:', error);
+              Alert.alert('Navigation Error', 'Unable to open Vehicle Analytics. Please try again.');
+            }
+          }}
         >
           <Ionicons name="analytics-outline" size={24} color={colors.primary} />
           <Text style={styles.actionText}>Vehicle Analytics</Text>
@@ -23,7 +34,14 @@ const QuickActions: React.FC<Props> = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => navigation.navigate('FinancialReports')}
+          onPress={() => {
+            try {
+              navigation.navigate('FinancialReports');
+            } catch (error) {
+              console.error('Navigation error to FinancialReports:', error);
+              Alert.alert('Navigation Error', 'Unable to open Financial Reports. Please try again.');
+            }
+          }}
         >
           <Ionicons name="document-text-outline" size={24} color={colors.primary} />
           <Text style={styles.actionText}>Financial Reports</Text>
@@ -31,7 +49,14 @@ const QuickActions: React.FC<Props> = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => navigation.navigate('FleetManagement')}
+          onPress={() => {
+            try {
+              navigation.navigate('FleetManagement');
+            } catch (error) {
+              console.error('Navigation error to FleetManagement:', error);
+              Alert.alert('Navigation Error', 'Unable to open Fleet Management. Please try again.');
+            }
+          }}
         >
           <Ionicons name="car-sport-outline" size={24} color={colors.primary} />
           <Text style={styles.actionText}>Fleet Management</Text>

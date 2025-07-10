@@ -5,7 +5,7 @@ import { colors, spacing } from '../styles/theme';
 
 interface SeatingCapacityFilterProps {
   minSeatingCapacity: number;
-  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
+  onUpdateFilter: (key: 'minSeatingCapacity', value: number) => void;
 }
 
 const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = ({ minSeatingCapacity, onUpdateFilter }) => {
@@ -25,7 +25,7 @@ const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = ({ minSeatin
         </TouchableOpacity>
         <View style={styles.sliderTrack}>
           <View 
-            style={[styles.sliderProgress, { width: `${(minSeatingCapacity - 1) * 14.28}%` }]} 
+            style={[styles.sliderProgress, { width: `${(minSeatingCapacity - 1) * (100 / 7)}%` }]} 
           />
         </View>
         <TouchableOpacity

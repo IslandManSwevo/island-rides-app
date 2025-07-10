@@ -43,7 +43,41 @@ export const VehicleReviews: React.FC<VehicleReviewsProps> = ({ vehicleId }) => 
       setAverageRating(response.averageRating || 0);
     } catch (error: any) {
       console.error('Error fetching reviews:', error);
-      notificationService.error('Failed to load reviews', { duration: 3000 });
+      
+      let errorMessage = 'Failed to load reviews';
+      
+      // Check for specific error types and HTTP status codes
+      if (error?.response?.status) {
+        switch (error.response.status) {
+          case 401:
+            errorMessage = 'Please log in to view reviews';
+            break;
+          case 403:
+            errorMessage = 'You do not have permission to view these reviews';
+            break;
+          case 404:
+            errorMessage = 'Vehicle reviews not found';
+            break;
+          case 429:
+            errorMessage = 'Too many requests. Please try again later';
+            break;
+          case 500:
+          case 502:
+          case 503:
+            errorMessage = 'Server error. Please try again later';
+            break;
+          default:
+            errorMessage = `Failed to load reviews (Error ${error.response.status})`;
+        }
+      } else if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('Network')) {
+        errorMessage = 'Network error. Please check your connection and try again';
+      } else if (error?.code === 'TIMEOUT_ERROR' || error?.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. Please try again';
+      } else if (error?.message) {
+        errorMessage = `Failed to load reviews: ${error.message}`;
+      }
+      
+      notificationService.error(errorMessage, { duration: 4000 });
     } finally {
       setLoadingReviews(false);
     }

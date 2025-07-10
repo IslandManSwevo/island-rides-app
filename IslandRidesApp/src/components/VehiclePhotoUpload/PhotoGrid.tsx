@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  ScrollView,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../styles/theme';
@@ -17,31 +17,73 @@ interface PhotoGridProps {
   photos: PhotoUpload[];
   serverPhotos: VehiclePhoto[];
   maxPhotos: number;
-  onAddPhoto: () => void;
-  onRemovePhoto: (id: string) => void;
-  onRemoveServerPhoto: (id: number) => void;
-  onSetPrimary: (id: string) => void;
-  onSetServerPrimary: (id: number) => void;
-  onEditType: (id: string) => void;
-  onEditCaption: (id: string) => void;
-  getPhotoTypeColor: (type: string) => string;
-  getPhotoTypeIcon: (type: string) => any;
+  handlers: {
+    onAddPhoto: () => void;
+    onRemovePhoto: (id: string) => void;
+    onRemoveServerPhoto: (id: number) => void;
+    onSetPrimary: (id: string) => void;
+    onSetServerPrimary: (id: number) => void;
+    onEditType: (id: string) => void;
+    onEditCaption: (id: string) => void;
+  };
+  utilities: {
+    getPhotoTypeColor: (type: string) => string;
+    getPhotoTypeIcon: (type: string) => any;
+  };
+}
+
+interface PhotoGridItem {
+  id: string | number;
+  isLocal: boolean;
+  data: PhotoUpload | VehiclePhoto;
 }
 
 export const PhotoGrid: React.FC<PhotoGridProps> = ({
   photos,
   serverPhotos,
   maxPhotos,
-  onAddPhoto,
-  onRemovePhoto,
-  onRemoveServerPhoto,
-  onSetPrimary,
-  onSetServerPrimary,
-  onEditType,
-  onEditCaption,
-  getPhotoTypeColor,
-  getPhotoTypeIcon,
+  handlers,
+  utilities,
 }) => {
+  const {
+    onAddPhoto,
+    onRemovePhoto,
+    onRemoveServerPhoto,
+    onSetPrimary,
+    onSetServerPrimary,
+    onEditType,
+    onEditCaption,
+  } = handlers;
+  
+  const { getPhotoTypeColor, getPhotoTypeIcon } = utilities;
+
+  // Combine server photos and local photos into a single array with isLocal flag
+  const combinedData = useMemo(() => {
+    const serverItems: PhotoGridItem[] = serverPhotos.map(photo => ({
+      id: `server_${photo.id}`,
+      isLocal: false,
+      data: photo,
+    }));
+    
+    const localItems: PhotoGridItem[] = photos.map(photo => ({
+      id: `local_${photo.id}`,
+      isLocal: true,
+      data: photo,
+    }));
+    
+    const allItems = [...serverItems, ...localItems];
+    
+    // Add "add photo" button if under limit
+    if (allItems.length < maxPhotos) {
+      allItems.push({
+        id: 'add_photo_button',
+        isLocal: false,
+        data: null as any, // Special case for add button
+      });
+    }
+    
+    return allItems;
+  }, [serverPhotos, photos, maxPhotos]);
   const renderPhotoItem = (
     photo: PhotoUpload | VehiclePhoto,
     config: {
@@ -122,53 +164,85 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
     </View>
   );
 
-  const renderPhoto = (photo: PhotoUpload) => renderPhotoItem(photo, {
-    imageUri: photo.uri,
-    photoType: photo.type,
-    showEditActions: true,
-    isUploading: photo.isUploading,
-    hasError: !!photo.error,
-    onSetPrimary: (id) => onSetPrimary(id as string),
-    onRemove: (id) => onRemovePhoto(id as string),
-    onEditType: onEditType,
-    onEditCaption: onEditCaption,
-  });
+  const renderItem = ({ item }: { item: PhotoGridItem }) => {
+    // Handle add photo button
+    if (item.id === 'add_photo_button') {
+      return (
+        <TouchableOpacity style={styles.addPhotoButton} onPress={onAddPhoto}>
+          <Ionicons name="add" size={32} color={colors.primary} />
+          <Text style={styles.addPhotoText}>Add Photo</Text>
+        </TouchableOpacity>
+      );
+    }
 
-  const renderServerPhoto = (photo: VehiclePhoto) => renderPhotoItem(photo, {
-    imageUri: photo.photoUrl,
-    photoType: photo.photoType,
-    showCaption: true,
-    caption: photo.caption,
-    onSetPrimary: (id) => onSetServerPrimary(id as number),
-    onRemove: (id) => onRemoveServerPhoto(id as number),
-  });
+    const photo = item.data;
+    
+    if (item.isLocal) {
+      // Render local photo
+      const localPhoto = photo as PhotoUpload;
+      return renderPhotoItem(localPhoto, {
+        imageUri: localPhoto.uri,
+        photoType: localPhoto.type,
+        showEditActions: true,
+        isUploading: localPhoto.isUploading,
+        hasError: !!localPhoto.error,
+        onSetPrimary: (id) => onSetPrimary(id as string),
+        onRemove: (id) => onRemovePhoto(id as string),
+        onEditType: onEditType,
+        onEditCaption: onEditCaption,
+      });
+    } else {
+      // Render server photo
+      const serverPhoto = photo as VehiclePhoto;
+      return renderPhotoItem(serverPhoto, {
+        imageUri: serverPhoto.photoUrl,
+        photoType: serverPhoto.photoType,
+        showCaption: true,
+        caption: serverPhoto.caption,
+        onSetPrimary: (id) => onSetServerPrimary(id as number),
+        onRemove: (id) => onRemoveServerPhoto(id as number),
+      });
+    }
+  };
+
+  const keyExtractor = (item: PhotoGridItem) => String(item.id);
+
+  const getItemLayout = (_: any, index: number) => {
+    const itemWidth = '48%'; // This matches the photoContainer width
+    const itemHeight = 120; // Approximate height based on aspect ratio 16:9
+    const gap = 8; // spacing.sm
+    
+    return {
+      length: itemHeight,
+      offset: Math.floor(index / 2) * (itemHeight + gap),
+      index,
+    };
+  };
 
   return (
-    <ScrollView style={styles.photosContainer} showsVerticalScrollIndicator={false}>
-      <View style={styles.photosGrid}>
-        {serverPhotos.map(renderServerPhoto)}
-        {photos.map(renderPhoto)}
-        
-        {(serverPhotos.length + photos.length) < maxPhotos && (
-          <TouchableOpacity style={styles.addPhotoButton} onPress={onAddPhoto}>
-            <Ionicons name="add" size={32} color={colors.primary} />
-            <Text style={styles.addPhotoText}>Add Photo</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </ScrollView>
+    <FlatList
+      data={combinedData}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      numColumns={2}
+      columnWrapperStyle={styles.row}
+      contentContainerStyle={styles.photosContainer}
+      showsVerticalScrollIndicator={false}
+      getItemLayout={getItemLayout}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      windowSize={10}
+    />
   );
 };
 
 const styles = StyleSheet.create({
   photosContainer: {
-    flex: 1,
-    padding: spacing.md,
+    paddingHorizontal: spacing.sm,
   },
-  photosGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+  row: {
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
   },
   photoContainer: {
     width: '48%',

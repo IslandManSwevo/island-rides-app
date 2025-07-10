@@ -32,7 +32,6 @@ export const useMaintenanceRecords = (vehicleId: number) => {
       return newRecord;
     } catch (error) {
       console.error('Failed to add maintenance record:', error);
-      notificationService.error('Failed to add maintenance record');
       throw error;
     }
   };

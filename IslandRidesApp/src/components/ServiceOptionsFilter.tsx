@@ -24,7 +24,7 @@ const ServiceOptionsFilter: React.FC<ServiceOptionsFilterProps> = ({ deliveryAva
           accessibilityLabel="Delivery Available option"
         >
           <Ionicons 
-            name="car-outline" 
+            name="cube-outline" 
             size={20} 
             color={deliveryAvailable ? colors.white : colors.primary} 
           />

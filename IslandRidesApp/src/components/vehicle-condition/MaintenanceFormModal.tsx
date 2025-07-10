@@ -34,6 +34,12 @@ export const MaintenanceFormModal: React.FC<Props> = ({ visible, onClose, onSave
     }
     onSave({ maintenanceType, description, cost, serviceProvider });
     onClose();
+    
+    // Reset form state after successful save
+    setMaintenanceType('');
+    setDescription('');
+    setCost(undefined);
+    setServiceProvider('');
   };
 
   return (

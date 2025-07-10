@@ -5,10 +5,19 @@ import { colors, spacing } from '../styles/theme';
 
 interface PriceRangeFilterProps {
   priceRange: [number, number];
-  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
+  onUpdateFilter: (key: string, value: [number, number]) => void;
+  step?: number;
+  minValue?: number;
+  maxValue?: number;
 }
 
-const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({ priceRange, onUpdateFilter }) => {
+const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({ 
+  priceRange, 
+  onUpdateFilter, 
+  step = 25, 
+  minValue = 25, 
+  maxValue = 500 
+}) => {
   return (
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>
@@ -20,7 +29,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({ priceRange, onUpdat
           <TouchableOpacity
             style={styles.priceButton}
             onPress={() => {
-              const newMin = Math.min(priceRange[0] + 25, priceRange[1]);
+              const newMin = Math.max(Math.min(priceRange[0] + step, priceRange[1]), minValue);
               onUpdateFilter('priceRange', [newMin, priceRange[1]]);
             }}
           >
@@ -30,7 +39,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({ priceRange, onUpdat
           <TouchableOpacity
             style={styles.priceButton}
             onPress={() => {
-              const newMax = Math.max(priceRange[1] - 25, priceRange[0]);
+              const newMax = Math.min(Math.max(priceRange[1] - step, priceRange[0]), maxValue);
               onUpdateFilter('priceRange', [priceRange[0], newMax]);
             }}
           >

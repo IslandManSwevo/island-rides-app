@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -27,10 +27,17 @@ interface FullscreenModalProps {
 export const FullscreenModal: React.FC<FullscreenModalProps> = ({ photos, visible, startIndex, onClose, getPhotoTypeLabel }) => {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const { width: screenWidth } = useWindowDimensions();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     setCurrentIndex(startIndex);
   }, [startIndex]);
+
+  useEffect(() => {
+    if (scrollViewRef.current && visible) {
+      scrollViewRef.current.scrollTo({ x: startIndex * screenWidth, y: 0, animated: false });
+    }
+  }, [startIndex, screenWidth, visible]);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
@@ -61,11 +68,11 @@ export const FullscreenModal: React.FC<FullscreenModalProps> = ({ photos, visibl
         </View>
 
         <ScrollView
+          ref={scrollViewRef}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={handleScroll}
-          contentOffset={{ x: startIndex * screenWidth, y: 0 }}
         >
           {photos.map((photo) => (
             <View key={photo.id} style={[styles.fullscreenPhotoContainer, { width: screenWidth }]}>

@@ -11,14 +11,32 @@ interface Props {
 }
 
 const DashboardMetrics: React.FC<Props> = ({ overview }) => {
+  const safeFormatCurrency = (value: number): string => {
+    try {
+      return formatCurrency(value);
+    } catch (error) {
+      console.warn('Error formatting currency:', error);
+      return `$${value || 0}`;
+    }
+  };
+
+  const safeFormatPercentage = (value: number): string => {
+    try {
+      return formatPercentage(value);
+    } catch (error) {
+      console.warn('Error formatting percentage:', error);
+      return `${value || 0}%`;
+    }
+  };
+
   return (
     <View style={styles.metricsGrid}>
       <MetricCard
         title="Total Revenue"
-        value={formatCurrency(overview.grossRevenue)}
+        value={safeFormatCurrency(overview.grossRevenue)}
         icon="cash-outline"
         color={colors.success}
-        subtitle={`Net: ${formatCurrency(overview.netRevenue)}`}
+        subtitle={`Net: ${safeFormatCurrency(overview.netRevenue)}`}
       />
       <MetricCard
         title="Active Vehicles"
@@ -36,7 +54,7 @@ const DashboardMetrics: React.FC<Props> = ({ overview }) => {
       />
       <MetricCard
         title="Occupancy Rate"
-        value={formatPercentage(overview.occupancyRate)}
+        value={safeFormatPercentage(overview.occupancyRate)}
         icon="speedometer-outline"
         color={colors.info}
       />

@@ -50,6 +50,15 @@ class VehicleService {
     }
   }
 
+  async getConditionRating(vehicleId: string): Promise<number> {
+    try {
+      const vehicle = await this.getVehicleById(vehicleId);
+      return vehicle.vehicle.conditionRating || 0;
+    } catch (error) {
+      throw new Error(`Failed to fetch condition rating: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
+    }
+  }
+
   private mapVehicleFields(vehicle: any): VehicleRecommendation {
     const totalReviews = vehicle.total_reviews || vehicle.totalReviews || 0;
     const averageRating = vehicle.average_rating || vehicle.averageRating || 0;

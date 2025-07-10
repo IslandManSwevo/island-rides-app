@@ -3,6 +3,7 @@ import { View, Text, Modal, TouchableOpacity, TextInput, Alert } from 'react-nat
 import { styles } from '../styles';
 import { NewGoal } from '../types';
 import { goalTypes } from '../../../constants/goalTypes';
+import { capitalize } from '../../../utils/stringUtils';
 
 interface Props {
   visible: boolean;
@@ -85,7 +86,7 @@ const GoalModal: React.FC<Props> = ({ visible, onClose, onCreate }) => {
                     newGoal.targetPeriod === period && styles.pickerOptionTextSelected,
                   ]}
                 >
-                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                  {capitalize(period)}
                 </Text>
               </TouchableOpacity>
             ))}

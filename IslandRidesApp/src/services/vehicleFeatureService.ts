@@ -3,7 +3,9 @@ import { apiService } from './apiService';
 import { 
   VehicleFeature, 
   VehicleFeatureCategory,
-  Vehicle
+  Vehicle,
+  VehicleMaintenance,
+  VehicleDamageReport
 } from '../types';
 
 interface VehicleFeatureResponse {
@@ -36,6 +38,24 @@ class VehicleFeatureService extends BaseService {
 
   async getFeatureCategories(): Promise<VehicleFeatureCategory[]> {
     return await apiService.get<VehicleFeatureCategory[]>('/api/vehicles/features/categories');
+  }
+
+  // Maintenance Records
+  async getVehicleMaintenance(vehicleId: number): Promise<VehicleMaintenance[]> {
+    return await apiService.get<VehicleMaintenance[]>(`/api/vehicles/${vehicleId}/maintenance`);
+  }
+
+  async addMaintenanceRecord(vehicleId: number, record: Omit<VehicleMaintenance, 'id' | 'createdAt' | 'updatedAt'>): Promise<VehicleMaintenance> {
+    return await apiService.post<VehicleMaintenance>(`/api/vehicles/${vehicleId}/maintenance`, record);
+  }
+
+  // Damage Reports
+  async getVehicleDamageReports(vehicleId: number): Promise<VehicleDamageReport[]> {
+    return await apiService.get<VehicleDamageReport[]>(`/api/vehicles/${vehicleId}/damage-reports`);
+  }
+
+  async reportVehicleDamage(vehicleId: number, report: Omit<VehicleDamageReport, 'id' | 'createdAt' | 'updatedAt'>): Promise<VehicleDamageReport> {
+    return await apiService.post<VehicleDamageReport>(`/api/vehicles/${vehicleId}/damage-reports`, report);
   }
 
   // Utility methods

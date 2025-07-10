@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { VehicleMaintenance } from '../../types';
 import { styles } from './styles';
-import { formatDate, formatCurrency } from '../../utils/formatters';
+import { formatDate, formatCurrency, formatNumber } from '../../utils/formatters';
 
 interface Props {
   records: VehicleMaintenance[];
@@ -38,7 +38,7 @@ export const MaintenanceRecordsSection: React.FC<Props> = ({ records, onAddRecor
                 Cost: {formatCurrency(record.cost)}
               </Text>
             )}            {record.mileageAtService && (
-              <Text style={styles.recordDetail}>Mileage: {record.mileageAtService.toLocaleString()} miles</Text>
+              <Text style={styles.recordDetail}>Mileage: {formatNumber(record.mileageAtService)} miles</Text>
             )}
             {record.notes && (
               <Text style={styles.recordNotes}>{record.notes}</Text>

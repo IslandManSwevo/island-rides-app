@@ -256,7 +256,8 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
         />
         <VerificationStatusFilter
           verificationStatus={filters.verificationStatus}
-          onToggleFilter={(key, value) => toggleArrayFilter('verificationStatus', value)}
+          onToggleFilter={(key, value) => toggleArrayFilter(key, value)}
+          filterKey="verificationStatus"
         />
         <FeaturesFilter
           features={filters.features}

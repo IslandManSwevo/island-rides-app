@@ -23,7 +23,13 @@ const TopVehiclesSection: React.FC<Props> = ({ revenueData }) => {
               {vehicle.year} {vehicle.make} {vehicle.model}
             </Text>
             <Text style={styles.vehicleStats}>
-              {vehicle.bookings} bookings • {formatCurrency(vehicle.grossRevenue)}
+              {vehicle.bookings} bookings • {(() => {
+                try {
+                  return formatCurrency(vehicle.grossRevenue);
+                } catch (error) {
+                  return '$0.00';
+                }
+              })()}
             </Text>
           </View>
           <View style={styles.vehicleRank}>

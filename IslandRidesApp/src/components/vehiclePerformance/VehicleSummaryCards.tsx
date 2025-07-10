@@ -2,8 +2,31 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, typography, spacing, borderRadius } from '../../styles/theme';
 
+interface VehiclePerformance {
+  id: number;
+  make: string;
+  model: string;
+  year: number;
+  dailyRate: number;
+  totalBookings: number;
+  confirmedBookings: number;
+  totalRevenue: number;
+  averageRating: number;
+  reviewCount: number;
+  occupancyRate: number;
+  recentBookings: number;
+  recentRevenue: number;
+  maintenanceInfo: {
+    maintenanceCount: number;
+    lastMaintenance: string | null;
+  };
+  available: boolean;
+  verificationStatus: string;
+  conditionRating: number;
+}
+
 interface VehicleSummaryCardsProps {
-  vehicles: any[];
+  vehicles: VehiclePerformance[];
   formatCurrency: (amount: number) => string;
   formatPercentage: (percentage: number) => string;
   getPerformanceColor: (value: number, type: string) => string;

@@ -3,10 +3,6 @@ import { apiService } from './apiService';
 import { DamageReport } from '../types';
 
 class VehicleDamageService extends BaseService {
-  constructor() {
-    super();
-  }
-
   protected async onInit(): Promise<void> {
     await apiService.waitForInitialization();
   }

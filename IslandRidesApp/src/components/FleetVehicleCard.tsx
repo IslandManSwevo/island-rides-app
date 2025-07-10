@@ -6,7 +6,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { NavigationProp } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { RootStackParamList } from '../navigation/routes';
 
 // Helper function to check if cleaning is due (more than 7 days since last cleaned)
 const isCleaningDue = (lastCleaned: string | null): boolean => {
@@ -45,7 +47,7 @@ interface FleetVehicleCardProps {
   onPress: () => void;
   onLongPress: () => void;
   onToggleAvailability: () => void;
-  navigation: any; 
+  navigation: NavigationProp<RootStackParamList>;
 }
 
 const formatCurrency = (amount: number) => {
@@ -63,7 +65,7 @@ const getStatusColor = (vehicle: Vehicle) => {
     return colors.success;
   };
 
-  const getStatusText = (vehicle: Vehicle) => {
+const getStatusText = (vehicle: Vehicle) => {
     if (!vehicle.available) return 'Unavailable';
     if (vehicle.nextMaintenanceDate && new Date(vehicle.nextMaintenanceDate) <= new Date()) {
       return 'Maintenance Due';
@@ -71,11 +73,11 @@ const getStatusColor = (vehicle: Vehicle) => {
     return 'Available';
   };
 
-  const isMaintenanceDue = (vehicle: Vehicle) => {
+const isMaintenanceDue = (vehicle: Vehicle) => {
     return vehicle.nextMaintenanceDate && new Date(vehicle.nextMaintenanceDate) <= new Date();
   };
 
-  const isInsuranceExpiring = (vehicle: Vehicle) => {
+const isInsuranceExpiring = (vehicle: Vehicle) => {
     if (!vehicle.insuranceExpiry) return false;
     const expiryDate = new Date(vehicle.insuranceExpiry);
     const warningDate = new Date();

@@ -5,7 +5,7 @@ import { colors, spacing } from '../styles/theme';
 
 interface ConditionRatingFilterProps {
   minConditionRating: number;
-  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
+  onUpdateFilter: (key: 'minConditionRating', value: number) => void;
 }
 
 const ConditionRatingFilter: React.FC<ConditionRatingFilterProps> = ({ minConditionRating, onUpdateFilter }) => {

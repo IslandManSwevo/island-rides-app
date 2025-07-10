@@ -17,7 +17,23 @@ const RevenueChart: React.FC<Props> = ({ revenueData }) => {
     );
   }
 
-  const maxRevenue = Math.max(...revenueData.dailyData.map(d => d.grossRevenue));
+  const maxRevenue = Math.max(...revenueData.dailyData.map(d => {
+    const revenue = Number.isFinite(d.grossRevenue) ? d.grossRevenue : 0;
+    return revenue;
+  }));
+
+  // Handle case where all revenue values are zero
+  if (maxRevenue === 0) {
+    return (
+      <View style={styles.chartContainer}>
+        <Text style={styles.chartTitle}>Revenue Trend</Text>
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No revenue generated yet</Text>
+          <Text style={styles.noDataSubtext}>Start accepting bookings to see your revenue trend</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.chartContainer}>
@@ -25,7 +41,8 @@ const RevenueChart: React.FC<Props> = ({ revenueData }) => {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.chart}>
           {revenueData.dailyData.slice(-14).map((data, index) => {
-            const height = maxRevenue > 0 ? (data.grossRevenue / maxRevenue) * 100 : 0;
+            const validRevenue = Number.isFinite(data.grossRevenue) ? data.grossRevenue : 0;
+            const height = maxRevenue > 0 ? (validRevenue / maxRevenue) * 100 : 0;
             return (
               <View key={index} style={styles.chartBar}>
                 <View style={styles.chartBarContainer}>

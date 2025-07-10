@@ -13,7 +13,7 @@ class ServiceRegistry extends BaseService {
   private readonly SERVICE_INIT_TIMEOUT = 10000; // 10 seconds
 
   private async timeout<T>(promise: Promise<T>, serviceName: string): Promise<T> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error(`Service '${serviceName}' initialization timed out`));
       }, this.SERVICE_INIT_TIMEOUT);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { styles } from '../styles';
 
 interface MaintenanceModalProps {
@@ -15,6 +15,8 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ visible, onClose, o
     if (description.trim()) {
       onSubmit(description);
       setDescription('');
+    } else {
+      Alert.alert('Error', 'Please provide a description of the maintenance issue.');
     }
   };
 
