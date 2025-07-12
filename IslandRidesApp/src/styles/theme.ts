@@ -377,7 +377,35 @@ export const themeUtils = {
       level5: 0.14,
     }[elevationLevel];
     
-    return colors.surface; // Base surface color (tinting would require color mixing)
+    // If no tinting needed, return base surface color
+    if (tintOpacity === 0) {
+      return colors.surface;
+    }
+    
+    // Mix surface color with primary color based on tint opacity
+    // Convert hex colors to RGB for blending
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 0, g: 0, b: 0 };
+    };
+    
+    const rgbToHex = (r: number, g: number, b: number) => {
+      return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
+    };
+    
+    const surfaceRgb = hexToRgb(colors.surface);
+    const primaryRgb = hexToRgb(colors.primary);
+    
+    // Blend colors: surface * (1 - opacity) + primary * opacity
+    const blendedR = surfaceRgb.r * (1 - tintOpacity) + primaryRgb.r * tintOpacity;
+    const blendedG = surfaceRgb.g * (1 - tintOpacity) + primaryRgb.g * tintOpacity;
+    const blendedB = surfaceRgb.b * (1 - tintOpacity) + primaryRgb.b * tintOpacity;
+    
+    return rgbToHex(blendedR, blendedG, blendedB);
   },
   
   // Get text color based on surface

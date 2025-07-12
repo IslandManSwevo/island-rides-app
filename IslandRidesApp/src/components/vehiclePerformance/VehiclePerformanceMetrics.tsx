@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, typography, spacing } from '../../styles/theme';
+import { formatDate } from '../../utils/formatters';
 
 interface VehiclePerformanceMetricsProps {
   vehicle: {
@@ -15,49 +16,84 @@ interface VehiclePerformanceMetricsProps {
   formatCurrency: (amount: number) => string;
   formatPercentage: (percentage: number) => string;
   getPerformanceColor: (value: number, type: string) => string;
+  /** Maximum condition rating scale (default: 5) */
+  maxConditionRating?: number;
 }
 
 export const VehiclePerformanceMetrics: React.FC<VehiclePerformanceMetricsProps> = ({
   vehicle,
   formatCurrency,
   formatPercentage,
-  getPerformanceColor
-}) => (
-  <>
-    <View style={styles.performanceRow}>
-      <View style={styles.performanceMetric}>
-        <Text style={styles.performanceLabel}>Occupancy Rate</Text>
-        <View style={styles.progressBar}>
-          <View 
-            style={[
-              styles.progressBarFill, 
-              { 
-                width: `${Math.min(vehicle.occupancyRate, 100)}%`,
-                backgroundColor: getPerformanceColor(vehicle.occupancyRate, 'occupancy')
-              }
-            ]} 
-          />
-        </View>
-        <Text style={[styles.performanceValue, { color: getPerformanceColor(vehicle.occupancyRate, 'occupancy') }]}>
-          {formatPercentage(vehicle.occupancyRate)}
-        </Text>
-      </View>
+  getPerformanceColor,
+  maxConditionRating = 5
+}) => {
+  // Validate occupancy rate and log warning if it exceeds 100%
+  if (vehicle.occupancyRate > 100) {
+    console.warn(
+      `Data validation warning: Vehicle occupancy rate exceeds 100%. Actual value: ${vehicle.occupancyRate}%. This may indicate a data integrity issue.`
+    );
+  }
 
-      <View style={styles.performanceMetric}>
+  return (
+    <>
+      <View style={styles.performanceRow}>
+        <View
+        style={styles.performanceMetric}
+        accessibilityLabel="Occupancy Rate Metric"
+      >
+          <Text style={styles.performanceLabel}>Occupancy Rate</Text>
+          <View
+            style={styles.progressBar}
+            accessibilityRole="progressbar"
+            accessibilityLabel={`Occupancy Rate: ${formatPercentage(vehicle.occupancyRate)}`}
+            accessibilityValue={{
+              min: 0,
+              max: 100,
+              now: Math.min(vehicle.occupancyRate, 100),
+            }}
+          >
+            <View 
+              style={[
+                styles.progressBarFill, 
+                { 
+                  width: `${Math.min(vehicle.occupancyRate, 100)}%`,
+                  backgroundColor: getPerformanceColor(vehicle.occupancyRate, 'occupancy')
+                }
+              ]} 
+            />
+          </View>
+          <Text style={[styles.performanceValue, { color: getPerformanceColor(vehicle.occupancyRate, 'occupancy') }]}>
+            {formatPercentage(vehicle.occupancyRate)}
+          </Text>
+        </View>
+
+      <View
+        style={styles.performanceMetric}
+        accessibilityLabel="Condition Rating Metric"
+      >
         <Text style={styles.performanceLabel}>Condition Rating</Text>
-        <View style={styles.progressBar}>
+        <View
+          style={styles.progressBar}
+          accessibilityRole="progressbar"
+          accessibilityLabel={`Condition Rating: ${vehicle.conditionRating.toFixed(1)} out of ${maxConditionRating}`}
+          accessibilityValue={{
+            min: 0,
+            max: maxConditionRating,
+            now: vehicle.conditionRating,
+          }}
+        >
           <View 
             style={[
               styles.progressBarFill, 
               { 
-                width: `${(vehicle.conditionRating / 5) * 100}%`,
+                width: `${Math.min((vehicle.conditionRating / maxConditionRating) * 100, 100)}%`,
                 backgroundColor: getPerformanceColor(vehicle.conditionRating, 'condition')
               }
             ]} 
           />
         </View>
         <Text style={[styles.performanceValue, { color: getPerformanceColor(vehicle.conditionRating, 'condition') }]}>
-          {vehicle.conditionRating.toFixed(1)}/5
+          {vehicle.conditionRating.toFixed(1)}/{maxConditionRating}
         </Text>
       </View>
     </View>
@@ -70,13 +106,14 @@ export const VehiclePerformanceMetrics: React.FC<VehiclePerformanceMetricsProps>
         </Text>
         {vehicle.maintenanceInfo.lastMaintenance && (
           <Text style={styles.maintenanceInfo}>
-            Last maintenance: {new Date(vehicle.maintenanceInfo.lastMaintenance).toLocaleDateString()}
+            Last maintenance: {formatDate(vehicle.maintenanceInfo.lastMaintenance)}
           </Text>
         )}
       </View>
     </View>
   </>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   performanceRow: {

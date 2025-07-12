@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { styles } from '../styles';
-import { RevenueData } from '../types';
+import { RevenueData } from '../../../types';
 import { formatCurrency } from '../../../utils/formatters';
 
 interface Props {

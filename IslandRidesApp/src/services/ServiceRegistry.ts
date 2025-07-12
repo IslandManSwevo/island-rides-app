@@ -30,6 +30,8 @@ class ServiceRegistry extends BaseService {
   }
 
   async initializeServices(): Promise<void> {
+    console.log('🚀 Starting service initialization...');
+    
     try {
       const servicesToInitialize = [
         { name: 'platform', init: this.initializePlatform.bind(this) },
@@ -42,11 +44,26 @@ class ServiceRegistry extends BaseService {
       ];
 
       for (const service of servicesToInitialize) {
-        await this.timeout(service.init(), service.name);
+        try {
+          console.log(`⏳ Initializing ${service.name}...`);
+          const startTime = Date.now();
+          await this.timeout(service.init(), service.name);
+          const duration = Date.now() - startTime;
+          console.log(`✅ ${service.name} initialized successfully in ${duration}ms`);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (errorMessage?.includes('timeout')) {
+            console.error(`⏰ ${service.name} initialization timed out after ${this.SERVICE_INIT_TIMEOUT}ms`);
+          } else {
+            console.error(`❌ Failed to initialize ${service.name}:`, error);
+          }
+          throw new Error(`Service '${service.name}' initialization failed: ${errorMessage}`);
+        }
       }
 
       // Mark initialization as complete
       this.initializedServices.add('core');
+      console.log('🎉 All services initialized successfully!');
     } catch (error) {
       console.error('Failed to initialize services:', error);
       throw error;
@@ -96,11 +113,16 @@ class ServiceRegistry extends BaseService {
 
   private async initializeApi(): Promise<void> {
     try {
-      await apiService.waitForInitialization();
+      console.log('🔌 Starting API service initialization...');
+      await this.timeout(apiService.waitForInitialization(), 'api');
       this.initializedServices.add('api');
+      console.log('🔌 API service initialization completed');
     } catch (error) {
-      console.error('Failed to initialize API service:', error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn('⚠️ API service initialization failed, continuing without backend:', errorMessage);
+      // Mark as initialized even if failed to allow app to continue
+      this.initializedServices.add('api');
+      console.log('🔌 API service marked as initialized (offline mode)');
     }
   }
 

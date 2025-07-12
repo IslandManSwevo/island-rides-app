@@ -110,12 +110,32 @@ export type RootStackParamList = {
   [ROUTES.PAYMENT]: {
     booking: {
       id: number;
-      total_amount: number;
       vehicle: {
+        id: number;
         make: string;
         model: string;
+        year: number;
+        location: string;
+        dailyRate: number;
       };
+      startDate: string;
+      endDate: string;
+      status: string;
+      totalAmount: number;
+      createdAt: string;
     };
+  };
+  BankTransferInstructions: {
+    instructions?: any;
+    reference?: string;
+    booking: any;
+  };
+  CryptoPayment: {
+    walletAddress?: string;
+    amount?: number;
+    currency?: string;
+    qrCode?: string;
+    booking: any;
   };
   
   // Owner Dashboard routes

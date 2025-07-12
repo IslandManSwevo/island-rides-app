@@ -71,6 +71,9 @@ export class ApiService extends BaseService {
             const newToken = await this.getToken();
             
             if (newToken && originalRequest) {
+              if (!originalRequest.headers) {
+                originalRequest.headers = {};
+              }
               originalRequest.headers.Authorization = `Bearer ${newToken}`;
               return this.axiosInstance(originalRequest);
             }

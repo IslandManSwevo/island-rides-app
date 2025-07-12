@@ -394,7 +394,19 @@ class ReviewPromptService {
 
   private navigateToWriteReview(booking: BookingForReview): void {
     if (navigationRef.current) {
-      navigationRef.current.navigate(ROUTES.WRITE_REVIEW, { booking });
+      // Map BookingForReview to the expected BookingInfo format
+      const mappedBooking = {
+        id: booking.id,
+        start_date: booking.startDate,
+        end_date: booking.endDate,
+        vehicle: {
+          id: booking.vehicle.id,
+          make: booking.vehicle.make,
+          model: booking.vehicle.model,
+          year: booking.vehicle.year
+        }
+      };
+      navigationRef.current.navigate(ROUTES.WRITE_REVIEW, { booking: mappedBooking });
     }
   }
 

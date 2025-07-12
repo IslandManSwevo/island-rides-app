@@ -47,13 +47,13 @@ export const runSetupTests = async () => {
         loggingService.warn('⚠️ Backend server responded but with error status:', { status: response.status });
       }
     } catch (error) {
-      loggingService.error('❌ Backend server not accessible. Make sure to start the backend server with: cd backend && npm start', error);
+      loggingService.error('❌ Backend server not accessible. Make sure to start the backend server with: cd backend && npm start', error as Error);
     }
     
     loggingService.info('\n🎉 Setup verification complete!');
     
   } catch (error) {
-    loggingService.error('❌ Setup test failed:', error);
+    loggingService.error('❌ Setup test failed:', error as Error);
   }
 };
 

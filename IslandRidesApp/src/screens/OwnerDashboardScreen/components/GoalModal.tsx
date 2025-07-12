@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { styles } from '../styles';
-import { NewGoal } from '../types';
+import { NewGoal } from '../../../types';
 import { goalTypes } from '../../../constants/goalTypes';
 import { capitalize } from '../../../utils/stringUtils';
 

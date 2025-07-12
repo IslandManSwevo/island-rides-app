@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   SafeAreaView
 } from 'react-native';
-import { AppHeader } from '../../components/AppHeader';
-import { apiService } from '../../services/apiService';
-import { notificationService } from '../../services/notificationService';
+import { AppHeader } from '../components/AppHeader';
+import { apiService } from '../services/apiService';
+import { notificationService } from '../services/notificationService';
 import { styles } from './OwnerDashboardScreen/styles';
-import { DashboardOverview, RevenueData, Goal, NewGoal } from './OwnerDashboardScreen/types';
+import { DashboardOverview, RevenueData, Goal, NewGoal } from '../types';
 import DashboardMetrics from './OwnerDashboardScreen/components/DashboardMetrics';
 import RevenueChart from './OwnerDashboardScreen/components/RevenueChart';
 import GoalsSection from './OwnerDashboardScreen/components/GoalsSection';
@@ -44,8 +44,9 @@ const timeframeOptions = [
 ];
 
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList, ROUTES } from '../navigation/routes';
 
-type OwnerDashboardScreenNavigationProp = StackNavigationProp<any, 'OwnerDashboardScreen'>;
+type OwnerDashboardScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.OWNER_DASHBOARD>;
 
 interface OwnerDashboardScreenProps {
   navigation: OwnerDashboardScreenNavigationProp;
@@ -111,8 +112,8 @@ export const OwnerDashboardScreen = ({ navigation }: OwnerDashboardScreenProps) 
 
       const response = await apiService.post('/owner/goals', goalData);
 
-      if (response.success) {
-        setGoals([...goals, response.data]);
+      if ((response as { success: boolean; data: Goal }).success) {
+        setGoals([...goals, (response as { data: Goal }).data]);
         setShowGoalModal(false);
         notificationService.success('Goal created successfully');
       } else {

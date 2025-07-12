@@ -18,9 +18,9 @@ import {
   IconName,
   PaymentMethod,
   PaymentMethodsResponse,
-  PaymentIntentResponse,
-  RootStackParamList
+  PaymentIntentResponse
 } from '../types/payment';
+import { RootStackParamList } from '../navigation/routes';
 
 type PaymentScreenProps = StackScreenProps<RootStackParamList, 'Payment'>;
 
@@ -88,7 +88,28 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, navigation 
       notificationService.success('Payment successful!', {
         duration: 5000
       });
-      navigation.navigate('BookingConfirmed', { booking });
+      
+      // Transform booking to match BookingConfirmed route expectations
+      const transformedBooking = {
+        id: booking.id,
+        start_date: booking.startDate,
+        end_date: booking.endDate,
+        status: booking.status,
+        total_amount: booking.totalAmount,
+        vehicle: {
+          id: booking.vehicle.id,
+          make: booking.vehicle.make,
+          model: booking.vehicle.model,
+          year: booking.vehicle.year,
+          location: booking.vehicle.location,
+          daily_rate: booking.vehicle.dailyRate
+        }
+      };
+      
+      navigation.navigate('BookingConfirmed', { 
+        booking: transformedBooking,
+        vehicle: booking.vehicle as any
+      });
     } else if (navState.url.includes('/checkout') && navState.canGoBack) {
       setPaymentUrl(null);
       notificationService.info('Payment cancelled', {
@@ -135,12 +156,12 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, navigation 
       <View style={styles.summary}>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Total Amount</Text>
-          <Text style={styles.summaryValue}>${booking.total_amount} USD</Text>
+          <Text style={styles.summaryValue}>${booking.totalAmount} USD</Text>
         </View>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Rental Period</Text>
           <Text style={styles.summaryValue}>
-            {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+            {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
           </Text>
         </View>
       </View>

@@ -137,7 +137,7 @@ export class PortDetectionHelper {
       clearTimeout(timeoutId);
       
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { status: string; uptime: number };
         console.log('✅ API Server: Connected successfully');
         console.log(`   Status: ${data.status}`);
         console.log(`   Uptime: ${data.uptime}`);

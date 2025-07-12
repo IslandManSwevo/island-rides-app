@@ -1,6 +1,6 @@
 import { BaseService } from './base/BaseService';
 import { environmentService } from './EnvironmentService';
-import { logger } from 'react-native-logs';
+import { logger, consoleTransport } from 'react-native-logs';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -13,12 +13,12 @@ interface LogEntry {
 
 const defaultConfig = {
   severity: __DEV__ ? 'debug' : 'error' as LogLevel,
-  transport: logger.consoleTransport,
+  transport: consoleTransport,
   transportOptions: {
     colors: {
-      info: 'blueBright',
-      warn: 'yellowBright',
-      error: 'redBright',
+      info: 'blueBright' as const,
+      warn: 'yellowBright' as const,
+      error: 'redBright' as const,
     },
   },
   async: true,
@@ -29,23 +29,14 @@ const defaultConfig = {
 };
 
 class LoggingService extends BaseService {
-  private static instance: LoggingService;
-
   private logs: LogEntry[] = [];
   private readonly MAX_LOGS = 1000;
   private readonly MAX_LOG_ENTRY_SIZE = 2048; // Approx 2KB
   private nativeLogger: any;
 
-  private constructor() {
+  constructor() {
     super();
     this.nativeLogger = logger.createLogger(defaultConfig);
-  }
-
-  static getInstance(): LoggingService {
-    if (!LoggingService.instance) {
-      LoggingService.instance = new LoggingService();
-    }
-    return LoggingService.instance;
   }
 
   private shouldLog(level: LogLevel): boolean {

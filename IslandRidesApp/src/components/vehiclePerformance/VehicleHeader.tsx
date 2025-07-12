@@ -41,7 +41,7 @@ export const VehicleHeader: React.FC<VehicleHeaderProps> = ({
             color={getVerificationStatusColor(vehicle.verificationStatus)} 
           />
           <Text style={[styles.verificationText, { color: getVerificationStatusColor(vehicle.verificationStatus) }]}>
-            {vehicle.verificationStatus?.charAt(0).toUpperCase() + vehicle.verificationStatus?.slice(1)}
+            {(vehicle.verificationStatus || '').charAt(0).toUpperCase() + (vehicle.verificationStatus || '').slice(1)}
           </Text>
         </View>
       </View>

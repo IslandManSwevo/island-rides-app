@@ -26,7 +26,7 @@ const App: React.FC = () => {
       
       // Initialize core services first
       await serviceRegistry.initializeServices();
-      console.log('Service registry initialized');
+      console.log('Service registry initialized successfully');
       
       setInitProgress('Setting up notifications...');
       
@@ -135,35 +135,35 @@ const App: React.FC = () => {
 
   if (initError) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Initialization Error</Text>
-        <Text style={styles.errorMessage}>{initError}</Text>
-        <Text style={styles.retryButton} onPress={handleRetry}>
-          Tap to Retry
-        </Text>
-      </View>
-    );
-  }
-
-  if (!isInitialized) {
-    return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading Island Rides...</Text>
-        <Text style={styles.progressText}>{initProgress}</Text>
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Initialization Error</Text>
+          <Text style={styles.errorMessage}>{initError}</Text>
+          <Text style={styles.retryButton} onPress={handleRetry}>
+            Tap to Retry
+          </Text>
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
   return (
     <SafeAreaProvider>
       <ErrorBoundary onError={handleError}>
-        <NavigationContainer ref={navigationRef}>
-          <AuthProvider>
-            <NotificationContainer />
-            <AppNavigator />
-          </AuthProvider>
-        </NavigationContainer>
+        {!isInitialized ? (
+          <SafeAreaView style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Loading Island Rides...</Text>
+            <Text style={styles.progressText}>{initProgress}</Text>
+          </SafeAreaView>
+        ) : (
+          <NavigationContainer ref={navigationRef}>
+            <AuthProvider>
+              <NotificationContainer />
+              <AppNavigator />
+            </AuthProvider>
+          </NavigationContainer>
+        )}
       </ErrorBoundary>
     </SafeAreaProvider>
   );

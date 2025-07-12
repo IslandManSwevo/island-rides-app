@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
-import { Button } from '../components/Button';
+import Button from '../components/Button';
 import { Vehicle } from '../types';
 import { BookingService } from '../services/bookingService';
 import { pricingConfigService, PricingConfig, BusinessRules } from '../services/pricingConfigService';
@@ -43,14 +43,14 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
     }
 
     const now = new Date();
-    const minAdvanceTime = new Date(now.getTime() + businessRules.minAdvanceBooking * 60 * 60 * 1000);
-    const maxAdvanceTime = new Date(now.getTime() + businessRules.maxAdvanceBooking * 24 * 60 * 60 * 1000);
+    const minAdvanceTime = new Date(now.getTime() + businessRules.minAdvanceBookingHours * 60 * 60 * 1000);
+    const maxAdvanceTime = new Date(now.getTime() + businessRules.maxAdvanceBookingHours * 60 * 60 * 1000);
     
     // Check minimum advance booking
     if (newStartDate < minAdvanceTime) {
       return {
         isValid: false,
-        errorMessage: `Booking must be made at least ${businessRules.minAdvanceBooking} hours in advance`
+        errorMessage: `Booking must be made at least ${businessRules.minAdvanceBookingHours} hours in advance`
       };
     }
     
@@ -58,7 +58,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
     if (newStartDate > maxAdvanceTime) {
       return {
         isValid: false,
-        errorMessage: `Booking cannot be made more than ${businessRules.maxAdvanceBooking} days in advance`
+        errorMessage: `Booking cannot be made more than ${Math.floor(businessRules.maxAdvanceBookingHours / 24)} days in advance`
       };
     }
     
@@ -68,17 +68,17 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
       newEndDate.toISOString().split('T')[0]
     );
     
-    if (rentalDays < businessRules.minRentalPeriod) {
+    if (rentalDays < businessRules.minRentalDays) {
       return {
         isValid: false,
-        errorMessage: `Minimum rental period is ${businessRules.minRentalPeriod} day${businessRules.minRentalPeriod > 1 ? 's' : ''}`
+        errorMessage: `Minimum rental period is ${businessRules.minRentalDays} day${businessRules.minRentalDays > 1 ? 's' : ''}`
       };
     }
     
-    if (rentalDays > businessRules.maxRentalPeriod) {
+    if (rentalDays > businessRules.maxRentalDays) {
       return {
         isValid: false,
-        errorMessage: `Maximum rental period is ${businessRules.maxRentalPeriod} days`
+        errorMessage: `Maximum rental period is ${businessRules.maxRentalDays} days`
       };
     }
     

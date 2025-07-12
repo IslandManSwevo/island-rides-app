@@ -1,15 +1,13 @@
 import React from 'react';
-
-
 import { createStackNavigator } from '@react-navigation/stack';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { BookingConfirmedScreen } from '../screens/BookingConfirmedScreen';
-import { ChatConversationScreen } from '../screens/ChatConversationScreen';
+import ChatConversationScreen from '../screens/ChatConversationScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { FinancialReportsScreen } from '../screens/FinancialReportsScreen';
 import { FleetManagementScreen } from '../screens/FleetManagementScreen';
-import { IslandSelectionScreen } from '../screens/IslandSelectionScreen';
+import IslandSelectionScreen from '../screens/IslandSelectionScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { NotificationPreferencesScreen } from '../screens/NotificationPreferencesScreen';
 import { OwnerDashboardScreen } from '../screens/OwnerDashboardScreen';
@@ -18,6 +16,7 @@ import { PaymentScreen } from '../screens/PaymentScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { RegistrationScreen } from '../screens/RegistrationScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
+import { SearchScreen } from '../screens/SearchScreen';
 import { VehicleDetailScreen } from '../screens/VehicleDetailScreen';
 import { VehiclePerformanceScreen } from '../screens/VehiclePerformanceScreen';
 import { WriteReviewScreen } from '../screens/WriteReviewScreen';

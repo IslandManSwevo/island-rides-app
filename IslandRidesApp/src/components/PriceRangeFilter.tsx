@@ -4,10 +4,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../styles/theme';
 
 interface PriceRangeFilterProps {
+  /** The current price range as a tuple of [minimum, maximum] values */
   priceRange: [number, number];
-  onUpdateFilter: (key: string, value: [number, number]) => void;
+  /** Callback function to update filter values with the specified key and new price range tuple */
+  onUpdateFilter: (key: 'priceRange', value: readonly [number, number]) => void;
+  /** The increment/decrement step value for price adjustments (default: 25) */
   step?: number;
+  /** The minimum allowed price value (default: 25) */
   minValue?: number;
+  /** The maximum allowed price value (default: 500) */
   maxValue?: number;
 }
 
@@ -29,7 +34,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
           <TouchableOpacity
             style={styles.priceButton}
             onPress={() => {
-              const newMin = Math.max(Math.min(priceRange[0] + step, priceRange[1]), minValue);
+              const newMin = Math.max(priceRange[0] - step, minValue);
               onUpdateFilter('priceRange', [newMin, priceRange[1]]);
             }}
           >
@@ -39,7 +44,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
           <TouchableOpacity
             style={styles.priceButton}
             onPress={() => {
-              const newMax = Math.min(Math.max(priceRange[1] - step, priceRange[0]), maxValue);
+              const newMax = Math.min(priceRange[1] + step, maxValue);
               onUpdateFilter('priceRange', [priceRange[0], newMax]);
             }}
           >

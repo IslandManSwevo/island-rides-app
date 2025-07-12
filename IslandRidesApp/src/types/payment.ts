@@ -22,18 +22,3 @@ export interface PaymentIntentResponse {
   currency?: string;
   qrCode?: string;
 }
-
-export type RootStackParamList = {
-  Payment: {
-    booking: {
-      id: number;
-      total_amount: number;
-      start_date: string;
-      end_date: string;
-      vehicle: any;
-    };
-  };
-  BookingConfirmed: { booking: any };
-  BankTransferInstructions: any;
-  CryptoPayment: any;
-};

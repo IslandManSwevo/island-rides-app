@@ -34,17 +34,33 @@ export const formatPercentage = (percentage: number): string => {
   return `${clampedPercentage.toFixed(1)}%`;
 };
 
-export const formatDate = (dateString?: string) => {
-  if (!dateString) return 'N/A';
+/**
+ * Formats a date string to a localized date format
+ * @param dateString - The date string to format
+ * @returns Formatted date string or fallback for invalid inputs
+ */
+export const formatDate = (dateString?: string): string => {
+  // Explicit type checking for input
+  if (typeof dateString !== 'string' || dateString.trim() === '') {
+    return 'N/A';
+  }
   
   try {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString);
+    
+    // Validate the date object after creation
+    if (isNaN(date.getTime()) || !isFinite(date.getTime())) {
+      console.warn('Invalid date string provided to formatDate:', dateString);
+      return 'Invalid Date';
+    }
+    
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
   } catch (error) {
-    console.warn('Invalid date string provided to formatDate:', dateString);
+    console.warn('Error formatting date string:', dateString, error);
     return 'Invalid Date';
   }
 };

@@ -31,7 +31,7 @@ export class ErrorRecoveryManager {
           loggingService.info(`Successfully recovered using strategy: ${strategy.constructor.name}`);
           return true;
         } catch (recoveryError) {
-          loggingService.error(`Recovery strategy ${strategy.constructor.name} failed`, { recoveryError });
+          loggingService.error(`Recovery strategy ${strategy.constructor.name} failed`, recoveryError instanceof Error ? recoveryError : new Error(String(recoveryError)));
           continue;
         }
       }

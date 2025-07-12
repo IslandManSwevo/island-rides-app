@@ -6,20 +6,29 @@ import { styles } from '../styles';
 interface Props {
   title: string;
   value: string;
-  icon: any;
+  icon: keyof typeof Ionicons.glyphMap;
   color: string;
   subtitle?: string;
 }
 
-const MetricCard: React.FC<Props> = ({ title, value, icon, color, subtitle }) => (
-  <View style={[styles.metricCard, { borderLeftColor: color }]}>
-    <View style={styles.metricHeader}>
-      <Text style={styles.metricTitle}>{title}</Text>
-      <Ionicons name={icon} size={20} color={color} />
+const MetricCard: React.FC<Props> = ({ title, value, icon, color, subtitle }) => {
+  const accessibilityLabel = `${title}: ${value}${subtitle ? `, ${subtitle}` : ''}`;
+  
+  return (
+    <View 
+      style={[styles.metricCard, { borderLeftColor: color }]}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="summary"
+    >
+      <View style={styles.metricHeader}>
+        <Text style={styles.metricTitle} accessibilityElementsHidden={true}>{title}</Text>
+        <Ionicons name={icon} size={20} color={color} accessibilityElementsHidden={true} />
+      </View>
+      <Text style={styles.metricValue} accessibilityElementsHidden={true}>{value}</Text>
+      {subtitle && <Text style={styles.metricSubtitle} accessibilityElementsHidden={true}>{subtitle}</Text>}
     </View>
-    <Text style={styles.metricValue}>{value}</Text>
-    {subtitle && <Text style={styles.metricSubtitle}>{subtitle}</Text>}
-  </View>
-);
+  );
+};
 
 export default MetricCard;

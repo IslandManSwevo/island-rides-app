@@ -125,9 +125,8 @@ class WebSocketService {
 
     // Remove custom event listeners
     this.eventListeners.forEach((listeners, eventName) => {
-      const event = eventName as WebSocketEvent;
       listeners.forEach(listener => {
-        this.socket?.off(event, listener as (...args: any[]) => void);
+        this.socket?.off(eventName as any, listener as (...args: any[]) => void);
       });
     });
     this.eventListeners.clear();

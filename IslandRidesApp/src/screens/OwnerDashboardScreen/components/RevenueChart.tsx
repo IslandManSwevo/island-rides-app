@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { styles } from '../styles';
 import { colors } from '../../../styles/theme';
-import { RevenueData } from '../types';
+import { RevenueData } from '../../../types';
 
 interface Props {
   revenueData: RevenueData | null;
