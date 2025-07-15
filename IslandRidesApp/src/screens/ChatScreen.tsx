@@ -16,7 +16,7 @@ import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '../types';
 import { getEnvironmentConfig } from '../config/environment';
 import { notificationService } from '../services/notificationService';
-import { colors } from '../styles/theme';
+import { colors } from '../styles/Theme';
 
 interface ChatScreenProps {
   conversationId: string;

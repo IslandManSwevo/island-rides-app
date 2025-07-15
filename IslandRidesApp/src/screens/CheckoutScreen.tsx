@@ -4,7 +4,7 @@ import { notificationService } from '../services/notificationService';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../styles/Theme';
 import Button from '../components/Button';
 import { Vehicle } from '../types';
 import { BookingService } from '../services/bookingService';

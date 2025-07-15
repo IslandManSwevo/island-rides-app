@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../styles/theme';
+import { colors, spacing } from '../styles/Theme';
 
 interface ServiceOptionsFilterProps {
   deliveryAvailable: boolean;

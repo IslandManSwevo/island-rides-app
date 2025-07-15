@@ -14,7 +14,7 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import { VehiclePhoto } from '../types';
-import { colors } from '../styles/theme';
+import { colors } from '../styles/Theme';
 
 interface FullscreenModalProps {
   photos: VehiclePhoto[];

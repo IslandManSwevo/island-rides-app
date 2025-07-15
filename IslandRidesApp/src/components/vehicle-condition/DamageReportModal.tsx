@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { styles } from './styles';
 import { VehicleDamageReport } from '../../types';
-import { colors } from '../../styles/theme';
+import { colors } from '../../styles/Theme';
 
 // Utility function to parse numeric input
 const parseNumericInput = (text: string): number | undefined => {

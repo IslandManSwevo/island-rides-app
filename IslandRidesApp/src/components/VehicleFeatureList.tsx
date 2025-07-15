@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { VehicleFeature, VehicleFeatureCategory } from '../types';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
-import { colors } from '../styles/theme';
+import { colors } from '../styles/Theme';
 
 interface VehicleFeatureListProps {
   features: VehicleFeature[];

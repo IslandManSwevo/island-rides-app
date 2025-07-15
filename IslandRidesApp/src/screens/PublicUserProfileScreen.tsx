@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../styles/Theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 import { apiService } from '../services/apiService';
 import { vehicleService } from '../services/vehicleService';

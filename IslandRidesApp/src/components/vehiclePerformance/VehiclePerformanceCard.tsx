@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
-import { colors, spacing, borderRadius } from '../../styles/theme';
+import { colors, spacing, borderRadius } from '../../styles/Theme';
 import { RootStackParamList } from '../../navigation/routes';
 import { VehicleHeader } from './VehicleHeader';
 import { VehicleMetrics } from './VehicleMetrics';

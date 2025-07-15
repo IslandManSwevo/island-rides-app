@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '../../styles/theme';
+import { colors, typography, spacing } from '../../styles/Theme';
 import { formatCountWithWord } from '../../utils/formatters';
 
 interface PhotoUploadProgressProps {

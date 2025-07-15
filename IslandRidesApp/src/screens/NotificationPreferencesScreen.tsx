@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../styles/Theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
 interface NotificationPreferences extends Record<string, boolean> {

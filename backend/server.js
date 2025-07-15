@@ -429,6 +429,23 @@ async function handleSuccessfulLogin(user) {
   logAuditEvent('LOGIN_SUCCESS', user.id, { email: user.email });
 }
 
+// Refresh token functions for frontend compatibility
+function generateRefreshToken(userId, email) {
+  return jwt.sign(
+    { userId, email, type: 'refresh' },
+    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh',
+    { expiresIn: '7d' }
+  );
+}
+
+function verifyRefreshToken(token) {
+  try {
+    return jwt.verify(token, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh');
+  } catch (error) {
+    throw new Error('Invalid refresh token');
+  }
+}
+
 
 function calculateCollaborativeFilteringScore(userId, vehicleId) {
   const userBookings = bookings.filter(b => b.user_id === userId && b.status === 'completed');
@@ -574,13 +591,31 @@ const authenticateToken = (req, res, next) => {
   console.log('🔍 Backend: Token extracted:', !!token);
   
   if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
+    return res.status(401).json({ 
+      error: 'Access token required',
+      code: 'TOKEN_MISSING',
+      message: 'Authorization header with Bearer token is required'
+    });
   }
   
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
       console.log('❌ Backend: JWT verify failed:', err.message);
-      return res.status(403).json({ error: 'Invalid token' });
+      let errorResponse = {
+        error: 'Invalid or expired token',
+        code: 'TOKEN_INVALID',
+        message: 'The provided token is invalid or has expired'
+      };
+      
+      if (err.name === 'TokenExpiredError') {
+        errorResponse.code = 'TOKEN_EXPIRED';
+        errorResponse.message = 'Token has expired, please refresh your session';
+      } else if (err.name === 'JsonWebTokenError') {
+        errorResponse.code = 'TOKEN_MALFORMED';
+        errorResponse.message = 'Token format is invalid';
+      }
+      
+      return res.status(401).json(errorResponse);
     }
     
     console.log('✅ Backend: Token valid for user:', user.userId);
@@ -642,6 +677,8 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
+    const refreshToken = generateRefreshToken(user.id, user.email);
+
     logAuditEvent('USER_REGISTRATION', user.id, { 
       email: user.email, 
       role: user.role 
@@ -656,7 +693,8 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
         lastName: user.last_name,
         role: user.role
       },
-      token
+      token,
+      refreshToken
     });
   } catch (error) {
     logError('Registration error', error);
@@ -707,6 +745,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
+    const refreshToken = generateRefreshToken(user.id, user.email);
+
     res.json({
       message: 'Login successful',
       user: {
@@ -716,7 +756,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         lastName: user.last_name,
         role: user.role
       },
-      token
+      token,
+      refreshToken
     });
   } catch (error) {
     logError('Login error', error);
@@ -739,6 +780,103 @@ app.post('/api/auth/logout', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     logError('Logout error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Refresh token endpoint
+app.post('/api/auth/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({ 
+        error: 'Refresh token required',
+        code: 'REFRESH_TOKEN_MISSING',
+        message: 'Refresh token is required to obtain new access token'
+      });
+    }
+
+    // Verify the refresh token
+    const decoded = verifyRefreshToken(refreshToken);
+    
+    // Get user from database to ensure they still exist
+    const userResult = await db.query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({ 
+        error: 'User not found',
+        code: 'USER_NOT_FOUND',
+        message: 'User associated with refresh token no longer exists'
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Generate new tokens
+    const newToken = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+    );
+
+    const newRefreshToken = generateRefreshToken(user.id, user.email);
+
+    res.json({
+      message: 'Token refreshed successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        role: user.role
+      },
+      token: newToken,
+      refreshToken: newRefreshToken
+    });
+  } catch (error) {
+    logError('Token refresh error', error);
+    
+    let errorResponse = {
+      error: 'Invalid refresh token',
+      code: 'REFRESH_TOKEN_INVALID',
+      message: 'The provided refresh token is invalid or expired'
+    };
+    
+    if (error.message.includes('expired')) {
+      errorResponse.code = 'REFRESH_TOKEN_EXPIRED';
+      errorResponse.message = 'Refresh token has expired, please log in again';
+    }
+    
+    res.status(401).json(errorResponse);
+  }
+});
+
+// Get current user endpoint
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const userResult = await db.query(
+      'SELECT id, email, first_name, last_name, role, created_at FROM users WHERE id = $1', 
+      [userId]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    res.json({
+      id: user.id,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      role: user.role,
+      createdAt: user.created_at
+    });
+  } catch (error) {
+    logError('Get current user error', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

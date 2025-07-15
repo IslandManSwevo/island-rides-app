@@ -159,4 +159,3 @@ export type RootStackParamList = {
     vehicleIds: number[];
   };
 };
-

@@ -5,7 +5,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { notificationService } from '../services/notificationService';
 import { reviewPromptService } from '../services/reviewPromptService';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../styles/Theme';
 import Button from '../components/Button';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { Vehicle } from '../types';

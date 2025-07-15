@@ -16,7 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { reviewPromptService } from '../services/reviewPromptService';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../styles/Theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
 type WriteReviewScreenProps = StackScreenProps<RootStackParamList, typeof ROUTES.WRITE_REVIEW>;

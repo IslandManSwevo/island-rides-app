@@ -1,4 +1,4 @@
-import { colors } from '../styles/theme';
+import { colors } from '../styles/Theme';
 
 export type PhotoType = 'exterior' | 'interior' | 'engine' | 'dashboard' | 'trunk' | 'other';
 

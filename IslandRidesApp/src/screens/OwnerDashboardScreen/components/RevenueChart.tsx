@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { styles } from '../styles';
-import { colors } from '../../../styles/theme';
+import { colors } from '../../../styles/Theme';
 import { RevenueData } from '../../../types';
 
 interface Props {

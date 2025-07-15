@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '../../styles/theme';
+import { colors, typography, spacing } from '../../styles/Theme';
 
 interface SortOption {
   label: string;

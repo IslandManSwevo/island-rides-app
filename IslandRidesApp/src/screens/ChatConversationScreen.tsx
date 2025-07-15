@@ -39,7 +39,7 @@ import chatService from '../services/chatService';
 import { mediaUploadService } from '../services/mediaUploadService';
 import { AppHeader } from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
-import { colors, spacing, borderRadius } from '../styles/theme';
+import { colors, spacing, borderRadius } from '../styles/Theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 

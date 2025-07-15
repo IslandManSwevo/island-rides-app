@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { VehicleCard } from '../components/VehicleCard';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../styles/Theme';
 import { Vehicle } from '../types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, ROUTES } from '../navigation/routes';

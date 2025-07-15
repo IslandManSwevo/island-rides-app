@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../components/AppHeader';
 import { vehicleService } from '../services/vehicleService';
 import { useAuth } from '../context/AuthContext';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../styles/Theme';
 import { Island } from '../types';
 import { ROUTES, RootStackParamList } from '../navigation/routes';
 import { islands, IslandOption } from '../constants/islands';

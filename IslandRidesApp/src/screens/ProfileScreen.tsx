@@ -16,7 +16,7 @@ import { ProfileService } from '../services/profileService';
 import { reviewPromptService } from '../services/reviewPromptService';
 import { useAuth } from '../context/AuthContext';
 import { ProfileData, ProfileBooking } from '../types';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../styles/Theme';
 import { AppHeader } from '../components/AppHeader';
 import { ROUTES, RootStackParamList } from '../navigation/routes';
 import { createDevOnlyFunction } from '../utils/development';

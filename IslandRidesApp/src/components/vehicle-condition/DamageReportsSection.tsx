@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { VehicleDamageReport } from '../../types';
 import { styles } from './styles';
-import { colors } from '../../styles/theme';
+import { colors } from '../../styles/Theme';
 
 interface Props {
   reports: VehicleDamageReport[];

@@ -9,7 +9,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../../styles/Theme';
 import { VehiclePhoto } from '../../types';
 import { PhotoUpload } from './usePhotoUpload';
 

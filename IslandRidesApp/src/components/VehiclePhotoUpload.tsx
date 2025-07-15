@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { colors, typography, spacing } from '../styles/theme';
+import { colors, typography, spacing } from '../styles/Theme';
 import { VehiclePhoto } from '../types';
 import { photoTypeOptions, PhotoType } from '../constants/photoTypes';
 import { usePhotoUpload } from './VehiclePhotoUpload/usePhotoUpload';

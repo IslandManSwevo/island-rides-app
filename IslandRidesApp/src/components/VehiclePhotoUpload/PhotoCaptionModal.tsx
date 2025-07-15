@@ -7,7 +7,7 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import { colors, typography, spacing, borderRadius } from '../../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../../styles/Theme';
 
 interface PhotoCaptionModalProps {
   visible: boolean;

@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StackScreenProps } from '@react-navigation/stack';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing } from '../styles/theme';
+import { colors, typography, spacing } from '../styles/Theme';
 import {
   IconName,
   PaymentMethod,

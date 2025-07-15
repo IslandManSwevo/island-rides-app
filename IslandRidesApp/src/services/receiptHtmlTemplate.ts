@@ -1,5 +1,5 @@
 import { Receipt } from './receiptService';
-import { colors } from '../styles/theme';
+import { colors } from '../styles/Theme';
 
 
 // Helper function to safely format dates with null/undefined checks

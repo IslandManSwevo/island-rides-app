@@ -126,7 +126,7 @@ const App: React.FC = () => {
       DevSettings.reload();
     } else {
       // For production, just re-initialize
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         setInitProgress('Starting...');
         initializeApp();
       }, 500);

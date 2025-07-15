@@ -4,7 +4,7 @@ import Button from '../components/Button';
 import { notificationService } from '../services/notificationService';
 import { Input } from '../components/Input';
 import { useAuth } from '../context/AuthContext';
-import { colors, typography, spacing } from '../styles/theme';
+import { colors, typography, spacing } from '../styles/Theme';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { colors, typography, spacing } from '../styles/theme';
+import { colors, typography, spacing } from '../styles/Theme';
 import { NavigationProp } from '@react-navigation/native';
 import { BusinessLogicError } from '../services/errors/BusinessLogicError';
 import { RootStackParamList } from '../navigation/routes';

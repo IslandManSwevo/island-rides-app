@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ErrorBoundaryProps } from '../types';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing } from '../styles/theme';
+import { colors, typography, spacing } from '../styles/Theme';
 
 interface State {
   hasError: boolean;

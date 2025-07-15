@@ -5,7 +5,7 @@ import { ApiErrorCode, ErrorBoundaryProps } from '../types';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { navigationRef } from '../navigation/navigationRef';
-import { colors } from '../styles/theme';
+import { colors } from '../styles/Theme';
 
 interface State {
   hasError: boolean;

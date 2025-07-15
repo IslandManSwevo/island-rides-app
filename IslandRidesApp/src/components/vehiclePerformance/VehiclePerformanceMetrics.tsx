@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography, spacing } from '../../styles/theme';
+import { colors, typography, spacing } from '../../styles/Theme';
 import { formatDate } from '../../utils/formatters';
 
 interface VehiclePerformanceMetricsProps {

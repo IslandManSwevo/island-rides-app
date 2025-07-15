@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Notification } from '../types';
-import { colors, borderRadius, elevationStyles } from '../styles/theme';
+import { colors, borderRadius, elevationStyles } from '../styles/Theme';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     padding: 12,
     borderRadius: borderRadius.sm,
-    ...elevationStyles.level3,
+    ...elevationStyles[3],
   },
   content: {
     flex: 1,

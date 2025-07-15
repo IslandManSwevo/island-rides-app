@@ -11,7 +11,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { VehiclePhoto } from '../types';
-import { colors } from '../styles/theme';
+import { colors } from '../styles/Theme';
 import { PhotoIndicators } from './PhotoIndicators';
 import { PhotoThumbnails } from './PhotoThumbnails';
 import { FullscreenModal } from './FullscreenModal';

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { colors, spacing } from '../styles/theme';
+import { colors, spacing } from '../styles/Theme';
 import { VehicleFeature, VehicleFeatureCategory } from '../types';
 
 interface FeaturesFilterProps {

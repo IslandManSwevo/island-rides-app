@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView } from 'react-native';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing } from '../styles/theme';
+import { colors, typography, spacing } from '../styles/Theme';
 import { VehicleCard } from '../components/VehicleCard';
 import { vehicleService } from '../services/vehicleService';
 import { VehicleRecommendation, Island } from '../types';

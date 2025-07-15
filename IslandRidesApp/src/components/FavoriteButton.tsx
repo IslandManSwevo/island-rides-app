@@ -3,7 +3,7 @@ import { TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
-import { colors } from '../styles/theme';
+import { colors } from '../styles/Theme';
 import { navigationRef } from '../navigation/navigationRef';
 import { ROUTES } from '../navigation/routes';
 
