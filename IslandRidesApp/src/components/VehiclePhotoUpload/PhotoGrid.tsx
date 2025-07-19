@@ -9,7 +9,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../../styles/theme';
 import { VehiclePhoto } from '../../types';
 import { PhotoUpload } from './usePhotoUpload';
 
@@ -35,7 +35,7 @@ interface PhotoGridProps {
 interface PhotoGridItem {
   id: string | number;
   isLocal: boolean;
-  data: PhotoUpload | VehiclePhoto;
+  data: PhotoUpload | VehiclePhoto | null;
 }
 
 export const PhotoGrid: React.FC<PhotoGridProps> = ({
@@ -78,7 +78,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
       allItems.push({
         id: 'add_photo_button',
         isLocal: false,
-        data: null as any, // Special case for add button
+        data: null, // Special case for add button
       });
     }
     

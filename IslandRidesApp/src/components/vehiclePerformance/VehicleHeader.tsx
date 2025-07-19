@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../../styles/theme';
 
 interface VehicleHeaderProps {
   vehicle: {
@@ -10,11 +10,11 @@ interface VehicleHeaderProps {
     model: string;
     dailyRate: number;
     available: boolean;
-    verificationStatus: string;
+    verificationStatus: 'pending' | 'verified' | 'rejected' | 'expired';
   };
   formatCurrency: (amount: number) => string;
-  getVerificationStatusColor: (status: string) => string;
-  getVerificationStatusIcon: (status: string) => any;
+  getVerificationStatusColor: (status: 'pending' | 'verified' | 'rejected' | 'expired') => string;
+  getVerificationStatusIcon: (status: 'pending' | 'verified' | 'rejected' | 'expired') => any;
 }
 
 export const VehicleHeader: React.FC<VehicleHeaderProps> = ({

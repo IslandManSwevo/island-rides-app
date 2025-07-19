@@ -1,5 +1,5 @@
 import { Receipt } from './receiptService';
-import { colors } from '../styles/Theme';
+import { colors } from '../styles/theme';
 
 
 // Helper function to safely format dates with null/undefined checks
@@ -48,7 +48,7 @@ const getStyles = () => `
         margin: 0;
         padding: 20px;
         background-color: ${colors.sectionBackground};
-        color: ${colors.darkText};
+        color: ${colors.text};
     }
     .receipt-container {
         max-width: 600px;
@@ -310,10 +310,10 @@ export const generateReceiptHTML = (receipt: Receipt): string => {
     };
 
     const safeCompany = {
-      name: escapeHtml(company?.name) || 'Island Rides',
+      name: escapeHtml(company?.name) || 'KeyLo',
       address: escapeHtml(company?.address) || 'Bahamas',
       phone: escapeHtml(company?.phone) || 'N/A',
-      email: escapeHtml(company?.email) || 'info@islandrides.com'
+      email: escapeHtml(company?.email) || 'info@keylo.com'
     };
 
     return `

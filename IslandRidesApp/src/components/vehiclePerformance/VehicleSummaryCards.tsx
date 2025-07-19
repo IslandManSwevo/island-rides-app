@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography, spacing, borderRadius } from '../../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../../styles/theme';
 
 interface VehiclePerformance {
   id: number;
   make: string;
   model: string;
   year: number;
+  ownerId: number;
+  location: string;
   dailyRate: number;
   totalBookings: number;
   confirmedBookings: number;
@@ -21,7 +23,7 @@ interface VehiclePerformance {
     lastMaintenance: string | null;
   };
   available: boolean;
-  verificationStatus: string;
+  verificationStatus: 'pending' | 'verified' | 'rejected' | 'expired';
   conditionRating: number;
 }
 

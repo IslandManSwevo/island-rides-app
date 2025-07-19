@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Dimensions } from 'react-native';
-import Theme from '../styles/Theme';
+import { View, StyleSheet, Animated, Dimensions, ViewStyle, TextStyle } from 'react-native';
+import Theme from '../styles/theme';
 
 interface ShimmerLoadingProps {
   width?: number;
   height?: number;
-  style?: any;
+  style?: ViewStyle | TextStyle;
   borderRadius?: number;
 }
 

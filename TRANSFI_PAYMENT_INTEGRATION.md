@@ -2,7 +2,7 @@
 
 ## ✅ Integration Status: COMPLETE
 
-The Island Rides app has been successfully migrated from Stripe to Transfi payment processing.
+The KeyLo app has been successfully migrated from Stripe to Transfi payment processing.
 
 ## 🔧 What Was Changed
 

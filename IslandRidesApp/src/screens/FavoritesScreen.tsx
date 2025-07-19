@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { VehicleCard } from '../components/VehicleCard';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Vehicle } from '../types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
@@ -46,11 +46,12 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
   const fetchFavorites = async () => {
     try {
-      const response: any = await apiService.get('/favorites');
-      setFavorites(response.favorites || []);
-    } catch (error: any) {
-      console.error('Error fetching favorites:', error);
-      if (error?.response?.status !== 401) {
+      const response = await apiService.get('/favorites');
+      setFavorites((response as any).favorites || []);
+    } catch (error: unknown) {
+      console.error('Error fetching favorites:', String(error));
+      const err = error as any;
+      if (err?.response?.status !== 401) {
         notificationService.error('Failed to load favorites', {
           duration: 4000,
           action: {

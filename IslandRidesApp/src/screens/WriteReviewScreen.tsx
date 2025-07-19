@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   Image,
@@ -16,8 +15,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { reviewPromptService } from '../services/reviewPromptService';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
+import { StandardInput } from '../components/templates/StandardInput';
 
 type WriteReviewScreenProps = StackScreenProps<RootStackParamList, typeof ROUTES.WRITE_REVIEW>;
 
@@ -80,7 +80,7 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({ navigation
       uri,
       name: `photo.${fileType}`,
       type: `image/${fileType}`,
-    } as any);
+    } as unknown as Blob); // React Native file object for FormData
 
     const response = await apiService.uploadFile<UploadResponse>('/upload', formData);
 
@@ -124,11 +124,12 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({ navigation
       });
 
       navigation.goBack();
-    } catch (error: any) {
-      console.error('Review submission error:', error);
+    } catch (error: unknown) {
+      console.error('Review submission error:', String(error));
 
-      if (error?.response?.status === 400) {
-        notificationService.error(error.response.data.error || 'Invalid review data', {
+      const err = error as any;
+      if (err?.response?.status === 400) {
+        notificationService.error(err.response.data.error || 'Invalid review data', {
           duration: 4000,
         });
       } else {
@@ -235,21 +236,16 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({ navigation
       </View>
 
       <View style={styles.commentSection}>
-        <Text style={styles.sectionTitle}>Write Your Review</Text>
-        <TextInput
-          style={styles.commentInput}
+        <StandardInput
+          label="Write Your Review"
           placeholder="Share your experience with this vehicle. What did you like? What could be improved?"
-          placeholderTextColor={colors.lightGrey}
-          multiline
-          numberOfLines={6}
-          maxLength={1000}
           value={comment}
           onChangeText={setComment}
-          textAlignVertical="top"
+          multiline
+          maxLength={1000}
+          accessibilityLabel="Write review comment"
+          accessibilityHint="Enter your detailed review of the vehicle"
         />
-        <Text style={styles.characterCount}>
-          {comment.length}/1000 characters
-        </Text>
       </View>
 
       {renderPhotos()}

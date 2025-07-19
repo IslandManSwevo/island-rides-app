@@ -1,14 +1,14 @@
-# Island Rides Development Rules
+# KeyLo Development Rules
 
 ## Project Overview
-Island Rides is a vehicle rental platform for the Bahamas with React Native frontend and Node.js backend.
+KeyLo is a vehicle rental platform for the Bahamas with React Native frontend and Node.js backend.
 
 ## Development Guidelines
 
 ### Before Writing Code
-1. Check `/Docs/Implementation.md` for current tasks
+1. Check `C:\Users\green\Desktop\island-rides-app-main\docs\keylo-brownfield-architecture.md` for current tasks
 2. Review existing patterns in similar files
-3. Consult `/Docs/Bug_tracking.md` for known issues
+3. Consult `C:\Users\green\Desktop\island-rides-app-main\docs\Bug_tracking.md` for known issues
 
 ### File Creation Rules
 - Frontend screens: `/IslandRidesApp/src/screens/[FeatureName]/`

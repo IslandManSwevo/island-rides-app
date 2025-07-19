@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../styles/Theme';
+import { colors, spacing } from '../styles/theme';
 
 interface ConditionRatingFilterProps {
   minConditionRating: number;
-  onUpdateFilter: (key: 'minConditionRating', value: number) => void;
+  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
 }
 
 const ConditionRatingFilter: React.FC<ConditionRatingFilterProps> = ({ minConditionRating, onUpdateFilter }) => {
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: spacing.md,
-    color: colors.dark,
+    color: colors.text,
   },
   ratingContainer: {
     flexDirection: 'row',

@@ -1,9 +1,22 @@
 import { Booking } from '../types';
+import { BookingForReview } from '../services/reviewPromptService';
+
+/**
+ * Interface for booking data that includes vehicle information
+ */
+interface BookingWithVehicle extends Booking {
+  vehicle: {
+    id: number;
+    make: string;
+    model: string;
+    year: number;
+  };
+}
 
 /**
  * Transforms a booking object into the format required for the review prompt service.
  * @param booking - The booking object containing vehicle and booking details.
- * @returns {Object|null} The transformed booking data for review with the following structure:
+ * @returns {BookingForReview|null} The transformed booking data for review with the following structure:
  *   - id: booking identifier
  *   - vehicle: { id, make, model, year }
  *   - startDate: booking start date
@@ -12,18 +25,7 @@ import { Booking } from '../types';
  *   Returns null if the booking is invalid or missing required vehicle data.
  * @throws {Error} Does not throw errors - returns null for invalid input instead.
  */
-export const transformBookingForReview = (booking: any): {
-  id: any;
-  vehicle: {
-    id: any;
-    make: any;
-    model: any;
-    year: any;
-  };
-  startDate: any;
-  endDate: any;
-  status: any;
-} | null => {
+export const transformBookingForReview = (booking: BookingWithVehicle): BookingForReview | null => {
   if (!booking || !booking.vehicle) {
     return null;
   }

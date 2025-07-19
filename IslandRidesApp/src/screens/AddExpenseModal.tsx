@@ -3,12 +3,15 @@ import {
   Modal,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
+  StyleSheet,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { colors } from '../styles/Theme';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { colors } from '../styles/theme';
+import { StandardInput } from '../components/templates/StandardInput';
 
 interface Expense {
   vehicleId: number;
@@ -39,7 +42,25 @@ interface AddExpenseModalProps {
   vehicles: Vehicle[];
   expenseTypes: ExpenseType[];
   handleAddExpense: () => void;
-  styles: any;
+  styles: {
+    modalOverlay: ViewStyle;
+    modal: ViewStyle;
+    modalTitle: TextStyle;
+    inputLabel: TextStyle;
+    pickerContainer: ViewStyle;
+    pickerOption: ViewStyle;
+    pickerOptionSelected: ViewStyle;
+    pickerOptionText: TextStyle;
+    pickerOptionTextSelected: TextStyle;
+    input: ViewStyle;
+    checkboxRow: ViewStyle;
+    checkboxLabel: TextStyle;
+    modalActions: ViewStyle;
+    cancelButton: ViewStyle;
+    cancelButtonText: TextStyle;
+    addButton: ViewStyle;
+    addButtonText: TextStyle;
+  };
 }
 
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ 
@@ -103,9 +124,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
             ))}
           </View>
 
-          <Text style={styles.inputLabel}>Amount</Text>
-          <TextInput
-            style={styles.input}
+          <StandardInput
+            label="Amount"
             value={newExpense.amount !== null ? String(newExpense.amount) : ''}
             onChangeText={(text) => {
               if (text.trim() === '') {
@@ -121,9 +141,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
             keyboardType="numeric"
           />
 
-          <Text style={styles.inputLabel}>Description</Text>
-          <TextInput
-            style={styles.input}
+          <StandardInput
+            label="Description"
             value={newExpense.description}
             onChangeText={(text) => setNewExpense({ ...newExpense, description: text })}
             placeholder="Enter description"
@@ -142,7 +161,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
               })()}
               mode="date"
               display="default"
-              onChange={(event, selectedDate) => {
+              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
                 setShowDatePicker(false);
                 if (selectedDate && !isNaN(selectedDate.getTime())) {
                   setNewExpense({ ...newExpense, expenseDate: selectedDate.toISOString().split('T')[0] });

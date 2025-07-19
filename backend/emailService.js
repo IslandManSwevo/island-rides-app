@@ -31,9 +31,9 @@ class EmailService {
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
     
     const mailOptions = {
-      from: `"Island Rides" <${process.env.EMAIL_FROM || 'noreply@islandrides.com'}>`,
+      from: `"KeyLo" <${process.env.EMAIL_FROM || 'noreply@islandrides.com'}>`,
       to: email,
-      subject: '🏝️ Verify Your Island Rides Account',
+      subject: '🏝️ Verify Your KeyLo Account',
       html: `
         <!DOCTYPE html>
         <html>
@@ -59,7 +59,7 @@ class EmailService {
         <body>
           <div class="container">
             <div class="header">
-              <h1>🏝️ Welcome to Island Rides!</h1>
+              <h1>🏝️ Welcome to KeyLo!</h1>
             </div>
             <div class="content">
               <h2>Hi ${firstName},</h2>
@@ -73,7 +73,7 @@ class EmailService {
                 ${verificationUrl}
               </p>
               <p>This link will expire in 24 hours.</p>
-              <p>If you didn't create an account with Island Rides, you can safely ignore this email.</p>
+              <p>If you didn't create an account with KeyLo, you can safely ignore this email.</p>
               <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
               <p><strong>Why verify?</strong></p>
               <ul>
@@ -83,7 +83,7 @@ class EmailService {
               </ul>
             </div>
             <div class="footer">
-              <p>© 2024 Island Rides. All rights reserved.</p>
+              <p>© 2024 KeyLo. All rights reserved.</p>
               <p>Questions? Contact us at support@islandrides.com</p>
             </div>
           </div>
@@ -91,14 +91,14 @@ class EmailService {
         </html>
       `,
       text: `
-        Welcome to Island Rides, ${firstName}!
+        Welcome to KeyLo, ${firstName}!
         
         Please verify your email address by visiting:
         ${verificationUrl}
         
         This link will expire in 24 hours.
         
-        If you didn't create an account with Island Rides, you can safely ignore this email.
+        If you didn't create an account with KeyLo, you can safely ignore this email.
       `
     };
 
@@ -116,9 +116,9 @@ class EmailService {
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
     
     const mailOptions = {
-      from: `"Island Rides" <${process.env.EMAIL_FROM || 'noreply@islandrides.com'}>`,
+      from: `"KeyLo" <${process.env.EMAIL_FROM || 'noreply@islandrides.com'}>`,
       to: email,
-      subject: '🔐 Reset Your Island Rides Password',
+      subject: '🔐 Reset Your KeyLo Password',
       html: `
         <!DOCTYPE html>
         <html>
@@ -149,7 +149,7 @@ class EmailService {
             </div>
             <div class="content">
               <h2>Hi ${firstName},</h2>
-              <p>We received a request to reset your password for your Island Rides account.</p>
+              <p>We received a request to reset your password for your KeyLo account.</p>
               <p>Click the button below to create a new password:</p>
               <div style="text-align: center;">
                 <a href="${resetUrl}" class="button">Reset Password</a>
@@ -174,7 +174,7 @@ class EmailService {
               </ul>
             </div>
             <div class="footer">
-              <p>© 2024 Island Rides. All rights reserved.</p>
+              <p>© 2024 KeyLo. All rights reserved.</p>
               <p>Questions? Contact us at support@islandrides.com</p>
               <p>This email was sent to ${email}</p>
             </div>
@@ -185,7 +185,7 @@ class EmailService {
       text: `
         Hi ${firstName},
         
-        We received a request to reset your password for your Island Rides account.
+        We received a request to reset your password for your KeyLo account.
         
         Reset your password by visiting:
         ${resetUrl}
@@ -211,9 +211,9 @@ class EmailService {
 
   async sendWelcomeEmail(email, firstName) {
     const mailOptions = {
-      from: `"Island Rides" <${process.env.EMAIL_FROM || 'noreply@islandrides.com'}>`,
+      from: `"KeyLo" <${process.env.EMAIL_FROM || 'noreply@islandrides.com'}>`,
       to: email,
-      subject: '🎉 Welcome to Island Rides - Your Account is Verified!',
+      subject: '🎉 Welcome to KeyLo - Your Account is Verified!',
       html: `
         <!DOCTYPE html>
         <html>
@@ -240,7 +240,7 @@ class EmailService {
         <body>
           <div class="container">
             <div class="header">
-              <h1>🎉 Welcome to Island Rides!</h1>
+              <h1>🎉 Welcome to KeyLo!</h1>
             </div>
             <div class="content">
               <h2>Hi ${firstName},</h2>
@@ -266,7 +266,7 @@ class EmailService {
               <p>Need help? Our support team is here for you at support@islandrides.com</p>
             </div>
             <div class="footer">
-              <p>© 2024 Island Rides. All rights reserved.</p>
+              <p>© 2024 KeyLo. All rights reserved.</p>
               <p>Follow us on social media for updates and special offers!</p>
             </div>
           </div>

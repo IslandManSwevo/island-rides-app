@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run typecheck:*)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(sqlite3:*)",
+      "Bash(node:*)",
+      "Bash(where node)",
+      "Bash(powershell:*)",
+      "Bash(dir)",
+      "Bash(npm run build:*)",
+      "Bash(docker build:*)",
+      "Bash(docker:*)",
+      "Bash(cmd /c:*)",
+      "Bash(mkdir:*)",
+      "Bash(npx:*)",
+      "Bash(check-types.bat)",
+      "Bash(cmd.exe /c \"cd IslandRidesApp && npx tsc --noEmit\")",
+      "Bash(tail:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm start)"
+    ],
+    "deny": []
+  }
+}

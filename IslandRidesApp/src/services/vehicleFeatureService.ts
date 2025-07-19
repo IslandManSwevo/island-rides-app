@@ -93,7 +93,7 @@ class VehicleFeatureService extends BaseService {
     return 'Very Poor';
   }
 
-  getVerificationStatusText(verificationStatus?: string): string {
+  getVerificationStatusText(verificationStatus?: 'pending' | 'verified' | 'rejected' | 'expired'): string {
     switch (verificationStatus) {
       case 'verified': return 'Verified';
       case 'pending': return 'Pending Verification';
@@ -103,7 +103,7 @@ class VehicleFeatureService extends BaseService {
     }
   }
 
-  getVerificationStatusColor(verificationStatus?: string): string {
+  getVerificationStatusColor(verificationStatus?: 'pending' | 'verified' | 'rejected' | 'expired'): string {
     switch (verificationStatus) {
       case 'verified': return '#4CAF50'; // Green
       case 'pending': return '#FF9800'; // Orange

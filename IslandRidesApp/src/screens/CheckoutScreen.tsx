@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { notificationService } from '../services/notificationService';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
-import Button from '../components/Button';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { StandardButton } from '../components/templates/StandardButton';
 import { Vehicle } from '../types';
 import { BookingService } from '../services/bookingService';
 import { pricingConfigService, PricingConfig, BusinessRules } from '../services/pricingConfigService';
@@ -85,7 +85,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
     return { isValid: true };
   };
 
-  const handleDateChange = (event: any, selectedDate: Date | undefined, type: 'start' | 'end') => {
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate: Date | undefined, type: 'start' | 'end') => {
     if (selectedDate) {
       let newStartDate = startDate;
       let newEndDate = endDate;
@@ -151,8 +151,8 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
         }
       });
       
-    } catch (error) {
-      notificationService.error(error instanceof Error ? error.message : 'Failed to create booking', {
+    } catch (error: unknown) {
+      notificationService.error(error instanceof Error ? error.message : String(error), {
         title: 'Booking Error',
         duration: 5000
       });
@@ -198,19 +198,21 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
         <View style={styles.dateContainer}>
           <View style={styles.dateField}>
             <Text style={styles.dateLabel}>Start Date</Text>
-            <Button
+            <StandardButton
               title={startDate.toLocaleDateString()}
               onPress={() => setShowStartPicker(true)}
-              variant="secondary"
+              variant="outline"
+              fullWidth
             />
           </View>
           
           <View style={styles.dateField}>
             <Text style={styles.dateLabel}>End Date</Text>
-            <Button
+            <StandardButton
               title={endDate.toLocaleDateString()}
               onPress={() => setShowEndPicker(true)}
-              variant="secondary"
+              variant="outline"
+              fullWidth
             />
           </View>
         </View>
@@ -275,10 +277,12 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
         <Text style={styles.sectionTitle}>Payment Method</Text>
         
         <View style={styles.paymentButtons}>
-          <Button
+          <StandardButton
             title="Pay Securely with Transfi"
             onPress={handlePayment}
             loading={loading}
+            variant="primary"
+            fullWidth
           />
           
           <Text style={styles.paymentNote}>

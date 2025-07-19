@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import * as yup from 'yup';
 import { notificationService } from '../services/notificationService';
-import Button from '../components/Button';
-import { Input } from '../components/Input';
+import { StandardButton } from '../components/templates/StandardButton';
+import { StandardInput } from '../components/templates/StandardInput';
+import { GluestackButton, GluestackInput } from '../components/templates';
 import { useAuth } from '../context/AuthContext';
-import { colors, typography, spacing } from '../styles/Theme';
+import { colors, typography, spacing } from '../styles/theme';
+import { RootStackParamList, ROUTES } from '../navigation/routes';
+
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.LOGIN>;
 
 interface LoginScreenProps {
-  navigation: any;
+  navigation: LoginScreenNavigationProp;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
@@ -71,7 +76,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         )}
         
         <View style={styles.form}>
-          <Input
+          <GluestackInput
             label="Email"
             value={email}
             onChangeText={setEmail}
@@ -79,27 +84,50 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             keyboardType="email-address"
             autoCapitalize="none"
             error={formErrors.email}
+            leftIcon="mail"
+            size="md"
+            required
+            accessibilityLabel="Email address"
+            accessibilityHint="Enter your registered email address"
           />
           
-          <Input
+          <GluestackInput
             label="Password"
             value={password}
             onChangeText={setPassword}
             placeholder="Enter your password"
             secureTextEntry
             error={formErrors.password}
+            leftIcon="lock-closed"
+            size="md"
+            required
+            accessibilityLabel="Password"
+            accessibilityHint="Enter your account password"
           />
           
-          <Button
+          <GluestackButton
             title="Login"
             onPress={handleLogin}
+            variant="solid"
+            action="primary"
+            icon="log-in"
+            size="lg"
             loading={isLoading}
+            fullWidth
+            accessibilityLabel="Login to your account"
+            accessibilityHint="Logs you into your KeyLo account"
           />
           
-          <Button
+          <GluestackButton
             title="Don't have an account? Sign up"
             onPress={() => navigation.navigate('Registration')}
-            variant="secondary"
+            variant="outline"
+            action="secondary"
+            icon="person-add"
+            size="md"
+            fullWidth
+            accessibilityLabel="Create new account"
+            accessibilityHint="Navigate to registration screen to create a new account"
           />
         </View>
       </View>

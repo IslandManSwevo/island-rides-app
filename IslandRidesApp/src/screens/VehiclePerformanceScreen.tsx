@@ -9,7 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
@@ -17,12 +18,15 @@ import { VehicleSummaryCards } from '../components/vehiclePerformance/VehicleSum
 import { VehicleSortControls } from '../components/vehiclePerformance/VehicleSortControls';
 import { VehiclePerformanceCard } from '../components/vehiclePerformance/VehiclePerformanceCard';
 import { VehicleEmptyState } from '../components/vehiclePerformance/VehicleEmptyState';
+import { RootStackParamList } from '../navigation/routes';
 
 interface VehiclePerformance {
   id: number;
   make: string;
   model: string;
   year: number;
+  ownerId: number;
+  location: string;
   dailyRate: number;
   totalBookings: number;
   confirmedBookings: number;
@@ -37,12 +41,14 @@ interface VehiclePerformance {
     lastMaintenance: string | null;
   };
   available: boolean;
-  verificationStatus: string;
+  verificationStatus: 'pending' | 'verified' | 'rejected' | 'expired';
   conditionRating: number;
 }
 
+type VehiclePerformanceScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+
 interface VehiclePerformanceScreenProps {
-  navigation: any;
+  navigation: VehiclePerformanceScreenNavigationProp;
 }
 
 interface VehiclePerformanceResponse {
@@ -144,7 +150,7 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
     }
   };
 
-  const getVerificationStatusColor = (status: string) => {
+  const getVerificationStatusColor = (status: 'pending' | 'verified' | 'rejected' | 'expired') => {
     switch (status) {
       case 'verified':
         return colors.success;
@@ -157,7 +163,7 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
     }
   };
 
-  const getVerificationStatusIcon = (status: string) => {
+  const getVerificationStatusIcon = (status: 'pending' | 'verified' | 'rejected' | 'expired') => {
     switch (status) {
       case 'verified':
         return 'checkmark-circle';
@@ -177,8 +183,12 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
         make: vehicle.make,
         model: vehicle.model,
         year: vehicle.year,
+        ownerId: vehicle.ownerId,
+        location: vehicle.location,
         dailyRate: vehicle.dailyRate,
         available: vehicle.available,
+        driveSide: 'LHD' as const, // Add required property with default
+        createdAt: new Date().toISOString(), // Add required property with default
         averageRating: vehicle.averageRating,
         totalReviews: vehicle.reviewCount,
         verificationStatus: vehicle.verificationStatus,

@@ -6,7 +6,7 @@ import OpenAI from "openai";
     apiKey: "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",
     defaultHeaders: {
       "HTTP-Referer": "https://example.com",
-      "X-Title": "Island Rides"
+      "X-Title": "KeyLo"
     }
   });
 

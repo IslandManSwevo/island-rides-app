@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { colors, spacing } from '../styles/Theme';
+import { colors, spacing } from '../styles/theme';
 import { VehicleFeature, VehicleFeatureCategory } from '../types';
 
 interface FeaturesFilterProps {
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   featureChip: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.light,
+    backgroundColor: colors.surfaceVariant,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.lightGrey,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   featureChipText: {
     fontSize: 14,
-    color: colors.dark,
+    color: colors.text,
   },
   featureChipTextSelected: {
     color: colors.white,

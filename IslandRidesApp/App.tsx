@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { DevSettings, View, Text, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import type { ErrorInfo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import NotificationContainer from './src/components/NotificationContainer';
 import AppNavigator from './src/navigation/AppNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
+import { ReduxProvider } from './src/store/provider';
 import { notificationService } from './src/services/notificationService';
 import { serviceRegistry } from './src/services/ServiceRegistry';
 import { loggingService } from './src/services/LoggingService';
@@ -66,7 +68,7 @@ const App: React.FC = () => {
 
       // Show welcome message
       setTimeout(() => {
-        notificationService.info('Welcome to Island Rides! 🏝️', {
+        notificationService.info('Welcome to KeyLo! 🏝️', {
           duration: 3000,
           action: {
             label: 'Get Started',
@@ -149,22 +151,24 @@ const App: React.FC = () => {
 
   return (
     <SafeAreaProvider>
-      <ErrorBoundary onError={handleError}>
-        {!isInitialized ? (
-          <SafeAreaView style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading Island Rides...</Text>
-            <Text style={styles.progressText}>{initProgress}</Text>
-          </SafeAreaView>
-        ) : (
-          <NavigationContainer ref={navigationRef}>
-            <AuthProvider>
-              <NotificationContainer />
-              <AppNavigator />
-            </AuthProvider>
-          </NavigationContainer>
-        )}
-      </ErrorBoundary>
+      <ReduxProvider>
+        <ErrorBoundary onError={handleError}>
+          {!isInitialized ? (
+            <SafeAreaView style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text style={styles.loadingText}>Loading KeyLo...</Text>
+              <Text style={styles.progressText}>{initProgress}</Text>
+            </SafeAreaView>
+          ) : (
+            <NavigationContainer ref={navigationRef}>
+              <AuthProvider>
+                <NotificationContainer />
+                <AppNavigator />
+              </AuthProvider>
+            </NavigationContainer>
+          )}
+        </ErrorBoundary>
+      </ReduxProvider>
     </SafeAreaProvider>
   );
 };

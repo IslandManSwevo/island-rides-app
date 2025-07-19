@@ -1,4 +1,5 @@
 import { ApiErrorCode, ErrorMeta } from '../types';
+import { isAxiosError } from 'axios';
 import { notificationService } from './notificationService';
 
 interface RetryConfig {
@@ -19,20 +20,21 @@ class NetworkService {
     config: Partial<RetryConfig> = {}
   ): Promise<T> {
     const retryConfig = { ...this.defaultRetryConfig, ...config };
-    let lastError: any;
+    let lastError: unknown;
     let attempt = 1;
     let delay = retryConfig.delayMs;
 
     while (attempt <= retryConfig.maxAttempts) {
       try {
         return await requestFn();
-      } catch (error: any) {
+      } catch (error: unknown) {
         lastError = error;
         
         // Don't retry on certain error types
-        if (error.response?.status === 401 || // Unauthorized
+        if (isAxiosError(error) && (
+            error.response?.status === 401 || // Unauthorized
             error.response?.status === 403 || // Forbidden
-            error.response?.status === 422) { // Validation error
+            error.response?.status === 422)) { // Validation error
           throw error;
         }
 
@@ -54,26 +56,29 @@ class NetworkService {
     throw lastError;
   }
 
-  static isNetworkError(error: any): boolean {
-    return !error.response && error.request;
+  static isNetworkError(error: unknown): boolean {
+    return isAxiosError(error) && !error.response && !!error.request;
   }
 
-  static isServerError(error: any): boolean {
-    return error.response?.status >= 500;
+  static isServerError(error: unknown): boolean {
+    return isAxiosError(error) && !!error.response && error.response.status >= 500;
   }
 
-  static isClientError(error: any): boolean {
-    return error.response?.status >= 400 && error.response?.status < 500;
+  static isClientError(error: unknown): boolean {
+    return isAxiosError(error) && !!error.response && error.response.status >= 400 && error.response.status < 500;
   }
 
-  static getErrorCode(error: any): ApiErrorCode {
+  static getErrorCode(error: unknown): ApiErrorCode {
     if (this.isNetworkError(error)) {
       return 'NETWORK_ERROR';
     }
     if (this.isServerError(error)) {
       return 'SERVER_ERROR';
     }
-    return error.response?.data?.code || 'UNKNOWN_ERROR';
+    if (isAxiosError(error) && error.response?.data?.code) {
+      return error.response.data.code;
+    }
+    return 'UNKNOWN_ERROR';
   }
 }
 

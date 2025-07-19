@@ -20,21 +20,25 @@ export const colors = {
   border: '#E5E5EA',
   divider: '#C6C6C8',
   shadow: '#000000',
+  overlay: 'rgba(0, 0, 0, 0.5)',
   white: '#FFFFFF',
   offWhite: '#F8F8F8',
   lightGrey: '#8E8E93',
   darkGrey: '#3A3A3C',
   black: '#000000',
   star: '#FFD700',
-  verified: '#34C759',
+  verified: '#4CAF50',
   grey: '#8E8E93',
   lightBorder: '#E5E5EA',
+  inputBackground: '#F8F8F8',
+  premium: '#FFD700',
+  partial: '#FF9500',
   gradient: {
     primary: ['#007AFF', '#5856D6'],
     secondary: ['#5856D6', '#AF52DE'],
     accent: ['#FF9500', '#FF2D92']
   }
-};
+} as const;
 
 export const typography = {
   heading1: {
@@ -54,6 +58,12 @@ export const typography = {
     fontWeight: '600' as const,
     lineHeight: 25,
     letterSpacing: 0.38,
+  },
+  heading4: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    lineHeight: 23,
+    letterSpacing: 0.35,
   },
   subheading: {
     fontSize: 18,
@@ -94,7 +104,8 @@ export const spacing = {
   lg: 24,
   xl: 32,
   xxl: 48,
-};
+  full: '100%' as const,
+} as const;
 
 export const borderRadius = {
   xs: 4,
@@ -103,7 +114,8 @@ export const borderRadius = {
   lg: 16,
   xl: 24,
   xxl: 32,
-};
+  full: 9999,
+} as const;
 
 export const shadows = {
   small: {
@@ -176,10 +188,60 @@ export const elevationStyles = {
   },
 };
 
+export const vehicleCardStyles = {
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  premiumBadge: {
+    backgroundColor: colors.premium,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  premiumBadgeText: {
+    color: colors.black,
+    fontSize: 10,
+    fontWeight: '600' as const,
+  },
+  verifiedBadge: {
+    backgroundColor: colors.verified,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  verifiedText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: '600' as const,
+  },
+  advancedInfo: {
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: borderRadius.sm,
+    padding: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  badge: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.sm,
+    marginRight: spacing.xs,
+  },
+} as const;
+
 export const Colors = colors;
 export const Spacing = spacing;
 export const BorderRadius = borderRadius;
 export const Shadows = shadows;
+export const VehicleCardStyles = vehicleCardStyles;
 
 export default {
   colors,
@@ -188,4 +250,5 @@ export default {
   borderRadius,
   shadows,
   elevationStyles,
+  vehicleCardStyles,
 };

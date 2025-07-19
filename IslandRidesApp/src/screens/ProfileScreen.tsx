@@ -16,7 +16,7 @@ import { ProfileService } from '../services/profileService';
 import { reviewPromptService } from '../services/reviewPromptService';
 import { useAuth } from '../context/AuthContext';
 import { ProfileData, ProfileBooking } from '../types';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { AppHeader } from '../components/AppHeader';
 import { ROUTES, RootStackParamList } from '../navigation/routes';
 import { createDevOnlyFunction } from '../utils/development';
@@ -288,6 +288,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                   <Text style={styles.actionButtonText}>My Favorites</Text>
                 </TouchableOpacity>
                 
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate(ROUTES.MY_BOOKINGS)}
+                >
+                  <Ionicons name="calendar-outline" size={20} color={colors.white} />
+                  <Text style={styles.actionButtonText}>My Bookings</Text>
+                </TouchableOpacity>
+                
                 {profileData?.user.role === 'owner' && (
                   <TouchableOpacity 
                     style={[styles.actionButton, { backgroundColor: colors.warning }]}
@@ -295,6 +303,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                   >
                     <Ionicons name="analytics-outline" size={20} color={colors.white} />
                     <Text style={styles.actionButtonText}>Owner Dashboard</Text>
+                  </TouchableOpacity>
+                )}
+                
+                {profileData?.user.role === 'host' && (
+                  <TouchableOpacity 
+                    style={[styles.actionButton, { backgroundColor: colors.success }]}
+                    onPress={() => navigation.navigate(ROUTES.HOST_DASHBOARD)}
+                  >
+                    <Ionicons name="home-outline" size={20} color={colors.white} />
+                    <Text style={styles.actionButtonText}>Host Dashboard</Text>
                   </TouchableOpacity>
                 )}
               </View>

@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../styles/Theme';
+import { colors, spacing } from '../styles/theme';
 import { VERIFICATION_STATUS_OPTIONS, VerificationStatusOption } from '../constants/filters';
 
 interface VerificationStatusFilterProps<K extends string = string> {
-  verificationStatus: string[];
+  verificationStatus: ('pending' | 'verified' | 'rejected' | 'expired')[];
   onToggleFilter: (key: K, value: string) => void;
   filterKey: K;
 }

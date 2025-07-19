@@ -23,7 +23,7 @@ class TransFiService {
       const payload = {
         amount: booking.total_amount,
         currency: 'USD',
-        description: `Island Rides Booking #${booking.id}`,
+        description: `KeyLo Booking #${booking.id}`,
         reference_id: `booking-${booking.id}`,
         customer: {
           email: booking.user_email,

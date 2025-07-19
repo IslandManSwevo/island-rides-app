@@ -24,7 +24,12 @@ import {
   Send, 
   MessageImage,
   Bubble,
-  InputToolbar
+  InputToolbar,
+  ActionsProps,
+  SendProps,
+  BubbleProps,
+  InputToolbarProps,
+  MessageImageProps
 } from 'react-native-gifted-chat';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -39,7 +44,7 @@ import chatService from '../services/chatService';
 import { mediaUploadService } from '../services/mediaUploadService';
 import { AppHeader } from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
-import { colors, spacing, borderRadius } from '../styles/Theme';
+import { colors, spacing, borderRadius } from '../styles/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -115,8 +120,8 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
           [{ text: 'OK' }]
         );
       }
-    } catch (error) {
-      console.error('Error requesting permissions:', error);
+    } catch (error: unknown) {
+      console.error('Error requesting permissions:', String(error));
     }
   };
 
@@ -163,10 +168,10 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       // Step 3: Connect to chat server
       await connectToChat(resolvedConversation.conversationId);
 
-    } catch (error) {
-      console.error('❌ Failed to initialize chat:', error);
+    } catch (error: unknown) {
+      console.error('❌ Failed to initialize chat:', String(error));
       if (isMountedRef.current) {
-        setError(error instanceof Error ? error.message : 'Failed to initialize chat');
+        setError(error instanceof Error ? error.message : String(error));
         setIsLoading(false);
       }
     }
@@ -189,8 +194,8 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       setMessages(giftedMessages);
       console.log(`✅ Loaded ${giftedMessages.length} messages`);
 
-    } catch (error) {
-      console.error('❌ Failed to load message history:', error);
+    } catch (error: unknown) {
+      console.error('❌ Failed to load message history:', String(error));
       // Continue without history - not a critical error
     }
   };
@@ -231,18 +236,18 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
         }
       });
 
-      chatService.onError((error) => {
+      chatService.onError((error: unknown) => {
         if (isMountedRef.current) {
-          console.error('❌ Chat error:', error);
-          setError(error);
+          console.error('❌ Chat error:', String(error));
+          setError(String(error));
         }
       });
 
       setConnectionStatus('connected');
       console.log('✅ Connected to chat server');
 
-    } catch (error) {
-      console.error('❌ Failed to connect to chat:', error);
+    } catch (error: unknown) {
+      console.error('❌ Failed to connect to chat:', String(error));
       if (isMountedRef.current) {
         setError(error instanceof Error ? error.message : 'Failed to connect to chat');
         setConnectionStatus('disconnected');
@@ -326,9 +331,8 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       return;
     }
 
-        const message = newMessages[0];
+    const message = newMessages[0];
     if (!message) return;
-
     // Do not send empty messages
     if (!message.text?.trim() && !message.image && !message.audio) return;
 
@@ -401,9 +405,9 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
           });
 
             if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-        
-        // Show a loading indicator while uploading
+           };
+      if (!result.canceled && result.assets[0]) {
+         const imageUri = result.assets[0].uri;        // Show a loading indicator while uploading
         notificationService.info('Uploading image...', { duration: 0 });
 
         try {
@@ -468,9 +472,9 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       setIsRecording(false);
       await recording.stopAndUnloadAsync();
       
-            const uri = recording.getURI();
+      const uri = recording.getURI();
       setRecording(null);
-
+      
       if (uri) {
         // Show a loading indicator while uploading
         notificationService.info('Uploading audio...', { duration: 0 });
@@ -544,7 +548,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   /**
    * Custom Actions component
    */
-  const renderActions = (props: any) => (
+  const renderActions = (props: ActionsProps) => (
     <Actions
       {...props}
       options={{
@@ -559,14 +563,13 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
           <Ionicons name="add" size={24} color={colors.primary} />
         </View>
       )}
-      onSend={onSend}
     />
   );
 
   /**
    * Custom Send component
    */
-  const renderSend = (props: any) => (
+  const renderSend = (props: SendProps<IMessage>) => (
     <Send {...props}>
       <View style={styles.sendButton}>
         <Ionicons name="send" size={20} color={colors.primary} />
@@ -577,7 +580,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   /**
    * Custom Bubble component
    */
-  const renderBubble = (props: any) => (
+  const renderBubble = (props: BubbleProps<IMessage>) => (
     <Bubble
       {...props}
       wrapperStyle={{
@@ -602,7 +605,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   /**
    * Custom Input Toolbar
    */
-  const renderInputToolbar = (props: any) => (
+  const renderInputToolbar = (props: InputToolbarProps<IMessage>) => (
     <InputToolbar
       {...props}
       containerStyle={styles.inputToolbar}
@@ -613,10 +616,10 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   /**
    * Custom Message Image component
    */
-  const renderMessageImage = (props: any) => (
+  const renderMessageImage = (props: MessageImageProps<IMessage>) => (
     <TouchableOpacity
       onPress={() => {
-        setSelectedImage(props.currentMessage.image);
+        setSelectedImage(props.currentMessage.image || null);
         setShowImageViewer(true);
       }}
     >
@@ -634,7 +637,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   /**
    * Custom Message Audio component (simplified - no built-in audio player)
    */
-  const renderMessageAudio = (props: any) => (
+  const renderMessageAudio = (props: { currentMessage: IMessage }) => (
     <View style={styles.audioMessage}>
       <Ionicons name="play-circle" size={40} color={colors.primary} />
       <Text style={styles.audioText}>Voice Message</Text>

@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 require('dotenv').config();
 
-const dbFile = process.env.DATABASE_URL || 'island-rides.db';
+const dbFile = process.env.DB_PATH || process.env.DATABASE_URL || './island-rides.db';
 const dbExists = fs.existsSync(dbFile);
 
 const db = new sqlite3.Database(dbFile, (err) => {

@@ -103,7 +103,7 @@ class VehicleService {
     };
   }
 
-  private appendQueryParams(queryParams: URLSearchParams, params: Record<string, any>, keys: string[]) {
+  private appendQueryParams(queryParams: URLSearchParams, params: Record<string, unknown>, keys: string[]) {
     keys.forEach(key => {
       const value = params[key];
       if (value !== undefined && value !== null && value !== '') {
@@ -122,7 +122,7 @@ class VehicleService {
     maxPrice?: number;
     features?: string;
     conditionRating?: number;
-    verificationStatus?: string;
+    verificationStatus?: string; // This accepts comma-separated values like 'pending,verified'
     deliveryAvailable?: string;
     airportPickup?: string;
     sortBy?: string;
@@ -155,7 +155,7 @@ class VehicleService {
       }
 
       const url = `/api/vehicles/search${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      const response = await apiService.get<{ vehicles: any[]; pagination?: any }>(url);
+      const response = await apiService.get<{ vehicles: unknown[]; pagination?: any }>(url);
       
       // Transform backend vehicle data to VehicleRecommendation format
       const vehicles = response.vehicles || [];

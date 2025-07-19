@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../styles';
-import { colors } from '../../../styles/Theme';
+import { colors } from '../../../styles/theme';
 import { Goal } from '../../../types';
 import { formatCurrency, formatPercentage } from '../../../utils/formatters';
 import { goalTypes } from '../../../constants/goalTypes';

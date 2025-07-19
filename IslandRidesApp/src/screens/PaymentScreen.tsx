@@ -8,12 +8,12 @@ import {
   ActivityIndicator,
   Linking
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { WebView, WebViewNavigation } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { StackScreenProps } from '@react-navigation/stack';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing } from '../styles/Theme';
+import { colors, typography, spacing } from '../styles/theme';
 import {
   IconName,
   PaymentMethod,
@@ -57,21 +57,37 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, navigation 
         paymentMethod: methodId
       });
 
-      if (methodId === 'card' && response.paymentUrl) {
-        setPaymentUrl(response.paymentUrl);
+      if (methodId === 'card' && (response as any).paymentUrl) {
+        setPaymentUrl((response as any).paymentUrl);
+      } else if (methodId === 'paypal' && (response as any).paymentUrl) {
+        // Open PayPal payment URL in external browser
+        Linking.openURL((response as any).paymentUrl).catch(err => {
+          console.error('Failed to open PayPal URL:', err);
+          notificationService.error('Failed to open PayPal payment', {
+            duration: 3000
+          });
+        });
       } else if (methodId === 'bank_transfer') {
         navigation.navigate('BankTransferInstructions', {
-          instructions: response.instructions,
-          reference: response.reference,
-          booking
+          instructions: (response as any).instructions,
+          reference: (response as any).reference,
+          booking: {
+            ...booking,
+            start_date: booking.startDate,
+            end_date: booking.endDate
+          }
         });
       } else if (methodId === 'crypto') {
         navigation.navigate('CryptoPayment', {
-          walletAddress: response.walletAddress,
-          amount: response.amount,
-          currency: response.currency,
-          qrCode: response.qrCode,
-          booking
+          walletAddress: (response as any).walletAddress,
+          amount: (response as any).amount,
+          currency: (response as any).currency,
+          qrCode: (response as any).qrCode,
+          booking: {
+            ...booking,
+            start_date: booking.startDate,
+            end_date: booking.endDate
+          }
         });
       }
     } catch (error) {
@@ -83,7 +99,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, navigation 
     }
   };
 
-  const handleWebViewNavigationChange = (navState: any) => {
+  const handleWebViewNavigationChange = (navState: WebViewNavigation) => {
     if (navState.url.includes('/booking-confirmed')) {
       notificationService.success('Payment successful!', {
         duration: 5000
@@ -108,7 +124,18 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, navigation 
       
       navigation.navigate('BookingConfirmed', { 
         booking: transformedBooking,
-        vehicle: booking.vehicle as any
+        vehicle: {
+          id: booking.vehicle.id,
+          make: booking.vehicle.make,
+          model: booking.vehicle.model,
+          year: booking.vehicle.year,
+          ownerId: 0, // Default value as it's not available in booking.vehicle
+          location: booking.vehicle.location,
+          dailyRate: booking.vehicle.dailyRate,
+          available: true, // Default value
+          driveSide: 'LHD' as const, // Default value
+          createdAt: new Date().toISOString() // Default value
+        }
       });
     } else if (navState.url.includes('/checkout') && navState.canGoBack) {
       setPaymentUrl(null);

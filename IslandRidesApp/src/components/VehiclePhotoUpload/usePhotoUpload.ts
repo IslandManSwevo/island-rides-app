@@ -262,7 +262,7 @@ export const usePhotoUpload = ({
         uri: photo.uri,
         type: 'image/jpeg',
         name: `vehicle_${vehicleId}_${photo.id}.jpg`,
-      } as any);
+      } as unknown as Blob); // React Native file object for FormData
       formData.append('photoType', photo.type);
       formData.append('caption', photo.caption);
       formData.append('isPrimary', photo.isPrimary.toString());

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { styles } from './styles';
 import { VehicleDamageReport } from '../../types';
-import { colors } from '../../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../../styles/theme';
 
 // Utility function to parse numeric input
 const parseNumericInput = (text: string): number | undefined => {
@@ -70,19 +70,19 @@ export const DamageReportModal: React.FC<Props> = ({ visible, onClose, onSave })
                 style={{ flex: 1, padding: 12, borderRadius: 6, backgroundColor: severity === 'minor' ? colors.primary : colors.inputBackground, alignItems: 'center', marginRight: 5 }}
                 onPress={() => setSeverity('minor')}
               >
-                <Text style={{ color: severity === 'minor' ? colors.white : colors.darkText, fontWeight: '600' }}>Minor</Text>
+                <Text style={{ color: severity === 'minor' ? colors.white : colors.text, fontWeight: '600' }}>Minor</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={{ flex: 1, padding: 12, borderRadius: 6, backgroundColor: severity === 'moderate' ? colors.primary : colors.inputBackground, alignItems: 'center', marginHorizontal: 5 }}
                 onPress={() => setSeverity('moderate')}
               >
-                <Text style={{ color: severity === 'moderate' ? colors.white : colors.darkText, fontWeight: '600' }}>Moderate</Text>
+                <Text style={{ color: severity === 'moderate' ? colors.white : colors.text, fontWeight: '600' }}>Moderate</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={{ flex: 1, padding: 12, borderRadius: 6, backgroundColor: severity === 'major' ? colors.primary : colors.inputBackground, alignItems: 'center', marginLeft: 5 }}
                 onPress={() => setSeverity('major')}
               >
-                <Text style={{ color: severity === 'major' ? colors.white : colors.darkText, fontWeight: '600' }}>Major</Text>
+                <Text style={{ color: severity === 'major' ? colors.white : colors.text, fontWeight: '600' }}>Major</Text>
               </TouchableOpacity>
             </View>
           </View>

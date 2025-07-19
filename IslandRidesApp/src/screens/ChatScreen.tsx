@@ -9,15 +9,14 @@ import {
   ActivityIndicator,
   Text,
 } from 'react-native';
-import { GiftedChat, IMessage, User, Send } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, User, Send, SendProps } from 'react-native-gifted-chat';
 import { MaterialIcons } from '@expo/vector-icons';
 import { apiService } from '../services/apiService';
 import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '../types';
 import { getEnvironmentConfig } from '../config/environment';
 import { notificationService } from '../services/notificationService';
-import { colors } from '../styles/Theme';
-
+import { colors } from '../styles/theme';
 interface ChatScreenProps {
   conversationId: string;
   otherUserId: string;
@@ -63,6 +62,103 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   }, []);
 
+  // Core socket creation helper - no circular dependencies
+  const createSocketConnection = useCallback(async (onReconnectNeeded: () => void) => {
+    const token = await apiService.getToken();
+    if (!token) {
+      Alert.alert('Authentication Error', 'Please log in again');
+      return null;
+    }
+
+    // Get WebSocket URL from environment configuration
+    const envConfig = await getEnvironmentConfig();
+    const wsUrl = envConfig.WS_URL;
+
+    console.log('Connecting to WebSocket server:', wsUrl);
+
+    // Create socket connection with authentication
+    const socket = io(wsUrl, {
+      auth: {
+        token: token,
+      },
+      transports: ['websocket'],
+      timeout: 10000,
+      forceNew: true, // Force new connection for reconnections
+    });
+
+    // Connection event handlers
+    socket.on('connect', () => {
+      console.log('Connected to chat server');
+      setIsConnected(true);
+      setIsReconnecting(false);
+      reconnectAttemptsRef.current = 0; // Reset reconnection attempts on successful connection
+      clearReconnectTimeout();
+      
+      // Join the conversation room
+      socket.emit('join:conversation', { conversationId });
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Disconnected from chat server:', reason);
+      setIsConnected(false);
+      
+      // Only attempt reconnection for certain disconnect reasons
+      if (reason === 'io server disconnect' || reason === 'transport close' || reason === 'transport error') {
+        console.log('Attempting to reconnect due to:', reason);
+        onReconnectNeeded();
+      }
+    });
+
+    socket.on('connect_error', (error: Error) => {
+      console.error('Socket connection error:', error);
+      setIsConnected(false);
+      
+      // Attempt reconnection on connection errors
+      if (reconnectAttemptsRef.current === 0) {
+        // Only show alert on first connection error, not during reconnection attempts
+        console.log('Initial connection failed, attempting to reconnect...');
+      }
+      onReconnectNeeded();
+    });
+
+    // Message event handlers
+    socket.on('message:received', (messageData: ChatMessage) => {
+      const newMessage: IMessage = {
+        _id: messageData._id,
+        text: messageData.text,
+        createdAt: new Date(messageData.createdAt),
+        user: messageData.user,
+      };
+
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, [newMessage])
+      );
+    });
+
+    // Typing indicators
+    socket.on('typing:start', (data: { userId: string; userName: string }) => {
+      if (data.userId !== currentUserId) {
+        setIsTyping(true);
+      }
+    });
+
+    socket.on('typing:stop', (data: { userId: string }) => {
+      if (data.userId !== currentUserId) {
+        setIsTyping(false);
+      }
+    });
+
+    // Error handling
+    socket.on('error', (error: { message: string }) => {
+      console.error('Chat error:', error);
+      notificationService.error(`Chat Error: ${error.message}`, {
+        duration: 5000
+      });
+    });
+
+    return socket;
+  }, [conversationId, currentUserId, clearReconnectTimeout]);
+
   // Reconnection mechanism
   const attemptReconnection = useCallback(async () => {
     if (!mounted.current || reconnectAttemptsRef.current >= maxReconnectAttempts) {
@@ -89,7 +185,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
         if (socketRef.current) {
           socketRef.current.disconnect();
         }
-        await initializeSocket();
+        const socket = await createSocketConnection(attemptReconnection);
+        if (socket) {
+          socketRef.current = socket;
+        }
       } catch (error) {
         console.error('Reconnection attempt failed:', error);
         if (mounted.current) {
@@ -97,111 +196,21 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
         }
       }
     }, delay);
-  }, []);
+  }, [createSocketConnection]);
 
   // Initialize WebSocket connection
   const initializeSocket = useCallback(async () => {
     try {
-      const token = await apiService.getToken();
-      if (!token) {
-        Alert.alert('Authentication Error', 'Please log in again');
-        return;
+      const socket = await createSocketConnection(attemptReconnection);
+      if (socket) {
+        socketRef.current = socket;
       }
-
-      // Get WebSocket URL from environment configuration
-      const envConfig = await getEnvironmentConfig();
-      const wsUrl = envConfig.WS_URL;
-
-      console.log('Connecting to WebSocket server:', wsUrl);
-
-      // Create socket connection with authentication
-      socketRef.current = io(wsUrl, {
-        auth: {
-          token: token,
-        },
-        transports: ['websocket'],
-        timeout: 10000,
-        forceNew: true, // Force new connection for reconnections
-      });
-
-      const socket = socketRef.current;
-
-      // Connection event handlers
-      socket.on('connect', () => {
-        console.log('Connected to chat server');
-        setIsConnected(true);
-        setIsReconnecting(false);
-        reconnectAttemptsRef.current = 0; // Reset reconnection attempts on successful connection
-        clearReconnectTimeout();
-        
-        // Join the conversation room
-        socket.emit('join:conversation', { conversationId });
-      });
-
-      socket.on('disconnect', (reason) => {
-        console.log('Disconnected from chat server:', reason);
-        setIsConnected(false);
-        
-        // Only attempt reconnection for certain disconnect reasons
-        if (reason === 'io server disconnect' || reason === 'transport close' || reason === 'transport error') {
-          console.log('Attempting to reconnect due to:', reason);
-          attemptReconnection();
-        }
-      });
-
-      socket.on('connect_error', (error: Error) => {
-        console.error('Socket connection error:', error);
-        setIsConnected(false);
-        
-        // Attempt reconnection on connection errors
-        if (reconnectAttemptsRef.current === 0) {
-          // Only show alert on first connection error, not during reconnection attempts
-          console.log('Initial connection failed, attempting to reconnect...');
-        }
-        attemptReconnection();
-      });
-
-      // Message event handlers
-      socket.on('message:received', (messageData: ChatMessage) => {
-        const newMessage: IMessage = {
-          _id: messageData._id,
-          text: messageData.text,
-          createdAt: new Date(messageData.createdAt),
-          user: messageData.user,
-        };
-
-        setMessages((previousMessages) =>
-          GiftedChat.append(previousMessages, [newMessage])
-        );
-      });
-
-      // Typing indicators
-      socket.on('typing:start', (data: { userId: string; userName: string }) => {
-        if (data.userId !== currentUserId) {
-          setIsTyping(true);
-        }
-      });
-
-      socket.on('typing:stop', (data: { userId: string }) => {
-        if (data.userId !== currentUserId) {
-          setIsTyping(false);
-        }
-      });
-
-      // Error handling
-      socket.on('error', (error: { message: string }) => {
-        console.error('Chat error:', error);
-        notificationService.error(`Chat Error: ${error.message}`, {
-          duration: 5000
-        });
-      });
-
     } catch (error) {
       console.error('Socket initialization error:', error);
       Alert.alert('Error', 'Failed to initialize chat connection');
       attemptReconnection();
     }
-  }, [conversationId, currentUserId, attemptReconnection, clearReconnectTimeout]);
+  }, [createSocketConnection, attemptReconnection]);
 
   useEffect(() => {
     mounted.current = true;
@@ -303,7 +312,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
             setMessages((previousMessages) => 
               previousMessages.map(msg => 
                 msg._id === messageToSend._id 
-                  ? { ...msg, _id: acknowledgment.messageId! }
+                  ? { ...msg, _id: acknowledgment.messageId as string }
                   : msg
               )
             );
@@ -330,7 +339,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   }, [conversationId, isConnected]);
 
   // Custom send button
-  const renderSend = (props: any) => (
+  const renderSend = (props: SendProps<IMessage>) => (
     <Send {...props} disabled={!isConnected}>
       <View style={[styles.sendButton, !isConnected && styles.sendButtonDisabled]}>
         <MaterialIcons 

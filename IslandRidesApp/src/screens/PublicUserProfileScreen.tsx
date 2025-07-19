@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 import { apiService } from '../services/apiService';
 import { vehicleService } from '../services/vehicleService';
@@ -123,9 +123,9 @@ export const PublicUserProfileScreen: React.FC<PublicUserProfileScreenProps> = (
       if (showLoader) setLoading(true);
       const response = await apiService.get(`/profiles/${userId}`);
       setProfile(response as PublicProfile);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error loading public profile:', error);
-      if (error?.response?.status === 404) {
+      if ((error as any)?.response?.status === 404) {
         notificationService.error('Profile not found or private');
         navigation.goBack();
       } else {

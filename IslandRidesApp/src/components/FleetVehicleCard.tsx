@@ -7,8 +7,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationProp } from '@react-navigation/native';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList } from '../navigation/routes';
+import { FleetVehicle } from '../types';
 
 // Helper function to check if cleaning is due (more than 7 days since last cleaned)
 const isCleaningDue = (lastCleaned: string | null): boolean => {
@@ -20,28 +21,8 @@ const isCleaningDue = (lastCleaned: string | null): boolean => {
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
-interface Vehicle {
-    id: number;
-    make: string;
-    model: string;
-    year: number;
-    licensePlate: string;
-    dailyRate: number;
-    available: boolean;
-    verificationStatus: string;
-    conditionRating: number;
-    location: string;
-    mileage: number;
-    nextMaintenanceDate: string | null;
-    activeBookings: number;
-    upcomingBookings: number;
-    lastCleaned: string | null;
-    insuranceExpiry: string | null;
-    registrationExpiry: string | null;
-  }
-
 interface FleetVehicleCardProps {
-  vehicle: Vehicle;
+  vehicle: FleetVehicle;
   isSelected: boolean;
   selectionMode: boolean;
   onPress: () => void;
@@ -57,7 +38,7 @@ const formatCurrency = (amount: number) => {
     }).format(amount);
   };
 
-const getStatusColor = (vehicle: Vehicle) => {
+const getStatusColor = (vehicle: FleetVehicle) => {
     if (!vehicle.available) return colors.error;
     if (vehicle.nextMaintenanceDate && new Date(vehicle.nextMaintenanceDate) <= new Date()) {
       return colors.warning;
@@ -65,7 +46,7 @@ const getStatusColor = (vehicle: Vehicle) => {
     return colors.success;
   };
 
-const getStatusText = (vehicle: Vehicle) => {
+const getStatusText = (vehicle: FleetVehicle) => {
     if (!vehicle.available) return 'Unavailable';
     if (vehicle.nextMaintenanceDate && new Date(vehicle.nextMaintenanceDate) <= new Date()) {
       return 'Maintenance Due';
@@ -73,11 +54,11 @@ const getStatusText = (vehicle: Vehicle) => {
     return 'Available';
   };
 
-const isMaintenanceDue = (vehicle: Vehicle) => {
+const isMaintenanceDue = (vehicle: FleetVehicle) => {
     return vehicle.nextMaintenanceDate && new Date(vehicle.nextMaintenanceDate) <= new Date();
   };
 
-const isInsuranceExpiring = (vehicle: Vehicle) => {
+const isInsuranceExpiring = (vehicle: FleetVehicle) => {
     if (!vehicle.insuranceExpiry) return false;
     const expiryDate = new Date(vehicle.insuranceExpiry);
     const warningDate = new Date();
@@ -204,6 +185,14 @@ export const FleetVehicleCard: React.FC<FleetVehicleCardProps> = ({
           <Ionicons name="calendar-outline" size={16} color={colors.primary} />
           <Text style={styles.quickActionText}>Calendar</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.quickAction}
+          onPress={() => navigation.navigate('VehicleDocumentManagement', { vehicleId: vehicle.id })}
+        >
+          <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+          <Text style={styles.quickActionText}>Documents</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -243,7 +232,7 @@ const styles = StyleSheet.create({
         flex: 1,
       },
       vehicleName: {
-        ...typography.displayMedium,
+        ...typography.heading3,
         color: colors.text,
       },
       licensePlate: {
@@ -266,7 +255,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
       },
       dailyRate: {
-        ...typography.displayMedium,
+        ...typography.heading3,
         color: colors.text,
       },
       vehicleMetrics: {

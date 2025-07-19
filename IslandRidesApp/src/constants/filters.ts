@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 export type IconName = keyof typeof Ionicons.glyphMap;
 
 export interface VerificationStatusOption {
-  key: string;
+  key: 'pending' | 'verified' | 'rejected' | 'expired';
   label: string;
   icon: IconName;
 }
@@ -23,24 +23,14 @@ export const VERIFICATION_STATUS_OPTIONS: VerificationStatusOption[] = [
     icon: 'time-outline'
   },
   {
-    key: 'partial',
-    label: 'Partially Verified',
-    icon: 'checkmark-circle-outline'
-  },
-  {
-    key: 'unverified',
-    label: 'Unverified',
-    icon: 'help-circle-outline'
-  },
-  {
-    key: 'premium',
-    label: 'Premium Verified',
-    icon: 'star'
-  },
-  {
     key: 'rejected',
     label: 'Rejected',
     icon: 'close-circle'
+  },
+  {
+    key: 'expired',
+    label: 'Expired',
+    icon: 'time'
   }
 ];
 
@@ -71,7 +61,13 @@ export const TRANSMISSION_TYPES = [
   'cvt'
 ];
 
-export const SORT_OPTIONS = [
+export interface SortOption {
+  key: 'popularity' | 'price_low' | 'price_high' | 'rating' | 'newest' | 'condition';
+  label: string;
+  icon: IconName;
+}
+
+export const SORT_OPTIONS: SortOption[] = [
   { key: 'popularity', label: 'Most Popular', icon: 'trending-up' },
   { key: 'price_low', label: 'Price: Low to High', icon: 'arrow-up' },
   { key: 'price_high', label: 'Price: High to Low', icon: 'arrow-down' },

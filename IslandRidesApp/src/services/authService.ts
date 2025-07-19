@@ -199,7 +199,6 @@ class AuthService extends BaseService {
       if (!response.token || !response.refreshToken) {
         throw new BusinessLogicError('Failed to refresh session', 'SESSION_REFRESH_FAILED');
       }
-      await apiService.storeToken(response.token, response.refreshToken);
     } catch (error) {
       throw new BusinessLogicError(
         'Unable to refresh session',
@@ -238,10 +237,6 @@ class AuthService extends BaseService {
   }
 
   private async checkRateLimit(identifier: string): Promise<{ allowed: boolean; waitTime?: number }> {
-    if (!this.failedAttempts.size) {
-      await this.initializeFailedAttempts();
-    }
-
     const attempts = this.failedAttempts.get(identifier);
     if (!attempts) return { allowed: true };
 
@@ -264,10 +259,6 @@ class AuthService extends BaseService {
   }
 
   private async recordFailedAttempt(identifier: string): Promise<void> {
-    if (!this.failedAttempts.size) {
-      await this.initializeFailedAttempts();
-    }
-
     const existing = this.failedAttempts.get(identifier);
     
     if (existing) {
@@ -346,7 +337,7 @@ class AuthService extends BaseService {
     if (/[A-Z]/.test(password)) score++;
     if (/[a-z]/.test(password)) score++;
     if (/\d/.test(password)) score++;
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
+    if (/[!@#$%^&*(),.?":{}|<>~`_+\-=\[\]\\';/]/.test(password)) score++;
     
     if (score <= 2) return 'weak';
     if (score <= 4) return 'medium';

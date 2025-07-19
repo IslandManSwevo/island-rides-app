@@ -7,9 +7,13 @@ const validator = require('validator');
 const helmet = require('helmet');
 const winston = require('winston');
 const net = require('net');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 const db = require('./db');
 const transfiService = require('./services/transfiService');
+const paypalService = require('./services/paypalService');
 const pushNotificationService = require('./services/pushNotificationService');
 const favoritesService = require('./services/favoritesService');
 const priceMonitoringService = require('./services/priceMonitoringService');
@@ -274,6 +278,47 @@ const authLimiter = rateLimit({
 
 app.use(express.json());
 
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer configuration for document uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(uploadsDir, 'documents');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  // Accept images and PDFs for documents
+  if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files and PDFs are allowed'), false);
+  }
+};
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use((req, res, next) => {
   const originalJson = res.json;
   res.json = function(body) {
@@ -329,7 +374,7 @@ app.post('/api/port-resolve', async (req, res) => {
 // Basic root endpoint with enhanced info
 app.get('/', (req, res) => {
   res.status(200).json({ 
-    message: 'Island Rides API Server',
+    message: 'KeyLo API Server',
     status: 'running',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
@@ -519,66 +564,78 @@ function calculateHostPopularityScore(vehicleId) {
   return (avgHostRating - 1) / 4;
 }
 
-function generateRecommendations(userId, island) {
-  const islandVehicles = vehicles.filter(v => 
-    v.location.toLowerCase() === island.toLowerCase() && v.available
-  );
-  
-  const userBookedVehicleIds = new Set(
-    bookings
-      .filter(b => b.user_id === userId)
-      .map(b => b.vehicle_id)
-  );
-  
-  const candidateVehicles = islandVehicles.filter(v => 
-    !userBookedVehicleIds.has(v.id)
-  );
-  
-  const recommendations = candidateVehicles.map(vehicle => {
-    const collaborativeScore = calculateCollaborativeFilteringScore(userId, vehicle.id);
-    const popularityScore = calculateVehiclePopularityScore(vehicle.id);
-    const ratingScore = calculateVehicleRatingScore(vehicle.id);
-    const hostScore = calculateHostPopularityScore(vehicle.id);
+async function generateRecommendations(userId, island) {
+  try {
+    // Fetch available vehicles for the specified island
+    const vehiclesResult = await db.query(
+      'SELECT * FROM vehicles WHERE LOWER(location) = LOWER($1) AND available = true',
+      [island]
+    );
+    const islandVehicles = vehiclesResult.rows;
     
-    const weights = {
-      collaborative: 0.4,
-      popularity: 0.2,
-      rating: 0.25,
-      host: 0.15
-    };
-    
-    const finalScore = (
-      collaborativeScore * weights.collaborative +
-      popularityScore * weights.popularity +
-      ratingScore * weights.rating +
-      hostScore * weights.host
+    // Fetch user's booking history to exclude already booked vehicles
+    const userBookingsResult = await db.query(
+      'SELECT DISTINCT vehicle_id FROM bookings WHERE user_id = $1',
+      [userId]
+    );
+    const userBookedVehicleIds = new Set(
+      userBookingsResult.rows.map(b => b.vehicle_id)
     );
     
-    return {
-      vehicle: {
-        id: vehicle.id,
-        make: vehicle.make,
-        model: vehicle.model,
-        year: vehicle.year,
-        location: vehicle.location,
-        daily_rate: vehicle.daily_rate,
-        drive_side: vehicle.drive_side,
-        available: vehicle.available,
-        created_at: vehicle.created_at
-      },
-      recommendationScore: Math.round(finalScore * 100) / 100,
-      scoreBreakdown: {
-        collaborativeFiltering: Math.round(collaborativeScore * 100) / 100,
-        vehiclePopularity: Math.round(popularityScore * 100) / 100,
-        vehicleRating: Math.round(ratingScore * 100) / 100,
-        hostPopularity: Math.round(hostScore * 100) / 100
-      }
-    };
-  });
-  
-  return recommendations
-    .sort((a, b) => b.recommendationScore - a.recommendationScore)
-    .slice(0, 5);
+    // Filter out vehicles the user has already booked
+    const candidateVehicles = islandVehicles.filter(v => 
+      !userBookedVehicleIds.has(v.id)
+    );
+    
+    const recommendations = candidateVehicles.map(vehicle => {
+      const collaborativeScore = calculateCollaborativeFilteringScore(userId, vehicle.id);
+      const popularityScore = calculateVehiclePopularityScore(vehicle.id);
+      const ratingScore = calculateVehicleRatingScore(vehicle.id);
+      const hostScore = calculateHostPopularityScore(vehicle.id);
+      
+      const weights = {
+        collaborative: 0.4,
+        popularity: 0.2,
+        rating: 0.25,
+        host: 0.15
+      };
+      
+      const finalScore = (
+        collaborativeScore * weights.collaborative +
+        popularityScore * weights.popularity +
+        ratingScore * weights.rating +
+        hostScore * weights.host
+      );
+      
+      return {
+        vehicle: {
+          id: vehicle.id,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          location: vehicle.location,
+          daily_rate: vehicle.daily_rate,
+          drive_side: vehicle.drive_side,
+          available: vehicle.available,
+          created_at: vehicle.created_at
+        },
+        recommendationScore: Math.round(finalScore * 100) / 100,
+        scoreBreakdown: {
+          collaborativeFiltering: Math.round(collaborativeScore * 100) / 100,
+          vehiclePopularity: Math.round(popularityScore * 100) / 100,
+          vehicleRating: Math.round(ratingScore * 100) / 100,
+          hostPopularity: Math.round(hostScore * 100) / 100
+        }
+      };
+    });
+    
+    return recommendations
+      .sort((a, b) => b.recommendationScore - a.recommendationScore)
+      .slice(0, 5);
+  } catch (error) {
+    console.error('Error generating recommendations:', error);
+    return [];
+  }
 }
 
 const authenticateToken = (req, res, next) => {
@@ -618,7 +675,18 @@ const authenticateToken = (req, res, next) => {
       return res.status(401).json(errorResponse);
     }
     
+    console.log('✅ Backend: Token decoded successfully:', JSON.stringify(user, null, 2));
     console.log('✅ Backend: Token valid for user:', user.userId);
+    
+    if (!user.userId) {
+      console.log('⚠️ Backend: Warning - userId is null/undefined in token payload');
+      return res.status(401).json({
+        error: 'Invalid token payload',
+        code: 'TOKEN_INVALID_PAYLOAD',
+        message: 'Token does not contain valid user information'
+      });
+    }
+    
     req.user = user;
     next();
   });
@@ -881,6 +949,18 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
+// === NEW API ROUTES ===
+
+// Host Profile Routes
+const hostProfileRoutes = require('./routes/hostProfile');
+app.use('/api/host-profile', hostProfileRoutes);
+
+// Document Management Routes
+const documentRoutes = require('./routes/documents');
+app.use('/api/documents', documentRoutes);
+
+// === END NEW API ROUTES ===
+
 app.get('/api/users', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(
@@ -1024,6 +1104,143 @@ app.get('/api/profiles/me/verification', authenticateToken, async (req, res) => 
   }
 });
 
+// Upload verification document
+app.post('/api/verification/upload', authenticateToken, upload.single('document'), async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { documentType } = req.body;
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    if (!documentType) {
+      return res.status(400).json({ error: 'Document type is required' });
+    }
+    
+    // Validate document type
+    const validDocumentTypes = ['identity', 'driving_license', 'vehicle_title', 'vehicle_insurance'];
+    if (!validDocumentTypes.includes(documentType)) {
+      return res.status(400).json({ error: 'Invalid document type' });
+    }
+    
+    const documentUrl = `/uploads/documents/${req.file.filename}`;
+    
+    // Update verification with document URL
+    const result = await publicProfileService.updateVerification(userId, documentType, false, documentUrl);
+    
+    logAuditEvent('DOCUMENT_UPLOADED', userId, { 
+      documentType, 
+      filename: req.file.filename,
+      originalName: req.file.originalname
+    });
+    
+    res.json({
+      success: true,
+      message: 'Document uploaded successfully',
+      documentUrl,
+      documentType,
+      filename: req.file.filename
+    });
+  } catch (error) {
+    logError('Upload verification document error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Upload vehicle document
+app.post('/api/vehicles/:vehicleId/documents', authenticateToken, upload.single('document'), async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { vehicleId } = req.params;
+    const { documentType } = req.body;
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    if (!documentType) {
+      return res.status(400).json({ error: 'Document type is required' });
+    }
+    
+    // Validate document type for vehicles
+    const validVehicleDocTypes = ['title', 'insurance'];
+    if (!validVehicleDocTypes.includes(documentType)) {
+      return res.status(400).json({ error: 'Invalid vehicle document type' });
+    }
+    
+    // Verify vehicle ownership
+    const vehicleResult = await db.query(
+      'SELECT * FROM vehicles WHERE id = $1 AND owner_id = $2',
+      [vehicleId, userId]
+    );
+    
+    if (vehicleResult.rows.length === 0) {
+      return res.status(403).json({ error: 'Vehicle not found or access denied' });
+    }
+    
+    const documentUrl = `/uploads/documents/${req.file.filename}`;
+    
+    // Update vehicle with document URL
+    const updateField = documentType === 'title' ? 'title_document_url' : 'insurance_document_url';
+    await db.query(
+      `UPDATE vehicles SET ${updateField} = $1, verification_status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      [documentUrl, vehicleId]
+    );
+    
+    logAuditEvent('VEHICLE_DOCUMENT_UPLOADED', userId, { 
+      vehicleId,
+      documentType, 
+      filename: req.file.filename,
+      originalName: req.file.originalname
+    });
+    
+    res.json({
+      success: true,
+      message: 'Vehicle document uploaded successfully',
+      documentUrl,
+      documentType,
+      vehicleId,
+      filename: req.file.filename
+    });
+  } catch (error) {
+    logError('Upload vehicle document error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get vehicle documents
+app.get('/api/vehicles/:vehicleId/documents', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { vehicleId } = req.params;
+    
+    // Verify vehicle ownership
+    const vehicleResult = await db.query(
+      'SELECT title_document_url, insurance_document_url, verification_status FROM vehicles WHERE id = $1 AND owner_id = $2',
+      [vehicleId, userId]
+    );
+    
+    if (vehicleResult.rows.length === 0) {
+      return res.status(403).json({ error: 'Vehicle not found or access denied' });
+    }
+    
+    const vehicle = vehicleResult.rows[0];
+    
+    res.json({
+      success: true,
+      data: {
+        title_document_url: vehicle.title_document_url,
+        insurance_document_url: vehicle.insurance_document_url,
+        verification_status: vehicle.verification_status || 'pending'
+      }
+    });
+  } catch (error) {
+    logError('Get vehicle documents error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Update verification status (admin or system use)
 app.put('/api/profiles/:userId/verification', authenticateToken, checkRole(['admin']), async (req, res) => {
   try {
@@ -1085,6 +1302,220 @@ app.get('/api/profiles/search', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+// Get host storefront profile
+app.get('/api/host-storefront/:hostId', async (req, res) => {
+  try {
+    const { hostId } = req.params;
+    const viewerId = req.user?.userId || null; // Optional authentication
+    
+    // Get host profile with verification check
+    const hostQuery = `
+      SELECT 
+        u.id,
+        u.first_name,
+        u.last_name,
+        u.profile_photo_url,
+        u.bio,
+        u.location,
+        u.created_at as member_since,
+        u.allow_messages,
+        
+        -- Verification info
+        uv.verification_score,
+        uv.overall_verification_status,
+        uv.email_verified,
+        uv.phone_verified,
+        uv.identity_verified,
+        uv.address_verified,
+        uv.driving_license_verified,
+        uv.background_check_verified,
+        
+        -- Badges
+        uv.superhost_badge,
+        uv.frequent_traveler_badge,
+        uv.early_adopter_badge,
+        uv.top_reviewer_badge,
+        uv.community_leader_badge,
+        uv.superhost_since,
+        uv.frequent_traveler_since,
+        uv.early_adopter_since,
+        uv.top_reviewer_since,
+        uv.community_leader_since
+        
+      FROM users u
+      LEFT JOIN user_verifications uv ON u.id = uv.user_id
+      WHERE u.id = ? AND u.profile_visibility != 'private'
+        AND (uv.overall_verification_status = 'verified' OR uv.overall_verification_status = 'premium')
+    `;
+
+    const hostProfile = db.prepare(hostQuery).get(hostId);
+    
+    if (!hostProfile) {
+      return res.status(404).json({ error: 'Host not found or not verified' });
+    }
+
+    // Get host statistics
+    const statsQuery = `
+      SELECT 
+        COUNT(DISTINCT CASE WHEN b.status = 'completed' THEN b.id END) as total_trips,
+        COUNT(DISTINCT CASE WHEN r.moderation_status = 'approved' THEN r.id END) as reviews_received_count,
+        AVG(CASE WHEN r.moderation_status = 'approved' THEN r.rating END) as average_rating_received,
+        COUNT(DISTINCT v.id) as vehicles_owned,
+        COALESCE(AVG(CASE WHEN c.created_at >= datetime('now', '-30 days') THEN 
+          CASE WHEN m.created_at IS NOT NULL THEN 
+            (julianday(m.created_at) - julianday(c.created_at)) * 24 
+          END 
+        END), 24) as response_time_hours,
+        COALESCE((
+          COUNT(CASE WHEN c.created_at >= datetime('now', '-30 days') AND m.sender_id = ? THEN 1 END) * 100.0 /
+          NULLIF(COUNT(CASE WHEN c.created_at >= datetime('now', '-30 days') THEN 1 END), 0)
+        ), 100) as response_rate,
+        COALESCE((
+          COUNT(CASE WHEN b.created_at >= datetime('now', '-30 days') AND b.status != 'cancelled' THEN 1 END) * 100.0 /
+          NULLIF(COUNT(CASE WHEN b.created_at >= datetime('now', '-30 days') THEN 1 END), 0)
+        ), 100) as acceptance_rate
+      FROM users u
+      LEFT JOIN vehicles v ON u.id = v.owner_id
+      LEFT JOIN bookings b ON v.id = b.vehicle_id
+      LEFT JOIN reviews r ON b.id = r.booking_id
+      LEFT JOIN conversations c ON (u.id = c.participant_1_id OR u.id = c.participant_2_id)
+      LEFT JOIN messages m ON c.id = m.conversation_id AND m.sender_id = u.id
+      WHERE u.id = ?
+    `;
+
+    const stats = db.prepare(statsQuery).get(hostId, hostId);
+
+    // Get active vehicles
+    const vehiclesQuery = `
+      SELECT 
+        v.id,
+        v.make,
+        v.model,
+        v.year,
+        v.location,
+        v.daily_rate,
+        v.average_rating,
+        v.total_reviews,
+        v.photo_url,
+        v.available,
+        v.listing_status
+      FROM vehicles v
+      WHERE v.owner_id = ? AND v.available = 1 AND v.listing_status = 'active'
+      ORDER BY v.average_rating DESC, v.total_reviews DESC
+      LIMIT 10
+    `;
+
+    const vehicles = db.prepare(vehiclesQuery).all(hostId);
+
+    // Get recent reviews received
+    const reviewsQuery = `
+      SELECT 
+        r.id,
+        r.rating,
+        r.comment as review_text,
+        r.created_at,
+        u.first_name as reviewer_first_name,
+        u.last_name as reviewer_last_name,
+        u.profile_photo_url as reviewer_photo
+      FROM reviews r
+      JOIN bookings b ON r.booking_id = b.id
+      JOIN vehicles v ON b.vehicle_id = v.id
+      JOIN users u ON r.renter_id = u.id
+      WHERE v.owner_id = ? AND r.moderation_status = 'approved'
+      ORDER BY r.created_at DESC
+      LIMIT 10
+    `;
+
+    const recentReviews = db.prepare(reviewsQuery).all(hostId);
+
+    // Record profile view if viewer is different from host
+    if (viewerId && viewerId !== parseInt(hostId)) {
+      try {
+        const viewQuery = `
+          INSERT OR REPLACE INTO profile_interactions 
+          (viewer_id, profile_id, interaction_type, created_at)
+          VALUES (?, ?, 'view', datetime('now'))
+        `;
+        db.prepare(viewQuery).run(viewerId, hostId);
+      } catch (error) {
+        console.warn('Failed to record profile view:', error);
+      }
+    }
+
+    // Format badges
+    const badges = [];
+    if (hostProfile.superhost_badge) {
+      badges.push({
+        type: 'superhost',
+        name: 'Superhost',
+        icon: '⭐',
+        color: '#FF5A5F',
+        earnedAt: hostProfile.superhost_since,
+        description: 'Exceptional host with outstanding reviews'
+      });
+    }
+    if (hostProfile.frequent_traveler_badge) {
+      badges.push({
+        type: 'frequent_traveler',
+        name: 'Frequent Traveler',
+        icon: '✈️',
+        color: '#00A699',
+        earnedAt: hostProfile.frequent_traveler_since,
+        description: 'Experienced traveler with multiple trips'
+      });
+    }
+    if (hostProfile.early_adopter_badge) {
+      badges.push({
+        type: 'early_adopter',
+        name: 'Early Adopter',
+        icon: '🚀',
+        color: '#FC642D',
+        earnedAt: hostProfile.early_adopter_since,
+        description: 'One of our first community members'
+      });
+    }
+    if (hostProfile.top_reviewer_badge) {
+      badges.push({
+        type: 'top_reviewer',
+        name: 'Top Reviewer',
+        icon: '📝',
+        color: '#767676',
+        earnedAt: hostProfile.top_reviewer_since,
+        description: 'Provides helpful and detailed reviews'
+      });
+    }
+    if (hostProfile.community_leader_badge) {
+      badges.push({
+        type: 'community_leader',
+        name: 'Community Leader',
+        icon: '👑',
+        color: '#FFD700',
+        earnedAt: hostProfile.community_leader_since,
+        description: 'Active community member and mentor'
+      });
+    }
+
+    const response = {
+      ...hostProfile,
+      stats: {
+        ...stats,
+        average_rating_received: stats.average_rating_received ? parseFloat(stats.average_rating_received).toFixed(1) : null,
+        response_time_hours: Math.round(stats.response_time_hours || 24),
+        response_rate: Math.round(stats.response_rate || 100),
+        acceptance_rate: Math.round(stats.acceptance_rate || 100)
+      },
+      vehicles,
+      recentReviews,
+      badges
+    };
+
+    res.json(response);
+  } catch (error) {
+    logError('Get host storefront error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ========== END PUBLIC PROFILE API ENDPOINTS ==========
 
 app.get('/api/conversations', authenticateToken, async (req, res) => {
@@ -1523,6 +1954,83 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
   }
 });
 
+// Cancel booking endpoint
+app.delete('/api/bookings/:id', authenticateToken, async (req, res) => {
+  try {
+    const bookingId = parseInt(req.params.id);
+    const userId = req.user.userId;
+
+    if (isNaN(bookingId)) {
+      return res.status(400).json({ error: 'Invalid booking ID' });
+    }
+
+    // Get booking details and verify ownership
+    const bookingResult = await db.query(
+      'SELECT * FROM bookings WHERE id = $1',
+      [bookingId]
+    );
+
+    if (bookingResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    const booking = bookingResult.rows[0];
+
+    // Check if user owns this booking
+    if (booking.renter_id !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Check if booking can be cancelled
+    if (booking.status === 'cancelled') {
+      return res.status(400).json({ error: 'Booking is already cancelled' });
+    }
+
+    if (booking.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot cancel completed booking' });
+    }
+
+    // Check if booking is within cancellation window (24 hours before start)
+    const startDate = new Date(booking.start_date);
+    const now = new Date();
+    const hoursUntilStart = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (hoursUntilStart < 24) {
+      return res.status(400).json({ 
+        error: 'Cannot cancel booking less than 24 hours before start date' 
+      });
+    }
+
+    // Update booking status to cancelled
+    await db.query(
+      'UPDATE bookings SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      ['cancelled', bookingId]
+    );
+
+    // Log audit event
+    logAuditEvent('BOOKING_CANCELLED', userId, {
+      bookingId: bookingId,
+      vehicleId: booking.vehicle_id,
+      startDate: booking.start_date,
+      endDate: booking.end_date,
+      totalAmount: booking.total_amount
+    });
+
+    // TODO: Process refund if payment was already made
+    // This would integrate with the payment service (TransFi/PayPal)
+
+    res.json({
+      message: 'Booking cancelled successfully',
+      bookingId: bookingId,
+      status: 'cancelled'
+    });
+
+  } catch (error) {
+    logError('Cancel booking error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/api/vehicles', authenticateToken, async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM vehicles');
@@ -1774,6 +2282,134 @@ app.post('/api/owner/vehicles/:vehicleId/expenses', authenticateToken, checkRole
   }
 });
 
+// === HOST DASHBOARD ENDPOINTS (Simple Mode) ===
+
+// Get simple host dashboard data for Story 1.3
+app.get('/api/host/dashboard', authenticateToken, async (req, res) => {
+  try {
+    const hostId = req.user.userId;
+    
+    console.log(`🏠 Simple host dashboard requested for user ${hostId}`);
+    
+    // Get total lifetime earnings
+    const earningsQuery = `
+      SELECT COALESCE(SUM(b.total_amount * 0.85), 0) as total_earnings
+      FROM bookings b
+      JOIN vehicles v ON b.vehicle_id = v.id
+      WHERE v.owner_id = $1 AND b.status IN ('confirmed', 'completed')
+    `;
+    
+    const earningsResult = await db.query(earningsQuery, [hostId]);
+    const totalEarnings = parseFloat(earningsResult.rows[0]?.total_earnings || 0);
+    
+    // Get upcoming bookings
+    const upcomingQuery = `
+      SELECT 
+        b.id,
+        b.start_date as "startDate",
+        b.end_date as "endDate",
+        b.status,
+        b.total_amount as "totalAmount",
+        u.id as renter_id,
+        u.first_name as "firstName",
+        u.last_name as "lastName",
+        v.id as vehicle_id,
+        v.make,
+        v.model,
+        v.year
+      FROM bookings b
+      JOIN vehicles v ON b.vehicle_id = v.id
+      JOIN users u ON b.renter_id = u.id
+      WHERE v.owner_id = $1 
+        AND b.status IN ('confirmed', 'pending')
+        AND b.start_date >= CURRENT_DATE
+      ORDER BY b.start_date ASC
+      LIMIT 10
+    `;
+    
+    const upcomingResult = await db.query(upcomingQuery, [hostId]);
+    const upcomingBookings = upcomingResult.rows.map(booking => ({
+      id: booking.id,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      status: booking.status,
+      totalAmount: parseFloat(booking.totalAmount),
+      renter: {
+        id: booking.renter_id,
+        firstName: booking.firstName,
+        lastName: booking.lastName
+      },
+      vehicle: {
+        id: booking.vehicle_id,
+        make: booking.make,
+        model: booking.model,
+        year: booking.year
+      }
+    }));
+    
+    // Get recent past bookings (last 5)
+    const recentQuery = `
+      SELECT 
+        b.id,
+        b.start_date as "startDate",
+        b.end_date as "endDate",
+        b.status,
+        b.total_amount as "totalAmount",
+        u.id as renter_id,
+        u.first_name as "firstName",
+        u.last_name as "lastName",
+        v.id as vehicle_id,
+        v.make,
+        v.model,
+        v.year
+      FROM bookings b
+      JOIN vehicles v ON b.vehicle_id = v.id
+      JOIN users u ON b.renter_id = u.id
+      WHERE v.owner_id = $1 
+        AND b.status = 'completed'
+        AND b.end_date < CURRENT_DATE
+      ORDER BY b.end_date DESC
+      LIMIT 5
+    `;
+    
+    const recentResult = await db.query(recentQuery, [hostId]);
+    const recentBookings = recentResult.rows.map(booking => ({
+      id: booking.id,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      status: booking.status,
+      totalAmount: parseFloat(booking.totalAmount),
+      renter: {
+        id: booking.renter_id,
+        firstName: booking.firstName,
+        lastName: booking.lastName
+      },
+      vehicle: {
+        id: booking.vehicle_id,
+        make: booking.make,
+        model: booking.model,
+        year: booking.year
+      }
+    }));
+    
+    const dashboardData = {
+      totalEarnings,
+      upcomingBookings,
+      recentBookings
+    };
+    
+    console.log(`✅ Host dashboard data loaded: $${totalEarnings}, ${upcomingBookings.length} upcoming, ${recentBookings.length} recent`);
+    
+    res.json({
+      success: true,
+      data: dashboardData
+    });
+  } catch (error) {
+    logError('Host dashboard error', error);
+    res.status(500).json({ error: 'Failed to load host dashboard data' });
+  }
+});
+
 // Get vehicle expenses
 app.get('/api/owner/vehicles/:vehicleId/expenses', authenticateToken, checkRole(['owner', 'admin']), async (req, res) => {
   try {
@@ -1826,6 +2462,162 @@ app.get('/api/owner/vehicles/:vehicleId/expenses', authenticateToken, checkRole(
   }
 });
 
+// Get Pro Host Dashboard with advanced analytics
+app.get('/api/host/dashboard/pro', authenticateToken, async (req, res) => {
+  try {
+    const hostId = req.user.userId;
+    const timeframe = req.query.timeframe || '30'; // days
+    
+    console.log(`📊 Pro host dashboard requested for user ${hostId}, timeframe: ${timeframe} days`);
+    
+    // Check if user qualifies for Pro Mode (more than 1 active vehicle)
+    const vehicleCountQuery = `
+      SELECT COUNT(*) as active_count
+      FROM vehicles 
+      WHERE owner_id = $1 AND available = true AND listing_status = 'active'
+    `;
+    
+    const vehicleCountResult = await db.query(vehicleCountQuery, [hostId]);
+    const activeVehicleCount = parseInt(vehicleCountResult.rows[0]?.active_count || 0);
+    
+    if (activeVehicleCount <= 1) {
+      return res.status(403).json({ 
+        error: 'Pro Mode requires more than one active vehicle',
+        qualifiesForPro: false,
+        activeVehicleCount 
+      });
+    }
+    
+    // Get earnings over time (monthly for charts)
+    const earningsOverTimeQuery = `
+      SELECT 
+        DATE_TRUNC('month', b.start_date) as month,
+        COUNT(b.id) as bookings,
+        SUM(b.total_amount) as gross_revenue,
+        SUM(b.total_amount * 0.85) as net_revenue
+      FROM bookings b
+      JOIN vehicles v ON b.vehicle_id = v.id
+      WHERE v.owner_id = $1 
+        AND b.status IN ('confirmed', 'completed')
+        AND b.start_date >= CURRENT_DATE - INTERVAL '${timeframe} days'
+      GROUP BY DATE_TRUNC('month', b.start_date)
+      ORDER BY month DESC
+    `;
+    
+    const earningsData = await db.query(earningsOverTimeQuery, [hostId]);
+    
+    // Get key performance metrics
+    const metricsQuery = `
+      SELECT 
+        COUNT(DISTINCT b.id) as total_bookings,
+        COUNT(DISTINCT CASE WHEN b.status = 'confirmed' THEN b.id END) as confirmed_bookings,
+        COUNT(DISTINCT CASE WHEN b.status = 'cancelled' THEN b.id END) as cancelled_bookings,
+        AVG(EXTRACT(DAY FROM (b.end_date - b.start_date))) as avg_trip_duration,
+        AVG(b.total_amount) as avg_booking_value,
+        COALESCE(AVG(r.rating), 0) as avg_rating,
+        COUNT(DISTINCT r.id) as total_reviews
+      FROM vehicles v
+      LEFT JOIN bookings b ON v.id = b.vehicle_id 
+        AND b.start_date >= CURRENT_DATE - INTERVAL '${timeframe} days'
+      LEFT JOIN reviews r ON b.id = r.booking_id
+      WHERE v.owner_id = $1
+    `;
+    
+    const metricsResult = await db.query(metricsQuery, [hostId]);
+    const metrics = metricsResult.rows[0] || {};
+    
+    // Calculate booking rate (confirmed bookings / total requests)
+    const bookingRate = metrics.total_bookings > 0 ? 
+      (metrics.confirmed_bookings / metrics.total_bookings * 100) : 0;
+    
+    // Get top performing vehicles
+    const topVehiclesQuery = `
+      SELECT 
+        v.id,
+        v.make,
+        v.model,
+        v.year,
+        v.daily_rate,
+        COUNT(b.id) as bookings,
+        SUM(b.total_amount) as revenue,
+        AVG(b.total_amount) as avg_booking_value,
+        COALESCE(AVG(r.rating), 0) as avg_rating
+      FROM vehicles v
+      LEFT JOIN bookings b ON v.id = b.vehicle_id 
+        AND b.status IN ('confirmed', 'completed')
+        AND b.start_date >= CURRENT_DATE - INTERVAL '${timeframe} days'
+      LEFT JOIN reviews r ON b.id = r.booking_id
+      WHERE v.owner_id = $1 AND v.available = true
+      GROUP BY v.id, v.make, v.model, v.year, v.daily_rate
+      ORDER BY revenue DESC NULLS LAST
+      LIMIT 10
+    `;
+    
+    const topVehiclesResult = await db.query(topVehiclesQuery, [hostId]);
+    const topVehicles = topVehiclesResult.rows.map(vehicle => ({
+      ...vehicle,
+      revenue: parseFloat(vehicle.revenue || 0),
+      avg_booking_value: parseFloat(vehicle.avg_booking_value || 0),
+      avg_rating: parseFloat(vehicle.avg_rating || 0)
+    }));
+    
+    // Get booking trends by day of week
+    const dayTrendsQuery = `
+      SELECT 
+        EXTRACT(DOW FROM b.start_date) as day_of_week,
+        COUNT(b.id) as bookings,
+        AVG(b.total_amount) as avg_value
+      FROM bookings b
+      JOIN vehicles v ON b.vehicle_id = v.id
+      WHERE v.owner_id = $1 
+        AND b.status IN ('confirmed', 'completed')
+        AND b.start_date >= CURRENT_DATE - INTERVAL '${timeframe} days'
+      GROUP BY EXTRACT(DOW FROM b.start_date)
+      ORDER BY day_of_week
+    `;
+    
+    const dayTrendsResult = await db.query(dayTrendsQuery, [hostId]);
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const bookingTrends = dayTrendsResult.rows.map(row => ({
+      day: dayNames[parseInt(row.day_of_week)],
+      bookings: parseInt(row.bookings),
+      avgValue: parseFloat(row.avg_value || 0)
+    }));
+    
+    const proData = {
+      qualifiesForPro: true,
+      activeVehicleCount,
+      earningsOverTime: earningsData.rows.map(row => ({
+        month: row.month,
+        bookings: parseInt(row.bookings),
+        grossRevenue: parseFloat(row.gross_revenue || 0),
+        netRevenue: parseFloat(row.net_revenue || 0)
+      })),
+      keyMetrics: {
+        totalBookings: parseInt(metrics.total_bookings || 0),
+        bookingRate: Math.round(bookingRate),
+        avgTripDuration: parseFloat(metrics.avg_trip_duration || 0),
+        avgBookingValue: parseFloat(metrics.avg_booking_value || 0),
+        avgRating: parseFloat(metrics.avg_rating || 0),
+        totalReviews: parseInt(metrics.total_reviews || 0)
+      },
+      topPerformingVehicles: topVehicles,
+      bookingTrends,
+      timeframe: parseInt(timeframe)
+    };
+    
+    console.log(`✅ Pro dashboard data loaded for ${activeVehicleCount} vehicles`);
+    
+    res.json({
+      success: true,
+      data: proData
+    });
+  } catch (error) {
+    logError('Pro host dashboard error', error);
+    res.status(500).json({ error: 'Failed to load pro dashboard data' });
+  }
+});
+
 // === END OWNER DASHBOARD ENDPOINTS ===
 
 app.post('/api/chat', (req, res) => {
@@ -1858,7 +2650,7 @@ const io = socketIo(server, {
 // Create payment intent
 app.post('/api/payments/create-intent', authenticateToken, async (req, res) => {
   try {
-    const { bookingId } = req.body;
+    const { bookingId, paymentMethod = 'card' } = req.body;
     
     if (!bookingId) {
       return res.status(400).json({ error: 'Booking ID is required' });
@@ -1866,9 +2658,10 @@ app.post('/api/payments/create-intent', authenticateToken, async (req, res) => {
     
     const bookingResult = await db.query(
       `SELECT b.*, u.email as user_email, u.first_name as user_first_name, 
-              u.last_name as user_last_name
+              u.last_name as user_last_name, v.make as vehicle_make, v.model as vehicle_model
        FROM bookings b
        JOIN users u ON b.renter_id = u.id
+       JOIN vehicles v ON b.vehicle_id = v.id
        WHERE b.id = $1 AND b.renter_id = $2`,
       [bookingId, req.user.userId]
     );
@@ -1878,14 +2671,38 @@ app.post('/api/payments/create-intent', authenticateToken, async (req, res) => {
     }
 
     const booking = bookingResult.rows[0];
-    const paymentIntent = await transfiService.createPaymentIntent(booking);
+    let paymentResponse;
     
-    await db.query(
-      'UPDATE bookings SET payment_intent_id = $1, payment_status = $2 WHERE id = $3',
-      [paymentIntent.paymentIntentId, 'pending', bookingId]
-    );
+    if (paymentMethod === 'paypal') {
+      // Handle PayPal payment
+      const paypalOrder = await paypalService.createOrder(booking);
+      
+      await db.query(
+        'UPDATE bookings SET payment_intent_id = $1, payment_status = $2, payment_provider = $3 WHERE id = $4',
+        [paypalOrder.orderId, 'pending', 'paypal', bookingId]
+      );
+      
+      paymentResponse = {
+        paymentIntentId: paypalOrder.orderId,
+        paymentUrl: paypalOrder.paymentUrl,
+        provider: 'paypal'
+      };
+    } else {
+      // Handle TransFi payment (card, crypto, bank_transfer)
+      const paymentIntent = await transfiService.createPaymentIntent(booking);
+      
+      await db.query(
+        'UPDATE bookings SET payment_intent_id = $1, payment_status = $2, payment_provider = $3 WHERE id = $4',
+        [paymentIntent.paymentIntentId, 'pending', 'transfi', bookingId]
+      );
+      
+      paymentResponse = {
+        ...paymentIntent,
+        provider: 'transfi'
+      };
+    }
     
-    res.json(paymentIntent);
+    res.json(paymentResponse);
   } catch (error) {
     console.error('Payment creation error:', error);
     res.status(500).json({ error: 'Failed to create payment' });
@@ -1958,6 +2775,124 @@ app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), asy
   }
 });
 
+// PayPal capture payment endpoint
+app.post('/api/payments/paypal/capture', authenticateToken, async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    
+    if (!orderId) {
+      return res.status(400).json({ error: 'Order ID is required' });
+    }
+
+    // Get booking details
+    const bookingResult = await db.query(
+      'SELECT * FROM bookings WHERE payment_intent_id = $1 AND renter_id = $2',
+      [orderId, req.user.userId]
+    );
+    
+    if (bookingResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    const booking = bookingResult.rows[0];
+    const captureResult = await paypalService.captureOrder(orderId);
+    
+    // Update booking status
+    await db.query(
+      `UPDATE bookings 
+       SET status = 'confirmed', 
+           payment_status = 'completed',
+           payment_method = 'paypal',
+           paid_at = NOW()
+       WHERE id = $1`,
+      [booking.id]
+    );
+    
+    // Get updated booking details for notification
+    const updatedBookingResult = await db.query(
+      `SELECT b.*, v.make, v.model, v.year, u.first_name, u.last_name
+       FROM bookings b
+       JOIN vehicles v ON b.vehicle_id = v.id
+       JOIN users u ON b.renter_id = u.id
+       WHERE b.id = $1`,
+      [booking.id]
+    );
+    
+    if (updatedBookingResult.rows.length > 0) {
+      const updatedBooking = keysToCamel(updatedBookingResult.rows[0]);
+      updatedBooking.vehicle = { make: updatedBooking.make, model: updatedBooking.model, year: updatedBooking.year };
+      
+      // Send booking confirmation notification
+      try {
+        await pushNotificationService.sendBookingConfirmation(updatedBooking);
+        console.log(`✅ PayPal booking confirmation notification sent for booking ${booking.id}`);
+      } catch (notifError) {
+        console.error(`❌ Failed to send PayPal booking confirmation notification for booking ${booking.id}:`, notifError);
+      }
+    }
+    
+    res.json({
+      success: true,
+      captureId: captureResult.captureId,
+      status: captureResult.status
+    });
+  } catch (error) {
+    console.error('PayPal capture error:', error);
+    res.status(500).json({ error: 'Failed to capture PayPal payment' });
+  }
+});
+
+// PayPal webhook handler
+app.post('/api/payments/paypal/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const headers = req.headers;
+    const body = req.body;
+    
+    if (!paypalService.verifyWebhookSignature(headers, body)) {
+      return res.status(401).json({ error: 'Invalid PayPal webhook signature' });
+    }
+
+    const event = JSON.parse(body);
+    
+    switch (event.event_type) {
+      case 'CHECKOUT.ORDER.APPROVED':
+        console.log('PayPal order approved:', event.resource.id);
+        break;
+        
+      case 'PAYMENT.CAPTURE.COMPLETED':
+        const resource = event.resource;
+        const customId = resource.custom_id;
+        
+        if (customId) {
+          await db.query(
+            `UPDATE bookings 
+             SET status = 'confirmed', 
+                 payment_status = 'completed',
+                 payment_method = 'paypal',
+                 paid_at = NOW()
+             WHERE id = $1`,
+            [customId]
+          );
+          
+          console.log(`PayPal payment completed for booking ${customId}`);
+        }
+        break;
+        
+      case 'PAYMENT.CAPTURE.DENIED':
+        console.log('PayPal payment denied:', event.resource);
+        break;
+        
+      default:
+        console.log('Unhandled PayPal webhook event:', event.event_type);
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    console.error('PayPal webhook error:', error);
+    res.status(500).json({ error: 'PayPal webhook processing failed' });
+  }
+});
+
 // Get payment methods
 app.get('/api/payments/methods', authenticateToken, async (req, res) => {
   const methods = [
@@ -1966,6 +2901,13 @@ app.get('/api/payments/methods', authenticateToken, async (req, res) => {
       name: 'Credit/Debit Card',
       icon: 'credit-card',
       currencies: ['USD', 'BSD'],
+      processingTime: 'Instant'
+    },
+    {
+      id: 'paypal',
+      name: 'PayPal',
+      icon: 'logo-paypal',
+      currencies: ['USD'],
       processingTime: 'Instant'
     },
     {
@@ -2875,7 +3817,7 @@ app.get('/api/payments/receipt/:bookingId', authenticateToken, async (req, res) 
         date: receiptData.payment_date
       },
       company: {
-        name: 'Island Rides',
+        name: 'KeyLo',
         address: 'Nassau, Bahamas',
         phone: '+1-242-XXX-XXXX',
         email: 'support@islandrides.com'
@@ -2934,7 +3876,7 @@ app.get('/api/payments/history', authenticateToken, async (req, res) => {
 if (require.main === module) {
   (async () => {
     try {
-      console.log('🔧 Starting Island Rides API Server with Smart Port Management...');
+      console.log('🔧 Starting KeyLo API Server with Smart Port Management...');
       console.log('🔍 Checking for port conflicts...');
       
       const { port } = await portManager.startServerWithRetry(server);
@@ -3119,3 +4061,4 @@ async function handleTyping(socket, user, message) {
 
 
 module.exports = { app, server, io };
+

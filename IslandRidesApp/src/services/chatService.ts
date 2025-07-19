@@ -139,7 +139,7 @@ class ChatService {
       }, 5000);
 
       // Listen for backend confirmation
-      const handleJoined = (data: any) => {
+      const handleJoined = (data: Record<string, unknown>) => {
         clearTimeout(timeout);
         console.log('✅ Joined conversation:', data);
         this.socket!.off('conversation_joined', handleJoined);

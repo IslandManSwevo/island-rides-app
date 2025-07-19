@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosResponse, AxiosError, AxiosRequestConfig } f
 import { BaseService } from './base/BaseService';
 import { storageService } from './storageService';
 import { getEnvironmentConfig } from '../config/environment';
+import { ErrorHandlingService } from './errors/ErrorHandlingService';
 
 interface RetryableAxiosRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
@@ -10,7 +11,7 @@ interface RetryableAxiosRequestConfig extends AxiosRequestConfig {
 interface ApiErrorResponse {
   message: string;
   code: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 export class ApiService extends BaseService {
@@ -84,14 +85,14 @@ export class ApiService extends BaseService {
           }
         }
 
-        return Promise.reject(this.handleError(error));
+        return Promise.reject(ErrorHandlingService.handleApiError(error));
       }
     );
 
     // Response interceptor for non-authenticated requests
     this.axiosInstanceWithoutAuth.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error: AxiosError) => Promise.reject(this.handleError(error))
+      (error: AxiosError) => Promise.reject(ErrorHandlingService.handleApiError(error))
     );
   }
 
@@ -126,8 +127,13 @@ export class ApiService extends BaseService {
 
   async get<T>(endpoint: string, params?: object): Promise<T> {
     await this.waitForInitialization();
-    const response = await this.axiosInstance.get(endpoint, { params });
-    return response.data;
+    return ErrorHandlingService.withErrorHandling(
+      async () => {
+        const response = await this.axiosInstance.get(endpoint, { params });
+        return response.data;
+      },
+      `ApiService.get(${endpoint})`
+    );
   }
 
   async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
@@ -142,8 +148,13 @@ export class ApiService extends BaseService {
 
   async post<T>(endpoint:string, data: object): Promise<T> {
     await this.waitForInitialization();
-    const response = await this.axiosInstance.post(endpoint, data);
-    return response.data;
+    return ErrorHandlingService.withErrorHandling(
+      async () => {
+        const response = await this.axiosInstance.post(endpoint, data);
+        return response.data;
+      },
+      `ApiService.post(${endpoint})`
+    );
   }
 
   async postWithoutAuth<T>(endpoint: string, data: object): Promise<T> {
@@ -158,9 +169,9 @@ export class ApiService extends BaseService {
     return response.data;
   }
 
-  async delete<T>(endpoint: string): Promise<T> {
+  async delete<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
     await this.waitForInitialization();
-    const response = await this.axiosInstance.delete(endpoint);
+    const response = await this.axiosInstance.delete(endpoint, config);
     return response.data;
   }
 
@@ -217,6 +228,14 @@ export class ApiService extends BaseService {
       await this.clearToken();
       throw error;
     }
+  }
+
+  async getAuthToken(): Promise<string | null> {
+    return await this.getToken();
+  }
+
+  get baseURL(): string {
+    return this.axiosInstance?.defaults?.baseURL || '';
   }
 }
 

@@ -12,27 +12,27 @@ export function toSnakeCase(str: string): string {
     .toLowerCase();
 }
 
-export function transformKeys(obj: any, transform: (key: string) => string): any {
+export function transformKeys<T>(obj: T, transform: (key: string) => string): T {
   if (Array.isArray(obj)) {
-    return obj.map(v => transformKeys(v, transform));
+    return obj.map(v => transformKeys(v, transform)) as T;
   }
   
   if (obj !== null && typeof obj === 'object') {
     return Object.keys(obj).reduce((result, key) => {
-      const value = obj[key];
+      const value = (obj as Record<string, unknown>)[key];
       const newKey = transform(key);
-      result[newKey] = transformKeys(value, transform);
+      (result as Record<string, unknown>)[newKey] = transformKeys(value, transform);
       return result;
-    }, {} as any);
+    }, {} as Record<string, unknown>) as T;
   }
   
   return obj;
 }
 
-export function transformToCamelCase(data: any): any {
+export function transformToCamelCase<T>(data: T): T {
   return transformKeys(data, toCamelCase);
 }
 
-export function transformToSnakeCase(data: any): any {
+export function transformToSnakeCase<T>(data: T): T {
   return transformKeys(data, toSnakeCase);
 }

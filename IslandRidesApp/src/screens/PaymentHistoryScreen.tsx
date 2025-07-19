@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { receiptService, PaymentHistory } from '../services/receiptService';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { notificationService } from '../services/notificationService';

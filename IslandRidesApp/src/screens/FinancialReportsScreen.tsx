@@ -11,12 +11,16 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { StackNavigationProp } from '@react-navigation/stack';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
 import AddExpenseModal from './AddExpenseModal';
+import { RootStackParamList } from '../navigation/routes';
+
+type FinancialReportsScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 interface FinancialData {
   period: {
@@ -62,7 +66,7 @@ interface Expense {
 }
 
 interface FinancialReportsScreenProps {
-  navigation: any;
+  navigation: FinancialReportsScreenNavigationProp;
 }
 
 export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ navigation }) => {
@@ -152,7 +156,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
       
       const response = await apiService.get<VehiclesResponse>('/owner/vehicles/performance');
       if (response.success) {
-        setVehicles(response.data.map((v: any) => ({
+        setVehicles(response.data.map((v) => ({
           id: v.id,
           make: v.make,
           model: v.model,
@@ -223,7 +227,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
     fuel: colors.info,
     cleaning: colors.success,
     repairs: colors.warning,
-    registration: colors.tertiary,
+    registration: colors.secondary,
     other: colors.grey,
     };
     return colorsMap[type] || colors.lightGrey;
@@ -288,7 +292,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
               value={startDate}
               mode="date"
               display="default"
-              onChange={(event, selectedDate) => {
+              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
                 const currentDate = selectedDate || startDate;
                 setShowStartDatePicker(false);
                 setStartDate(currentDate);
@@ -306,7 +310,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
               value={endDate}
               mode="date"
               display="default"
-              onChange={(event, selectedDate) => {
+              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
                 const currentDate = selectedDate || endDate;
                 setShowEndDatePicker(false);
                 setEndDate(currentDate);

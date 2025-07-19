@@ -5,8 +5,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { notificationService } from '../services/notificationService';
 import { reviewPromptService } from '../services/reviewPromptService';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
-import Button from '../components/Button';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { StandardButton } from '../components/templates/StandardButton';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { Vehicle } from '../types';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
@@ -39,7 +39,20 @@ export const BookingConfirmedScreen: React.FC<BookingConfirmedScreenProps> = ({ 
     if (booking.status === 'completed') {
       const scheduleReviewPrompt = async () => {
         try {
-          const bookingForReview = transformBookingForReview(booking);
+          // Transform booking to match BookingWithVehicle interface
+          const bookingWithVehicle = {
+            ...booking,
+            startDate: booking.start_date,
+            endDate: booking.end_date,
+            totalAmount: booking.total_amount,
+            status: booking.status as 'pending' | 'confirmed' | 'completed' | 'cancelled',
+            userId: 0, // Will be set by auth service in reviewPromptService
+            vehicleId: booking.vehicle.id,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          const bookingForReview = transformBookingForReview(bookingWithVehicle);
           if (bookingForReview) {
             await reviewPromptService.scheduleReviewPrompt(bookingForReview);
             console.log('Review prompt scheduled successfully for booking:', booking.id);
@@ -159,14 +172,16 @@ export const BookingConfirmedScreen: React.FC<BookingConfirmedScreenProps> = ({ 
       </View>
 
       <View style={styles.buttonContainer}>
-        <Button
+        <StandardButton
           title="View Receipt"
           onPress={() => setShowReceipt(true)}
+          fullWidth
         />
-        <Button
+        <StandardButton
           title="Back to Home"
           onPress={handleBackToHome}
           variant="secondary"
+          fullWidth
         />
       </View>
 

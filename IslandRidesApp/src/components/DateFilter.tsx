@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../styles/Theme';
+import { colors, spacing } from '../styles/theme';
 
 interface DateFilterProps {
   startDate: Date | null;
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: spacing.md,
-    color: colors.dark,
+    color: colors.text,
   },
   dateRow: {
     flexDirection: 'row',
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.light,
+    backgroundColor: colors.surfaceVariant,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: 8,
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   dateButtonText: {
     marginLeft: spacing.sm,
     fontSize: 16,
-    color: colors.dark,
+    color: colors.text,
   },
   dateArrow: {
     fontSize: 18,

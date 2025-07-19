@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaVi
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
-import Button from '../components/Button';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { StandardButton } from '../components/templates/StandardButton';
+import { usePerformanceMonitoring } from '../hooks/usePerformanceMonitoring';
 import { Vehicle, VehicleAmenity } from '../types';
 import { VehiclePhotoGallery } from '../components/VehiclePhotoGallery';
 import { VehicleFeatureList } from '../components/VehicleFeatureList';
@@ -27,6 +28,11 @@ interface VehicleDetailScreenProps {
 }
 
 export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenProps) => {
+  const { getMetrics, resetMetrics } = usePerformanceMonitoring('VehicleDetailScreen', {
+    slowRenderThreshold: 16,
+    enableLogging: __DEV__,
+    trackMemory: true,
+  });
   const { vehicle } = route.params;
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     specs: true,
@@ -279,10 +285,11 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
 
         {/* Booking */}
         <View style={styles.bookingContainer}>
-          <Button
+          <StandardButton
             title="Book Now"
             onPress={handleBookNow}
             disabled={!vehicle.available}
+            fullWidth
           />
         </View>
       </View>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, spacing } from '../styles/Theme';
+import { colors, spacing } from '../styles/theme';
+import { GluestackButton } from './templates/GluestackButton';
 
 interface OptionFilterProps {
   title: string;
@@ -17,24 +18,16 @@ const OptionFilter: React.FC<OptionFilterProps> = ({ title, options, selectedOpt
         {options.map(option => {
           const isSelected = selectedOptions.includes(option);
           return (
-            <TouchableOpacity
+            <GluestackButton
               key={option}
-              style={[
-                styles.optionChip,
-                isSelected && styles.optionChipSelected
-              ]}
+              title={option}
               onPress={() => onToggleOption(option)}
+              variant={isSelected ? "solid" : "outline"}
+              action="primary"
+              size="sm"
               accessibilityLabel={`${option}, ${isSelected ? 'selected' : 'not selected'}`}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isSelected }}
-            >
-              <Text style={[
-                styles.optionChipText,
-                isSelected && styles.optionChipTextSelected
-              ]}>
-                {option}
-              </Text>
-            </TouchableOpacity>
+              accessibilityHint={`Toggle ${option} filter option`}
+            />
           );
         })}
       </View>
@@ -50,7 +43,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: spacing.md,
-    color: colors.dark,
+    color: colors.text,
   },
   optionsGrid: {
     flexDirection: 'row',
@@ -60,7 +53,7 @@ const styles = StyleSheet.create({
   optionChip: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.light,
+    backgroundColor: colors.surfaceVariant,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.lightGrey,
@@ -71,7 +64,7 @@ const styles = StyleSheet.create({
   },
   optionChipText: {
     fontSize: 14,
-    color: colors.dark,
+    color: colors.text,
   },
   optionChipTextSelected: {
     color: colors.white,

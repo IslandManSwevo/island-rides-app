@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
-import { colors, spacing, borderRadius } from '../../styles/Theme';
+import { colors, spacing, borderRadius } from '../../styles/theme';
 import { RootStackParamList } from '../../navigation/routes';
 import { VehicleHeader } from './VehicleHeader';
 import { VehicleMetrics } from './VehicleMetrics';
@@ -13,6 +13,8 @@ interface VehiclePerformance {
   make: string;
   model: string;
   year: number;
+  ownerId: number;
+  location: string;
   dailyRate: number;
   totalBookings: number;
   confirmedBookings: number;
@@ -27,7 +29,7 @@ interface VehiclePerformance {
     lastMaintenance: string | null;
   };
   available: boolean;
-  verificationStatus: string;
+  verificationStatus: 'pending' | 'verified' | 'rejected' | 'expired';
   conditionRating: number;
 }
 
@@ -37,8 +39,8 @@ interface VehiclePerformanceCardProps {
   formatCurrency: (amount: number) => string;
   formatPercentage: (percentage: number) => string;
   getPerformanceColor: (value: number, type: string) => string;
-  getVerificationStatusColor: (status: string) => string;
-  getVerificationStatusIcon: (status: string) => any;
+  getVerificationStatusColor: (status: 'pending' | 'verified' | 'rejected' | 'expired') => string;
+  getVerificationStatusIcon: (status: 'pending' | 'verified' | 'rejected' | 'expired') => any;
   navigation: NavigationProp<RootStackParamList>;
 }
 

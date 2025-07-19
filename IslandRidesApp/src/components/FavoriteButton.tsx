@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Animated, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
-import { colors } from '../styles/Theme';
+import { colors } from '../styles/theme';
 import { navigationRef } from '../navigation/navigationRef';
 import { ROUTES } from '../navigation/routes';
+import { ApiResponse } from '../types';
 
 interface FavoriteButtonProps {
   vehicleId: number;
   size?: number;
-  style?: any;
+  style?: ViewStyle | TextStyle;
   onToggle?: (isFavorited: boolean) => void;
 }
 
@@ -30,8 +31,8 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     const checkFavoriteStatus = async () => {
       try {
         setChecking(true);
-        const response: any = await apiService.get(`/favorites/check/${vehicleId}`);
-        setIsFavorited(response.isFavorited);
+        const response: ApiResponse<{ isFavorited: boolean }> = await apiService.get(`/favorites/check/${vehicleId}`);
+        setIsFavorited(response.data.isFavorited);
       } catch (error) {
         console.error('Error checking favorite status:', error);
         // Don't show error for checking status, just log it

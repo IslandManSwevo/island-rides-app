@@ -3,7 +3,7 @@
  * Centralized route names to prevent typos and ease refactoring
  */
 
-import { ChatContext, Vehicle, VehicleRecommendation } from '../types';
+import { ChatContext, SearchFilters, Vehicle, VehicleRecommendation } from '../types';
 
 export const ROUTES = {
   // Authentication routes
@@ -18,10 +18,12 @@ export const ROUTES = {
   CHECKOUT: 'Checkout',
   BOOKING_CONFIRMED: 'BookingConfirmed',
   PAYMENT: 'Payment',
+  PAYPAL_CONFIRMATION: 'PayPalConfirmation',
   
   // User routes
   PROFILE: 'Profile',
   PUBLIC_USER_PROFILE: 'PublicUserProfile',
+  MY_BOOKINGS: 'MyBookings',
   PAYMENT_HISTORY: 'PaymentHistory',
   CHAT: 'Chat',
   FAVORITES: 'Favorites',
@@ -30,6 +32,8 @@ export const ROUTES = {
   
   // Owner Dashboard routes
   OWNER_DASHBOARD: 'OwnerDashboard',
+  HOST_DASHBOARD: 'HostDashboard',
+  HOST_STOREFRONT: 'HostStorefront',
   VEHICLE_PERFORMANCE: 'VehiclePerformance',
   FINANCIAL_REPORTS: 'FinancialReports',
   FLEET_MANAGEMENT: 'FleetManagement',
@@ -38,6 +42,10 @@ export const ROUTES = {
   VEHICLE_AVAILABILITY: 'VehicleAvailability',
   BULK_RATE_UPDATE: 'BulkRateUpdate',
   COMPARE_VEHICLES: 'CompareVehicles',
+  VEHICLE_DOCUMENT_MANAGEMENT: 'VehicleDocumentManagement',
+  
+  // Saved Searches
+  SAVED_SEARCHES: 'SavedSearches',
 } as const;
 
 export type RouteNames = typeof ROUTES[keyof typeof ROUTES];
@@ -71,9 +79,12 @@ export type RootStackParamList = {
     island: string;
     vehicles: VehicleRecommendation[];
   };
-  [ROUTES.SEARCH]: undefined;
+  [ROUTES.SEARCH]: {
+    filters?: SearchFilters; // SearchFilters type
+  } | undefined;
   [ROUTES.VEHICLE_DETAIL]: {
-    vehicle: Vehicle;
+    vehicle?: Vehicle;
+    vehicleId?: number;
   };
   [ROUTES.CHECKOUT]: {
     vehicle: Vehicle;
@@ -95,9 +106,14 @@ export type RootStackParamList = {
   [ROUTES.PUBLIC_USER_PROFILE]: {
     userId: number;
   };
+  [ROUTES.MY_BOOKINGS]: undefined;
+  [ROUTES.HOST_STOREFRONT]: {
+    hostId: number;
+  };
   [ROUTES.PAYMENT_HISTORY]: undefined;
   [ROUTES.CHAT]: {
-    context: ChatContext;
+    context?: ChatContext;
+    conversationId?: number;
     title?: string;
   };
   [ROUTES.FAVORITES]: undefined;
@@ -126,20 +142,55 @@ export type RootStackParamList = {
     };
   };
   BankTransferInstructions: {
-    instructions?: any;
+    instructions?: Record<string, unknown>;
     reference?: string;
-    booking: any;
+    booking: BookingInfo & {
+      vehicle: BookingVehicle & {
+        location: string;
+        dailyRate: number;
+      };
+      totalAmount: number;
+    };
   };
   CryptoPayment: {
     walletAddress?: string;
     amount?: number;
     currency?: string;
     qrCode?: string;
-    booking: any;
+    booking: BookingInfo & {
+      vehicle: BookingVehicle & {
+        location: string;
+        dailyRate: number;
+      };
+      totalAmount: number;
+    };
+  };
+  PayPalConfirmation: {
+    orderId: string;
+    booking: {
+      id: number;
+      vehicle: {
+        id: number;
+        make: string;
+        model: string;
+        year: number;
+        location: string;
+        dailyRate: number;
+      };
+      startDate: string;
+      endDate: string;
+      status: string;
+      totalAmount: number;
+      createdAt: string;
+    };
   };
   
   // Owner Dashboard routes
   [ROUTES.OWNER_DASHBOARD]: undefined;
+  [ROUTES.HOST_DASHBOARD]: undefined;
+  [ROUTES.HOST_STOREFRONT]: {
+    hostId: number;
+  };
   [ROUTES.VEHICLE_PERFORMANCE]: undefined;
   [ROUTES.FINANCIAL_REPORTS]: undefined;
   [ROUTES.FLEET_MANAGEMENT]: undefined;
@@ -157,5 +208,11 @@ export type RootStackParamList = {
   };
   [ROUTES.COMPARE_VEHICLES]: {
     vehicleIds: number[];
+  };
+  [ROUTES.VEHICLE_DOCUMENT_MANAGEMENT]: {
+    vehicleId: number;
+  };
+  [ROUTES.SAVED_SEARCHES]: {
+    filters?: SearchFilters;
   };
 };

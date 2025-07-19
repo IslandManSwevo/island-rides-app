@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface GradientBackgroundProps {
   children: React.ReactNode;
   colors?: readonly [string, string, ...string[]];
-  style?: any;
+  style?: ViewStyle | TextStyle;
 }
 
 const GradientBackground: React.FC<GradientBackgroundProps> = ({

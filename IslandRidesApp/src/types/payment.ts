@@ -13,9 +13,15 @@ export interface PaymentMethodsResponse {
   methods: PaymentMethod[];
 }
 
+export interface PaymentInstructions {
+  step: number;
+  description: string;
+  action?: string;
+}
+
 export interface PaymentIntentResponse {
   paymentUrl?: string;
-  instructions?: any;
+  instructions?: PaymentInstructions[];
   reference?: string;
   walletAddress?: string;
   amount?: number;

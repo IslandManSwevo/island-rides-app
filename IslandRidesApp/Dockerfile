@@ -12,7 +12,7 @@ RUN npm install -g @expo/cli
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 
 
@@ -32,4 +32,4 @@ ENV EXPO_NO_DOTENV=1
 EXPOSE 19006 19001 8081
 
 # Use correct Expo start options for Docker
-CMD ["sh", "-c", "rm -rf .expo && npm run start:web"]
+CMD ["sh", "-c", "rm -rf .expo && npx expo start --web --host lan --port 8081 --clear"]

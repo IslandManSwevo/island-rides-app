@@ -2,19 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
 import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
-import { Vehicle } from '../types';
+import { Vehicle, VehicleRecommendation, Island } from '../types';
+import { ClusteredMapView } from './ClusteredMapView';
 
 const { width, height } = Dimensions.get('window');
 
 interface MapViewProps {
-  vehicles: Vehicle[];
-  onVehicleSelect?: (vehicle: Vehicle) => void;
+  vehicles: Vehicle[] | VehicleRecommendation[];
+  onVehicleSelect?: (vehicle: Vehicle | VehicleRecommendation) => void;
   userLocation?: {
     latitude: number;
     longitude: number;
   };
   showUserLocation?: boolean;
-  clustering?: boolean;
+  enableClustering?: boolean;
+  island?: Island;
 }
 
 export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
@@ -22,9 +24,10 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
   onVehicleSelect,
   userLocation,
   showUserLocation = true,
-  clustering = true,
+  enableClustering = true,
+  island = 'Nassau',
 }) => {
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | VehicleRecommendation | null>(null);
   const [region, setRegion] = useState({
     latitude: 25.0343, // Nassau default
     longitude: -77.3963,
@@ -35,20 +38,77 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
 
   useEffect(() => {
     if (userLocation) {
-      setRegion({
-        ...region,
+      setRegion(prevRegion => ({
+        ...prevRegion,
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
-      });
+      }));
     }
   }, [userLocation]);
 
-  const handleMarkerPress = (vehicle: Vehicle) => {
+  const handleMarkerPress = (vehicle: Vehicle | VehicleRecommendation) => {
     setSelectedVehicle(vehicle);
     if (onVehicleSelect) {
       onVehicleSelect(vehicle);
     }
   };
+
+  const handleVehiclePress = (vehicle: VehicleRecommendation) => {
+    handleMarkerPress(vehicle);
+  };
+
+  const handleClusterPress = (cluster: any) => {
+    if (mapRef.current) {
+      const coordinates = cluster.vehicles.map((v: VehicleRecommendation) => ({
+        latitude: v.vehicle.latitude || 0,
+        longitude: v.vehicle.longitude || 0,
+      }));
+      
+      mapRef.current.fitToCoordinates(coordinates, {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        animated: true,
+      });
+    }
+  };
+
+  // Convert vehicles to VehicleRecommendation format if needed
+  const convertedVehicles: VehicleRecommendation[] = vehicles.map((vehicle, index) => {
+    if ('vehicle' in vehicle) {
+      return vehicle as VehicleRecommendation;
+    } else {
+      const v = vehicle as Vehicle;
+      return {
+        id: `vehicle-${v.id}`,
+        vehicle: v,
+        recommendationScore: 0.5,
+        type: v.vehicleType || 'unknown',
+        island: 'Nassau',
+        pricePerDay: v.dailyRate || 0,
+        scoreBreakdown: {
+          collaborativeFiltering: 0.1,
+          vehiclePopularity: 0.1,
+          vehicleRating: 0.2,
+          hostPopularity: 0.1,
+        },
+        score: 0.5,
+        reasons: ['Available vehicle']
+      };
+    }
+  });
+
+  // Use clustered map view if clustering is enabled
+  if (enableClustering) {
+    return (
+      <ClusteredMapView
+        vehicles={convertedVehicles}
+        island={island}
+        onVehiclePress={handleVehiclePress}
+        onClusterPress={handleClusterPress}
+        showUserLocation={showUserLocation}
+        style={styles.container}
+      />
+    );
+  }
 
   const bahamasMapStyle = [
     {
@@ -99,37 +159,40 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
         showsCompass={true}
         showsScale={true}
       >
-        {vehicles.map((vehicle) => (
-          <Marker
-            key={vehicle.id}
-            coordinate={{
-              latitude: vehicle.latitude || 25.0343,
-              longitude: vehicle.longitude || -77.3963,
-            }}
-            onPress={() => handleMarkerPress(vehicle)}
-            pinColor={vehicle.available ? '#007AFF' : '#FF3B30'}
-          >
-            <Callout>
-              <View style={styles.calloutContainer}>
-                <Text style={styles.vehicleName}>
-                  {vehicle.make} {vehicle.model}
-                </Text>
-                <Text style={styles.vehiclePrice}>
-                  ${vehicle.dailyRate}/day
-                </Text>
-                <Text style={styles.vehicleLocation}>
-                  {vehicle.location}
-                </Text>
-                <TouchableOpacity
-                  style={styles.calloutButton}
-                  onPress={() => handleMarkerPress(vehicle)}
-                >
-                  <Text style={styles.calloutButtonText}>View Details</Text>
-                </TouchableOpacity>
-              </View>
-            </Callout>
-          </Marker>
-        ))}
+        {convertedVehicles.map((vehicleRec) => {
+          const vehicle = 'vehicle' in vehicleRec ? vehicleRec.vehicle : vehicleRec as Vehicle;
+          return (
+            <Marker
+              key={`vehicle-${vehicle.id}`}
+              coordinate={{
+                latitude: vehicle.latitude || 25.0343,
+                longitude: vehicle.longitude || -77.3963,
+              }}
+              onPress={() => handleMarkerPress(vehicleRec)}
+              pinColor={(vehicle.available ? '#007AFF' : '#FF3B30') as string}
+            >
+              <Callout>
+                <View style={styles.calloutContainer}>
+                  <Text style={styles.vehicleName}>
+                    {vehicle.make} {vehicle.model}
+                  </Text>
+                  <Text style={styles.vehiclePrice}>
+                    ${vehicle.dailyRate}/day
+                  </Text>
+                  <Text style={styles.vehicleLocation}>
+                    {vehicle.location}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.calloutButton}
+                    onPress={() => handleMarkerPress(vehicleRec)}
+                  >
+                    <Text style={styles.calloutButtonText}>View Details</Text>
+                  </TouchableOpacity>
+                </View>
+              </Callout>
+            </Marker>
+          );
+        })}
 
         {userLocation && showUserLocation && (
           <Marker
@@ -151,15 +214,22 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
               onVehicleSelect?.(selectedVehicle);
             }}
           >
-            <Text style={styles.vehicleTitle}>
-              {selectedVehicle.make} {selectedVehicle.model}
-            </Text>
-            <Text style={styles.vehiclePriceText}>
-              ${selectedVehicle.dailyRate}/day
-            </Text>
-            <Text style={styles.vehicleLocationText}>
-              {selectedVehicle.location}
-            </Text>
+            {(() => {
+              const vehicle = 'vehicle' in selectedVehicle ? selectedVehicle.vehicle : selectedVehicle as Vehicle;
+              return (
+                <>
+                  <Text style={styles.vehicleTitle}>
+                    {vehicle.make} {vehicle.model}
+                  </Text>
+                  <Text style={styles.vehiclePriceText}>
+                    ${vehicle.dailyRate}/day
+                  </Text>
+                  <Text style={styles.vehicleLocationText}>
+                    {vehicle.location}
+                  </Text>
+                </>
+              );
+            })()}
           </TouchableOpacity>
         </View>
       )}

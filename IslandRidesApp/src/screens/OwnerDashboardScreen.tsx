@@ -25,14 +25,15 @@ interface DashboardData {
   goals?: Goal[];
 }
 
-const isDashboardData = (data: any): data is DashboardData => {
-  return (
+const isDashboardData = (data: unknown): data is DashboardData => {
+  const anyData = data as any;
+  return Boolean(
     data &&
-    typeof data.overview === 'object' &&
-    data.overview !== null &&
-    typeof data.revenue === 'object' &&
-    data.revenue !== null &&
-    (!data.goals || Array.isArray(data.goals))
+    typeof anyData.overview === 'object' &&
+    anyData.overview !== null &&
+    typeof anyData.revenue === 'object' &&
+    anyData.revenue !== null &&
+    (!anyData.goals || Array.isArray(anyData.goals))
   );
 };
 

@@ -111,6 +111,16 @@ class ConversationService {
       return `Chat with ${participant.firstName} ${participant.lastName}`;
     }
   }
+
+  async getConversationById(conversationId: number): Promise<ConversationResponse> {
+    try {
+      const response = await apiService.get<ConversationResponse>(`/api/conversations/${conversationId}`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch conversation:', error);
+      throw error;
+    }
+  }
 }
 
 export const conversationService = ConversationService.getInstance();

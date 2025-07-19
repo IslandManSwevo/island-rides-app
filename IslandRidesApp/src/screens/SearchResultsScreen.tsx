@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing } from '../styles/Theme';
+import { colors, typography, spacing } from '../styles/theme';
 import { VehicleCard } from '../components/VehicleCard';
 import { vehicleService } from '../services/vehicleService';
-import { VehicleRecommendation, Island } from '../types';
+import { VehicleRecommendation, Island, Vehicle } from '../types';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
+import { InteractiveVehicleMap } from '../components/MapView';
 
 type SearchResultsScreenProps = StackScreenProps<RootStackParamList, typeof ROUTES.SEARCH_RESULTS>;
 
@@ -14,6 +16,7 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ naviga
   const [vehicles, setVehicles] = useState<VehicleRecommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   
   const { island, vehicles: navigationVehicles } = route.params;
 
@@ -64,9 +67,8 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ naviga
       setLoading(false);
     }
   };
-
-  const handleVehiclePress = (vehicle: VehicleRecommendation) => {
-    navigation.navigate(ROUTES.VEHICLE_DETAIL, { vehicle: vehicle.vehicle });
+  const handleVehiclePress = (vehicleRecommendation: VehicleRecommendation) => {
+    navigation.navigate(ROUTES.VEHICLE_DETAIL, { vehicle: vehicleRecommendation.vehicle });
   };
 
   const renderVehicleItem = ({ item }: { item: VehicleRecommendation }) => (
@@ -101,16 +103,55 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ naviga
         <Text style={styles.subtitle}>
           {vehicles.length} vehicle{vehicles.length !== 1 ? 's' : ''} found
         </Text>
+        
+        <View style={styles.viewToggle}>
+          <TouchableOpacity
+            style={[styles.toggleButton, viewMode === 'list' && styles.activeToggle]}
+            onPress={() => setViewMode('list')}
+          >
+            <Ionicons 
+              name="list" 
+              size={20} 
+              color={viewMode === 'list' ? colors.white : colors.darkGrey} 
+            />
+            <Text style={[styles.toggleText, viewMode === 'list' && styles.activeToggleText]}>List</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.toggleButton, viewMode === 'map' && styles.activeToggle]}
+            onPress={() => setViewMode('map')}
+          >
+            <Ionicons 
+              name="map" 
+              size={20} 
+              color={viewMode === 'map' ? colors.white : colors.darkGrey} 
+            />
+            <Text style={[styles.toggleText, viewMode === 'map' && styles.activeToggleText]}>Map</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <FlatList
-        data={vehicles}
-        renderItem={renderVehicleItem}
-        keyExtractor={(item) => item.vehicle.id.toString()}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={renderEmptyState}
-      />
+      {viewMode === 'list' ? (
+        <FlatList
+          data={vehicles}
+          renderItem={renderVehicleItem}
+          keyExtractor={(item) => item.vehicle.id.toString()}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+        />
+      ) : (
+        <View style={styles.mapContainer}>
+          <InteractiveVehicleMap
+            vehicles={vehicles.map(v => v.vehicle)}
+            onVehicleSelect={(vehicle: Vehicle | VehicleRecommendation) => {
+              const actualVehicle = 'vehicle' in vehicle ? vehicle.vehicle : vehicle;
+              navigation.navigate(ROUTES.VEHICLE_DETAIL, { vehicle: actualVehicle });
+            }}
+            showUserLocation={true}
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -164,5 +205,36 @@ const styles = StyleSheet.create({
     ...typography.body,
     textAlign: 'center',
     paddingHorizontal: spacing.lg,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    marginTop: spacing.md,
+    backgroundColor: colors.lightGrey,
+    borderRadius: 8,
+    padding: 4,
+  },
+  toggleButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 6,
+  },
+  activeToggle: {
+    backgroundColor: colors.primary,
+  },
+  toggleText: {
+    ...typography.body,
+    marginLeft: spacing.xs,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  activeToggleText: {
+    color: colors.white,
+  },
+  mapContainer: {
+    flex: 1,
   },
 });

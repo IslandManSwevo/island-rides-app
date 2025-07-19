@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Vehicle } from '../types';
 import { FavoriteButton } from './FavoriteButton';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
+import { StandardCard } from './templates/StandardCard';
+import { GluestackCard } from './templates/GluestackCard';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -22,8 +24,6 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
   const primaryPhoto = vehicle.photos?.find(p => p.isPrimary) || vehicle.photos?.[0];
   const isPremium = vehicleFeatureService.isPremiumVehicle(vehicle);
   const conditionText = vehicle.conditionRating ? vehicleFeatureService.getVehicleConditionText(vehicle.conditionRating) : null;
-  const verificationStatus = vehicleFeatureService.getVerificationStatusText(vehicle.verificationStatus);
-  const verificationColor = vehicleFeatureService.getVerificationStatusColor(vehicle.verificationStatus);
 
   const getFuelIcon = (fuelType?: string) => {
     switch (fuelType) {
@@ -51,7 +51,15 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
   };
 
   return (
-    <TouchableOpacity style={[styles.card, compact && styles.compactCard]} onPress={onPress}>
+    <GluestackCard
+      variant="elevated"
+      padding="none"
+      margin="md"
+      onPress={onPress}
+      testID="vehicle-card"
+      accessibilityLabel={`Vehicle: ${vehicle.make} ${vehicle.model} ${vehicle.year}`}
+      accessibilityHint="Tap to view vehicle details"
+    >
       {/* Vehicle Image */}
       {primaryPhoto && (
         <View style={styles.imageContainer}>
@@ -224,21 +232,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
           <Ionicons name="chevron-forward" size={20} color={colors.primary} />
         </View>
       </View>
-    </TouchableOpacity>
+    </GluestackCard>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.md,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
+  // Removed card styles - now handled by StandardCard
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -333,47 +332,42 @@ const styles = StyleSheet.create({
   compactImage: {
     height: 150,
   },
-  badge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    padding: 4,
-  },
-  baseBadgeText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
-  },
   premiumBadge: {
-    position: 'absolute',
+    position: 'absolute' as const,
     top: 10,
-    right: 10,
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    padding: 4,
+    left: 10,
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
   },
   premiumBadgeText: {
     color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700' as const,
   },
   verifiedBadge: {
-    position: 'absolute',
+    position: 'absolute' as const,
     top: 10,
     right: 10,
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    padding: 4,
+    backgroundColor: colors.success,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
   },
   verifiedText: {
     color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '600' as const,
+    marginLeft: 2,
   },
   advancedInfo: {
-    marginBottom: spacing.md,
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   specsRow: {
     flexDirection: 'row',
@@ -466,16 +460,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: spacing.xs,
   },
-  compactCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.md,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
+  // Removed compactCard styles - now handled by StandardCard
   compactContent: {
     padding: spacing.lg,
   },

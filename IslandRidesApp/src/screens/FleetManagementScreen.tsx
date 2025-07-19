@@ -8,40 +8,24 @@ import {
   RefreshControl,
   Alert,
   Modal,
-  Switch,
   TextInput,
   Platform,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
+import { RootStackParamList } from '../navigation/routes';
+import { FleetVehicle } from '../types';
 
 import { FleetVehicleCard } from '../components/FleetVehicleCard';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
-interface Vehicle {
-  id: number;
-  make: string;
-  model: string;
-  year: number;
-  licensePlate: string;
-  dailyRate: number;
-  available: boolean;
-  verificationStatus: string;
-  conditionRating: number;
-  location: string;
-  mileage: number;
-  nextMaintenanceDate: string | null;
-  activeBookings: number;
-  upcomingBookings: number;
-  lastCleaned: string | null;
-  insuranceExpiry: string | null;
-  registrationExpiry: string | null;
-}
+
 
 interface BulkAction {
   action: string;
@@ -51,13 +35,12 @@ interface BulkAction {
 }
 
 interface FleetManagementScreenProps {
-  navigation: any;
-}
+  navigation: StackNavigationProp<RootStackParamList, 'FleetManagement'>;}
 
 export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<FleetVehicle[]>([]);
   const [selectedVehicles, setSelectedVehicles] = useState<Set<number>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
@@ -93,12 +76,25 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
       const response = await apiService.get<FleetResponse>('/owner/fleet');
       
       if (response.success) {
-        setVehicles(response.data || []);
+        // Transform Vehicle[] to FleetVehicle[] by adding missing properties
+        const fleetVehicles: FleetVehicle[] = (response.data || []).map(vehicle => ({
+          ...vehicle,
+          verificationStatus: vehicle.verificationStatus || 'pending',
+          conditionRating: vehicle.conditionRating || 5,
+          mileage: vehicle.mileage || 0,
+          nextMaintenanceDate: vehicle.nextMaintenanceDate,
+          activeBookings: 0, // Default values - would be populated by backend
+          upcomingBookings: 0,
+          lastCleaned: null,
+          insuranceExpiry: null,
+          registrationExpiry: null
+        }));
+        setVehicles(fleetVehicles);
       } else {
         throw new Error('Failed to load fleet data');
       }
-    } catch (error) {
-      console.error('Fleet data error:', error);
+    } catch (error: unknown) {
+      console.error('Fleet data error:', String(error));
       notificationService.error('Failed to load fleet data');
     } finally {
       setLoading(false);
@@ -206,14 +202,14 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
     }
   };
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (selectedDate) {
       setMaintenanceDate(selectedDate);
     }
   };
 
-  const getFilteredVehicles = () => {
+  const getFilteredVehicles = (): FleetVehicle[] => {
     return vehicles.filter(vehicle => {
       switch (filterStatus) {
         case 'available':
@@ -287,7 +283,7 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
     );
   };
 
-  const renderVehicleCard = (vehicle: Vehicle) => (
+  const renderVehicleCard = (vehicle: FleetVehicle) => (
     <FleetVehicleCard
       key={vehicle.id}
       vehicle={vehicle}
@@ -303,8 +299,12 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
               make: vehicle.make,
               model: vehicle.model,
               year: vehicle.year,
+              ownerId: vehicle.ownerId || 0, // Add required property
+              location: vehicle.location || '', // Add required property
               dailyRate: vehicle.dailyRate,
               available: vehicle.available,
+              driveSide: 'LHD' as const, // Add required property with default
+              createdAt: new Date().toISOString(), // Add required property with default
               verificationStatus: vehicle.verificationStatus,
               conditionRating: vehicle.conditionRating,
             }

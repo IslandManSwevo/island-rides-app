@@ -9,16 +9,18 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   useWindowDimensions,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 import { VehiclePhoto } from '../types';
-import { colors } from '../styles/Theme';
+import { colors } from '../styles/theme';
 import { PhotoIndicators } from './PhotoIndicators';
 import { PhotoThumbnails } from './PhotoThumbnails';
 import { FullscreenModal } from './FullscreenModal';
 
 interface VehiclePhotoGalleryProps {
   photos: VehiclePhoto[];
-  style?: any;
+  style?: StyleProp<ViewStyle>;
   height?: number;
   showIndicators?: boolean;
   showThumbnails?: boolean;
@@ -253,7 +255,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.overlay + 'B3',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     padding: 12,
   },
   captionText: {
