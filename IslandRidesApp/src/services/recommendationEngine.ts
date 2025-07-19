@@ -2,6 +2,37 @@ import { VehicleRecommendation, SearchFilters, Island } from '../types';
 import { searchIntelligenceService, TripPurpose, RecommendationScore } from './searchIntelligenceService';
 import { vehicleService } from './vehicleService';
 
+// Constants for vehicle types and islands
+export const VEHICLE_TYPES = {
+  SEDAN: 'sedan',
+  LUXURY: 'luxury',
+  SUV: 'suv',
+  JEEP: 'jeep'
+} as const;
+
+export const ISLANDS = {
+  NASSAU: 'Nassau',
+  EXUMA: 'Exuma'
+} as const;
+
+export const TRIP_PURPOSES = {
+  BUSINESS: 'business',
+  LEISURE: 'leisure',
+  FAMILY: 'family',
+  ADVENTURE: 'adventure'
+} as const;
+
+// User preferences interface based on searchIntelligenceService structure
+export interface UserPreferences {
+  preferredVehicleTypes?: Array<{
+    type: string;
+    count: number;
+  }>;
+  preferredPriceRange?: [number, number];
+  hasBookings?: boolean;
+  totalSearches?: number;
+}
+
 export interface EnhancedVehicleRecommendation extends VehicleRecommendation {
   recommendationScore: number;
   recommendationReasons: string[];
@@ -13,7 +44,7 @@ export interface EnhancedVehicleRecommendation extends VehicleRecommendation {
 
 export interface RecommendationContext {
   tripPurpose: TripPurpose;
-  userPreferences: any;
+  userPreferences: UserPreferences;
   searchHistory: unknown[];
   collaborativeMatches: string[];
   island: Island;
@@ -138,7 +169,7 @@ class RecommendationEngine {
 
       // Time-based boosting
       if (context.timeOfDay === 'morning' || context.timeOfDay === 'afternoon') {
-        if (context.tripPurpose.type === 'business') {
+        if (context.tripPurpose.type === TRIP_PURPOSES.BUSINESS) {
           boost += 0.1;
           newReasons.push('Great for business hours');
         }
@@ -146,25 +177,25 @@ class RecommendationEngine {
 
       // Weekend vs weekday boosting
       if (context.dayOfWeek === 'weekend') {
-        if (['leisure', 'family', 'adventure'].includes(context.tripPurpose.type)) {
+        if ([TRIP_PURPOSES.LEISURE, TRIP_PURPOSES.FAMILY, TRIP_PURPOSES.ADVENTURE].includes(context.tripPurpose.type)) {
           boost += 0.15;
           newReasons.push('Perfect for weekend activities');
         }
       } else {
-        if (context.tripPurpose.type === 'business') {
+        if (context.tripPurpose.type === TRIP_PURPOSES.BUSINESS) {
           boost += 0.1;
           newReasons.push('Ideal for business travel');
         }
       }
 
       // Island-specific boosting
-      if (context.island === 'Nassau') {
-        if (['sedan', 'luxury'].includes(vehicle.vehicle.vehicleType || '')) {
+      if (context.island === ISLANDS.NASSAU) {
+        if ([VEHICLE_TYPES.SEDAN, VEHICLE_TYPES.LUXURY].includes(vehicle.vehicle.vehicleType || '')) {
           boost += 0.1;
           newReasons.push('Great for Nassau city driving');
         }
-      } else if (context.island === 'Exuma') {
-        if (['suv', 'jeep'].includes(vehicle.vehicle.vehicleType || '')) {
+      } else if (context.island === ISLANDS.EXUMA) {
+        if ([VEHICLE_TYPES.SUV, VEHICLE_TYPES.JEEP].includes(vehicle.vehicle.vehicleType || '')) {
           boost += 0.15;
           newReasons.push('Perfect for Exuma adventures');
         }
@@ -244,7 +275,7 @@ class RecommendationEngine {
           id: rec.vehicleId.toString(),
           vehicle: { id: rec.vehicleId } as any,
           type: 'unknown',
-          island: context.island || 'Nassau',
+          island: context.island || ISLANDS.NASSAU,
           pricePerDay: 0,
           scoreBreakdown: {
             collaborativeFiltering: 0,
@@ -294,7 +325,7 @@ class RecommendationEngine {
     }
 
     // Time-based explanation
-    if (context.timeOfDay === 'morning' && context.tripPurpose.type === 'business') {
+    if (context.timeOfDay === 'morning' && context.tripPurpose.type === TRIP_PURPOSES.BUSINESS) {
       explanations.push('Great for morning business travel');
     }
 
@@ -336,7 +367,9 @@ class RecommendationEngine {
     const personalizedCount = recommendations.filter(r => r.isPersonalized).length;
     const trendingCount = recommendations.filter(r => r.isTrending).length;
     const collaborativeCount = recommendations.filter(r => r.isCollaborativeMatch).length;
-    const averageScore = recommendations.reduce((sum, r) => sum + r.recommendationScore, 0) / recommendations.length;
+    const averageScore = recommendations.length > 0 
+      ? recommendations.reduce((sum, r) => sum + r.recommendationScore, 0) / recommendations.length 
+      : 0;
     
     const allReasons = recommendations.flatMap(r => r.recommendationReasons);
     const reasonCounts = allReasons.reduce((acc: {[key: string]: number}, reason) => {

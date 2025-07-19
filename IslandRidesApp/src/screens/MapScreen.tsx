@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, ActivityIndicator, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -24,11 +24,19 @@ const MapScreen: React.FC = () => {
   const [enableClustering, setEnableClustering] = useState(true);
   const [currentIsland, setCurrentIsland] = useState<Island>('Nassau');
   const [sessionId, setSessionId] = useState<string | null>(null);
+  
+  // Ref to track sessionId for cleanup to avoid stale closure
+  const sessionIdRef = useRef<string | null>(null);
+
+  // Update ref whenever sessionId changes
+  useEffect(() => {
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
 
   useEffect(() => {
     initializeMap();
     return () => {
-      if (sessionId) {
+      if (sessionIdRef.current) {
         mapAnalyticsService.endSession();
       }
     };
@@ -36,19 +44,23 @@ const MapScreen: React.FC = () => {
 
   const initializeMap = async () => {
     try {
-      await Promise.all([
+      // First get user location and load vehicles in parallel
+      const [, location] = await Promise.all([
         loadVehicles(),
-        getUserLocation(),
-        startAnalyticsSession()
+        getUserLocation()
       ]);
+      
+      // Then start analytics session with the available userLocation
+      await startAnalyticsSession(location);
     } catch (error) {
       console.error('Error initializing map:', error);
     }
   };
 
-  const startAnalyticsSession = async () => {
+  const startAnalyticsSession = async (location?: { latitude: number; longitude: number }) => {
     try {
-      const id = await mapAnalyticsService.startSession(currentIsland, {}, userLocation);
+      const locationToUse = location || userLocation;
+      const id = await mapAnalyticsService.startSession(currentIsland, undefined, locationToUse);
       setSessionId(id);
     } catch (error: unknown) {
       console.error('Error starting analytics session:', String(error));
@@ -62,7 +74,8 @@ const MapScreen: React.FC = () => {
       const searchParams = {
         location: currentIsland,
         page: 1,
-        limit: 100 // Load more vehicles for map view
+        limit: 100, // Load more vehicles for map view
+        priceRange: [0, 1000] as [number, number] // Default price range for map view
       };
       
       const vehicleData = await vehicleService.searchVehicles(searchParams);
@@ -76,25 +89,30 @@ const MapScreen: React.FC = () => {
     }
   };
 
-  const getUserLocation = async () => {
+  const getUserLocation = async (): Promise<{ latitude: number; longitude: number }> => {
     try {
       const location = await locationService.getCurrentLocation();
       if (location) {
         setUserLocation(location.coords);
+        return location.coords;
       } else {
         // Fallback to Nassau
-        setUserLocation({
+        const fallbackLocation = {
           latitude: 25.0343,
           longitude: -77.3963,
-        });
+        };
+        setUserLocation(fallbackLocation);
+        return fallbackLocation;
       }
     } catch (error) {
       console.error('Error getting user location:', error);
       // Fallback to Nassau
-      setUserLocation({
+      const fallbackLocation = {
         latitude: 25.0343,
         longitude: -77.3963,
-      });
+      };
+      setUserLocation(fallbackLocation);
+      return fallbackLocation;
     }
   };
 

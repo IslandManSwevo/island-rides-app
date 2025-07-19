@@ -1,3 +1,5 @@
 {
-    "coderabbit.agentType": "Clipboard"
+    "coderabbit.agentType": "Native",
+    "coderabbit.autoReviewMode": "auto",
+    "coderabbit.reviewTimeout": 30
 }

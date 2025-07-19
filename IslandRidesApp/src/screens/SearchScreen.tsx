@@ -109,10 +109,29 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
       try {
         const saved = await AsyncStorage.getItem('searchFilters');
         if (saved) {
-          setFilters(JSON.parse(saved));
+          const parsedFilters = JSON.parse(saved);
+          // Validate that parsed data has expected structure
+          if (parsedFilters && typeof parsedFilters === 'object') {
+            setFilters(parsedFilters);
+          } else {
+            throw new Error('Invalid filter data format');
+          }
         }
       } catch (error) {
         console.error('Failed to load filters', error);
+        let errorMessage = 'Failed to load your saved search preferences. Using default settings.';
+        
+        if (error instanceof SyntaxError) {
+          errorMessage = 'Your saved search preferences are corrupted. Using default settings.';
+        } else if (error instanceof Error && error.message.includes('Invalid filter data')) {
+          errorMessage = 'Your saved search preferences have an invalid format. Using default settings.';
+        }
+        
+        Alert.alert(
+          'Settings Load Error',
+          errorMessage,
+          [{ text: 'OK' }]
+        );
       }
     };
     loadPersistedFilters();
@@ -124,6 +143,22 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
         await AsyncStorage.setItem('searchFilters', JSON.stringify(filters));
       } catch (error) {
         console.error('Failed to save filters', error);
+        
+        // Provide specific error messages based on error type
+        let message = 'Failed to save search preferences';
+        
+        if (error instanceof Error) {
+          if (error.message.includes('storage quota')) {
+            message = 'Storage full - cannot save search preferences';
+          } else if (error.message.includes('permission')) {
+            message = 'Permission denied - cannot save search preferences';
+          }
+        }
+        
+        // Show a less intrusive notification for save errors to avoid overwhelming the user
+        notificationService.warning(message, {
+          duration: 3000
+        });
       }
     };
     saveFilters();
@@ -168,7 +203,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
         maxPrice: filters.priceRange[1],
         features: filters.features.length > 0 ? filters.features.join(',') : undefined,
         conditionRating: filters.minConditionRating > 1 ? filters.minConditionRating : undefined,
-        verificationStatus: filters.verificationStatus.length > 0 ? filters.verificationStatus.join(',') as string : undefined,
+        verificationStatus: filters.verificationStatus.length > 0 ? filters.verificationStatus.join(',') : undefined,
         deliveryAvailable: filters.deliveryAvailable ? 'true' : undefined,
         airportPickup: filters.airportPickup ? 'true' : undefined,
         instantBooking: filters.instantBooking ? 'true' : undefined,
@@ -210,7 +245,15 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
 
   const toggleArrayFilter = (key: string, value: string) => {
     setFilters(prev => {
-      const currentArray = prev[key as keyof SearchFilters] as any[];
+      const currentValue = prev[key as keyof SearchFilters];
+      
+      // Type guard to ensure currentValue is an array
+      if (!Array.isArray(currentValue)) {
+        console.warn(`Expected array for filter key "${key}", but got:`, typeof currentValue);
+        return prev; // Return unchanged state if not an array
+      }
+      
+      const currentArray = currentValue as string[];
       return {
         ...prev,
         [key]: currentArray.includes(value)

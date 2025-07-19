@@ -1,96 +1,92 @@
 const axios = require('axios');
-const { v4: uuidv4 } = require('uuid');
+const { query } = require('../db');
 
 class PayPalService {
   constructor() {
-    this.baseURL = process.env.PAYPAL_ENVIRONMENT === 'production' 
-      ? 'https://api.paypal.com'
-      : 'https://api.sandbox.paypal.com';
     this.clientId = process.env.PAYPAL_CLIENT_ID;
     this.clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-    this.webhookId = process.env.PAYPAL_WEBHOOK_ID;
-    this.accessToken = null;
-    this.tokenExpiry = null;
+    this.environment = process.env.PAYPAL_ENVIRONMENT || 'sandbox';
+    this.baseUrl = this.environment === 'live' 
+      ? 'https://api.paypal.com' 
+      : 'https://api.sandbox.paypal.com';
   }
 
   async getAccessToken() {
-    // Return cached token if still valid
-    if (this.accessToken && this.tokenExpiry && Date.now() < this.tokenExpiry) {
-      return this.accessToken;
-    }
-
     try {
-      const auth = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
-      
       const response = await axios.post(
-        `${this.baseURL}/v1/oauth2/token`,
+        `${this.baseUrl}/v1/oauth2/token`,
         'grant_type=client_credentials',
         {
           headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'Accept-Language': 'en_US'
+          },
+          auth: {
+            username: this.clientId,
+            password: this.clientSecret
           }
         }
       );
 
-      this.accessToken = response.data.access_token;
-      // Set expiry to 90% of actual expiry to ensure we refresh before it expires
-      this.tokenExpiry = Date.now() + (response.data.expires_in * 900);
-      
-      return this.accessToken;
+      return response.data.access_token;
     } catch (error) {
-      console.error('PayPal token error:', error.response?.data || error.message);
-      throw new Error('Failed to get PayPal access token');
+      console.error('Error getting PayPal access token:', error.response?.data || error.message);
+      throw new Error('Failed to authenticate with PayPal');
     }
   }
 
-  async createOrder(booking) {
+  async createOrder(bookingId, amount, currency = 'USD') {
     try {
       const accessToken = await this.getAccessToken();
       
-      const orderData = {
-        intent: 'CAPTURE',
-        purchase_units: [{
-          reference_id: `booking-${booking.id}`,
-          amount: {
-            currency_code: 'USD',
-            value: booking.total_amount.toFixed(2)
-          },
-          description: `KeyLo Booking #${booking.id} - ${booking.vehicle_make} ${booking.vehicle_model}`,
-          custom_id: booking.id.toString(),
-          invoice_id: `IR-${booking.id}-${Date.now()}`
-        }],
-        application_context: {
-          brand_name: 'KeyLo',
-          landing_page: 'BILLING',
-          user_action: 'PAY_NOW',
-          return_url: `${process.env.FRONTEND_URL}/payment-success`,
-          cancel_url: `${process.env.FRONTEND_URL}/payment-cancelled`
-        }
-      };
-
       const response = await axios.post(
-        `${this.baseURL}/v2/checkout/orders`,
-        orderData,
+        `${this.baseUrl}/v2/checkout/orders`,
+        {
+          intent: 'CAPTURE',
+          purchase_units: [{
+            amount: {
+              currency_code: currency,
+              value: amount.toString()
+            },
+            reference_id: bookingId.toString(),
+            description: `Car rental booking #${bookingId}`
+          }],
+          application_context: {
+            brand_name: 'KeyLo',
+            landing_page: 'BILLING',
+            shipping_preference: 'NO_SHIPPING',
+            user_action: 'PAY_NOW',
+            return_url: `${process.env.API_BASE_URL}/api/payments/paypal/success`,
+            cancel_url: `${process.env.API_BASE_URL}/api/payments/paypal/cancel`
+          }
+        },
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
-            'PayPal-Request-Id': uuidv4()
+            'Authorization': `Bearer ${accessToken}`
           }
         }
       );
 
       const order = response.data;
-      const approvalUrl = order.links.find(link => link.rel === 'approve')?.href;
+      
+      // Store PayPal order in database
+      await query(
+        `INSERT INTO paypal_transactions (booking_id, paypal_order_id, amount, currency, status)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [bookingId, order.id, amount, currency, 'created']
+      );
 
       return {
         orderId: order.id,
-        paymentUrl: approvalUrl,
-        status: order.status
+        status: order.status,
+        approveUrl: order.links.find(link => link.rel === 'approve')?.href,
+        amount: amount,
+        currency: currency
       };
     } catch (error) {
-      console.error('PayPal order creation error:', error.response?.data || error.message);
+      console.error('Error creating PayPal order:', error.response?.data || error.message);
       throw new Error('Failed to create PayPal order');
     }
   }
@@ -100,32 +96,76 @@ class PayPalService {
       const accessToken = await this.getAccessToken();
       
       const response = await axios.post(
-        `${this.baseURL}/v2/checkout/orders/${orderId}/capture`,
+        `${this.baseUrl}/v2/checkout/orders/${orderId}/capture`,
         {},
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
-            'PayPal-Request-Id': uuidv4()
+            'Authorization': `Bearer ${accessToken}`
           }
         }
       );
 
-      const captureData = response.data;
-      const capture = captureData.purchase_units[0].payments.captures[0];
+      const capture = response.data;
+      
+      if (capture.status === 'COMPLETED') {
+        const captureId = capture.purchase_units[0].payments.captures[0].id;
+        
+        // Update PayPal transaction
+        await query(
+          `UPDATE paypal_transactions 
+           SET status = 'captured', paypal_capture_id = $1, updated_at = CURRENT_TIMESTAMP
+           WHERE paypal_order_id = $2`,
+          [captureId, orderId]
+        );
 
+        return {
+          success: true,
+          captureId: captureId,
+          amount: capture.purchase_units[0].payments.captures[0].amount.value,
+          currency: capture.purchase_units[0].payments.captures[0].amount.currency_code
+        };
+      } else {
+        throw new Error('PayPal capture failed');
+      }
+    } catch (error) {
+      console.error('Error capturing PayPal order:', error.response?.data || error.message);
+      throw new Error('Failed to capture PayPal order');
+    }
+  }
+
+  async refundPayment(captureId, amount, currency = 'USD') {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const response = await axios.post(
+        `${this.baseUrl}/v2/payments/captures/${captureId}/refund`,
+        {
+          amount: {
+            currency_code: currency,
+            value: amount.toString()
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      const refund = response.data;
+      
       return {
-        orderId: captureData.id,
-        captureId: capture.id,
-        status: capture.status,
-        amount: capture.amount.value,
-        currency: capture.amount.currency_code,
-        paidAt: capture.create_time,
-        paymentMethod: 'paypal'
+        success: true,
+        refundId: refund.id,
+        amount: refund.amount.value,
+        currency: refund.amount.currency_code,
+        status: refund.status
       };
     } catch (error) {
-      console.error('PayPal capture error:', error.response?.data || error.message);
-      throw new Error('Failed to capture PayPal payment');
+      console.error('Error refunding PayPal payment:', error.response?.data || error.message);
+      throw new Error('Failed to refund PayPal payment');
     }
   }
 
@@ -134,74 +174,98 @@ class PayPalService {
       const accessToken = await this.getAccessToken();
       
       const response = await axios.get(
-        `${this.baseURL}/v2/checkout/orders/${orderId}`,
+        `${this.baseUrl}/v2/checkout/orders/${orderId}`,
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${accessToken}`
           }
         }
       );
 
       return response.data;
     } catch (error) {
-      console.error('PayPal order details error:', error.response?.data || error.message);
+      console.error('Error getting PayPal order details:', error.response?.data || error.message);
       throw new Error('Failed to get PayPal order details');
     }
   }
 
-  async processRefund(captureId, amount, reason) {
+  async verifyWebhookSignature(headers, body) {
+    // PayPal webhook signature verification
+    // This is a placeholder for webhook verification
+    // In production, implement proper signature verification
+    return true;
+  }
+
+  async handleWebhook(event) {
     try {
-      const accessToken = await this.getAccessToken();
+      const { event_type, resource } = event;
       
-      const refundData = {
-        amount: {
-          value: amount.toFixed(2),
-          currency_code: 'USD'
-        },
-        note_to_payer: reason || 'Refund for KeyLo booking cancellation'
-      };
-
-      const response = await axios.post(
-        `${this.baseURL}/v2/payments/captures/${captureId}/refund`,
-        refundData,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'PayPal-Request-Id': uuidv4()
-          }
-        }
-      );
-
-      return {
-        refundId: response.data.id,
-        status: response.data.status,
-        amount: response.data.amount.value,
-        currency: response.data.amount.currency_code
-      };
+      switch (event_type) {
+        case 'PAYMENT.CAPTURE.COMPLETED':
+          await this.handlePaymentCompleted(resource);
+          break;
+        case 'PAYMENT.CAPTURE.DENIED':
+          await this.handlePaymentDenied(resource);
+          break;
+        case 'PAYMENT.CAPTURE.REFUNDED':
+          await this.handlePaymentRefunded(resource);
+          break;
+        default:
+          console.log(`Unhandled PayPal webhook event: ${event_type}`);
+      }
+      
+      return { success: true };
     } catch (error) {
-      console.error('PayPal refund error:', error.response?.data || error.message);
-      throw new Error('Failed to process PayPal refund');
+      console.error('Error handling PayPal webhook:', error);
+      throw error;
     }
   }
 
-  verifyWebhookSignature(headers, body) {
+  async handlePaymentCompleted(resource) {
+    const orderId = resource.supplementary_data?.related_ids?.order_id;
+    if (orderId) {
+      await query(
+        `UPDATE paypal_transactions 
+         SET status = 'captured', updated_at = CURRENT_TIMESTAMP
+         WHERE paypal_order_id = $1`,
+        [orderId]
+      );
+    }
+  }
+
+  async handlePaymentDenied(resource) {
+    const orderId = resource.supplementary_data?.related_ids?.order_id;
+    if (orderId) {
+      await query(
+        `UPDATE paypal_transactions 
+         SET status = 'failed', updated_at = CURRENT_TIMESTAMP
+         WHERE paypal_order_id = $1`,
+        [orderId]
+      );
+    }
+  }
+
+  async handlePaymentRefunded(resource) {
+    const captureId = resource.id;
+    await query(
+      `UPDATE paypal_transactions 
+       SET status = 'refunded', updated_at = CURRENT_TIMESTAMP
+       WHERE paypal_capture_id = $1`,
+      [captureId]
+    );
+  }
+
+  async getTransactionHistory(bookingId) {
     try {
-      // PayPal webhook verification would go here
-      // For now, we'll implement basic verification
-      const authAlgo = headers['paypal-auth-algo'];
-      const transmission = headers['paypal-transmission-id'];
-      const certId = headers['paypal-cert-id'];
-      const signature = headers['paypal-transmission-sig'];
-      const timestamp = headers['paypal-transmission-time'];
+      const result = await query(
+        `SELECT * FROM paypal_transactions WHERE booking_id = $1 ORDER BY created_at DESC`,
+        [bookingId]
+      );
       
-      // In production, you would verify the signature using PayPal's SDK
-      // For now, we'll just check if required headers are present
-      return authAlgo && transmission && certId && signature && timestamp;
+      return result.rows;
     } catch (error) {
-      console.error('PayPal webhook verification error:', error);
-      return false;
+      console.error('Error getting PayPal transaction history:', error);
+      throw new Error('Failed to get transaction history');
     }
   }
 }

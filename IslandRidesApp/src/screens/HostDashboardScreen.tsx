@@ -32,31 +32,6 @@ interface EarningsOverTime {
   totalBookings: number;
 }
 
-interface TopPerformingVehicle {
-  id: number;
-  make: string;
-  model: string;
-  revenue: number;
-  bookings: number;
-}
-
-interface ProDashboardData {
-  earningsOverTime: EarningsOverTime[];
-  topPerformingVehicles: TopPerformingVehicle[];
-  totalRevenue: number;
-  totalBookings: number;
-}
-
-interface DashboardResponse {
-  success: boolean;
-  data: Record<string, unknown>;
-}
-
-interface ProDashboardResponse {
-  success: boolean;
-  data: ProDashboardData;
-}
-
 interface HostBooking {
   id: number;
   startDate: string;
@@ -80,6 +55,34 @@ interface HostDashboardData {
   totalEarnings: number;
   upcomingBookings: HostBooking[];
   recentBookings: HostBooking[];
+}
+
+interface TopPerformingVehicle {
+  id: number;
+  make: string;
+  model: string;
+  year: number;
+  revenue: number;
+  bookings: number;
+  avg_rating: number;
+  daily_rate: number;
+}
+
+interface ProDashboardData {
+  earningsOverTime: EarningsOverTime[];
+  topPerformingVehicles: TopPerformingVehicle[];
+  totalRevenue: number;
+  totalBookings: number;
+}
+
+interface DashboardResponse {
+  success: boolean;
+  data: HostDashboardData;
+}
+
+interface ProDashboardResponse {
+  success: boolean;
+  data: ProDashboardData;
 }
 
 export const HostDashboardScreen = ({ navigation }: HostDashboardScreenProps) => {

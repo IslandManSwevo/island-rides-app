@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { apiService } from '../../../services/apiService';
 import { setAuthToken, clearAuth, selectIsAuthenticated, selectUser } from '../../../store/slices/authSlice';
@@ -7,6 +7,11 @@ export const useAuthPersistence = () => {
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const user = useAppSelector(selectUser);
+  
+  // Refs to track previous state and prevent multiple dispatches
+  const prevIsAuthenticatedRef = useRef<boolean>(isAuthenticated);
+  const isTokenRefreshActiveRef = useRef<boolean>(false);
+  const isAuthenticatedRef = useRef<boolean>(isAuthenticated);
 
   // Initialize auth state from stored tokens
   const initializeAuth = useCallback(async () => {
@@ -27,44 +32,81 @@ export const useAuthPersistence = () => {
     }
   }, [dispatch]);
 
-  // Monitor auth state and persist tokens
+  // Update refs when authentication state changes
   useEffect(() => {
-    if (!isAuthenticated && user) {
+    isAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated]);
+
+  // Monitor auth state transitions and handle logout
+  useEffect(() => {
+    const wasAuthenticated = prevIsAuthenticatedRef.current;
+    const isCurrentlyAuthenticated = isAuthenticated;
+    
+    // Detect logout: was authenticated but now is not
+    if (wasAuthenticated && !isCurrentlyAuthenticated) {
       // User logged out, clear stored tokens
       apiService.clearToken().catch(console.warn);
     }
-  }, [isAuthenticated, user]);
-
-  // Auto-refresh token before expiration
-  const scheduleTokenRefresh = useCallback(() => {
-    // Implementation would depend on your token structure
-    // This is a basic example
-    const refreshInterval = 15 * 60 * 1000; // 15 minutes
     
-    const intervalId = setInterval(async () => {
-      if (isAuthenticated) {
-        try {
-          await apiService.refreshToken();
-          const newToken = await apiService.getToken();
-          if (newToken) {
-            dispatch(setAuthToken(newToken));
-          }
-        } catch (error) {
-          console.warn('Token refresh failed:', error);
-          dispatch(clearAuth());
-        }
-      }
-    }, refreshInterval);
+    // Update previous state for next comparison
+    prevIsAuthenticatedRef.current = isCurrentlyAuthenticated;
+  }, [isAuthenticated]);
 
-    return () => clearInterval(intervalId);
-  }, [isAuthenticated, dispatch]);
 
   // Setup token refresh scheduling
   useEffect(() => {
+    let intervalId: NodeJS.Timeout | undefined;
+    
     if (isAuthenticated) {
-      return scheduleTokenRefresh();
+      // Inline the token refresh logic to avoid dependency on scheduleTokenRefresh
+      const refreshInterval = 15 * 60 * 1000; // 15 minutes
+      
+      intervalId = setInterval(async () => {
+        // Use ref to get current authentication state to avoid stale closure
+        if (isAuthenticatedRef.current) {
+          // Prevent multiple concurrent refresh attempts
+          if (isTokenRefreshActiveRef.current) {
+            return;
+          }
+          
+          try {
+            isTokenRefreshActiveRef.current = true;
+            await apiService.refreshToken();
+            const newToken = await apiService.getToken();
+            if (newToken) {
+              dispatch(setAuthToken(newToken));
+            }
+          } catch (error) {
+            console.warn('Token refresh failed:', error);
+            // Only dispatch clearAuth if we're still supposed to be authenticated
+            // and this isn't already being cleared by another process
+            if (isAuthenticatedRef.current) {
+              dispatch(clearAuth());
+            }
+          } finally {
+            isTokenRefreshActiveRef.current = false;
+          }
+        }
+      }, refreshInterval);
     }
-  }, [isAuthenticated, scheduleTokenRefresh]);
+    
+    // Cleanup function to clear intervals when component unmounts or auth state changes
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      // Reset refresh flag when cleaning up
+      isTokenRefreshActiveRef.current = false;
+    };
+  }, [isAuthenticated, dispatch]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Reset all flags when component unmounts
+      isTokenRefreshActiveRef.current = false;
+    };
+  }, []);
 
   return {
     initializeAuth,

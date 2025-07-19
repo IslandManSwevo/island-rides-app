@@ -1,43 +1,137 @@
 #!/usr/bin/env node
 
+/**
+ * Island Rides Development Toolkit
+ * Provides enhanced console output with colors, logging utilities, and development helpers
+ */
+
+'use strict';
+
 const { execSync } = require('child_process');
 const path = require('path');
 
-// Colors for console output
-const colors = {
-  reset: '\x1b[0m',
-  cyan: '\x1b[36m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  red: '\x1b[31m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m'
-};
+// Enhanced Colors Configuration
+const colors = (() => {
+  'use strict';
+  
+  // ANSI color codes - single source of truth
+  const codes = Object.freeze({
+    reset: '\x1b[0m',
+    black: '\x1b[30m',
+    red: '\x1b[31m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    magenta: '\x1b[35m',
+    cyan: '\x1b[36m',
+    white: '\x1b[37m',
+    gray: '\x1b[90m',
+    brightRed: '\x1b[91m',
+    brightGreen: '\x1b[92m',
+    brightYellow: '\x1b[93m',
+    brightBlue: '\x1b[94m',
+    brightMagenta: '\x1b[95m',
+    brightCyan: '\x1b[96m',
+    brightWhite: '\x1b[97m'
+  });
+  
+  // Cache for color support detection
+  let _colorSupport = null;
+  
+  // Detect color support
+  const isColorSupported = () => {
+    if (_colorSupport !== null) return _colorSupport;
+    
+    // Check environment
+    if (process.env.NODE_ENV === 'test' || 
+        process.env.CI || 
+        process.env.TERM === 'dumb' ||
+        !process.stdout?.isTTY) {
+      _colorSupport = false;
+      return false;
+    }
+    
+    // Windows 10+ support
+    if (process.platform === 'win32') {
+      const os = require('os');
+      const [major, , build] = os.release().split('.').map(Number);
+      _colorSupport = major > 10 || (major === 10 && build >= 10586);
+      return _colorSupport;
+    }
+    
+    _colorSupport = true;
+    return true;
+  };
+  
+  // Safe color application
+  const applyColor = (text, colorName) => {
+    if (!isColorSupported()) return String(text);
+    if (!text || typeof text !== 'string') return String(text);
+    
+    const colorCode = codes[colorName];
+    if (!colorCode) {
+      console.warn(`Invalid color: ${colorName}`);
+      return text;
+    }
+    
+    return `${colorCode}${text}${codes.reset}`;
+  };
+  
+  // Create color functions
+  const colorFunctions = {};
+  Object.keys(codes).forEach(key => {
+    colorFunctions[key] = (text) => applyColor(text, key);
+  });
+  
+  return {
+    ...codes,
+    ...colorFunctions,
+    isSupported: isColorSupported,
+    apply: applyColor
+  };
+})();
 
-function log(message, color = 'white') {
-  console.log(`${colors[color]}${message}${colors.reset}`);
+// Enhanced logging with color validation
+function log(message, colorName = 'white') {
+  console.log(colors.apply(message, colorName));
 }
 
-function runCommand(command, description) {
+// Improved command runner with better error handling
+function runCommand(command, description, options = {}) {
+  const { showOutput = false, timeout = 300000 } = options;
+  
   log(`\n🔄 ${description}...`, 'cyan');
+  
   try {
-    const output = execSync(command, { 
+    const output = execSync(command, {
       cwd: process.cwd(),
-      stdio: 'pipe',
-      encoding: 'utf8'
+      stdio: showOutput ? 'inherit' : 'pipe',
+      encoding: 'utf8',
+      timeout,
+      env: { ...process.env, FORCE_COLOR: colors.isSupported() ? '1' : '0' }
     });
+    
     log(`✅ ${description} completed successfully`, 'green');
-    return { success: true, output };
+    return { success: true, output: output?.trim() || '' };
   } catch (error) {
+    const errorMessage = error.stdout || error.stderr || error.message;
     log(`❌ ${description} failed:`, 'red');
-    log(error.stdout || error.message, 'red');
-    return { success: false, error };
+    
+    if (errorMessage) {
+      log(errorMessage, 'red');
+    }
+    
+    return { 
+      success: false, 
+      error,
+      message: errorMessage 
+    };
   }
 }
 
 function main() {
-  console.log(`${colors.magenta}🚀 KeyLo Development Toolkit${colors.reset}`);
-  console.log(`${colors.magenta}====================================${colors.reset}`);
+  console.log(colors.magenta('🚀 KeyLo Development Toolkit'));
+  console.log(colors.magenta('===================================='));
   
   const mode = process.argv[2] || 'check';
   
@@ -113,37 +207,29 @@ function main() {
     case 'help':
     default:
       console.log(`
-${colors.cyan}KeyLo Development Toolkit${colors.reset}
-
-Usage: node scripts/dev-toolkit.js [command]
+${colors.cyan('KeyLo Development Toolkit')}
+${colors.cyan('========================')}
+Usage: node dev-toolkit.js [command]
 
 Commands:
-  ${colors.green}check${colors.reset}    Run comprehensive code analysis (default)
-  ${colors.green}fix${colors.reset}      Apply automated fixes for common issues
-  ${colors.green}test${colors.reset}     Run TypeScript check and tests
-  ${colors.green}dev${colors.reset}      Start development server (after checks)
-  ${colors.green}help${colors.reset}     Show this help message
+  check  - Run comprehensive code analysis
+  fix    - Run automated fixes
+  test   - Run test suite
+  dev    - Start development environment
+  help   - Show this help message
 
 Examples:
-  ${colors.gray}node scripts/dev-toolkit.js check${colors.reset}    # Analyze code issues
-  ${colors.gray}node scripts/dev-toolkit.js fix${colors.reset}      # Fix issues automatically
-  ${colors.gray}node scripts/dev-toolkit.js dev${colors.reset}      # Start development
-
-NPM Scripts:
-  ${colors.gray}npm run dev:check${colors.reset}     # Same as 'check'
-  ${colors.gray}npm run dev:fix${colors.reset}       # Same as 'fix'
-  ${colors.gray}npm run dev:test${colors.reset}      # Same as 'test'
-  ${colors.gray}npm run dev:start${colors.reset}     # Same as 'dev'
-
-Individual Tools:
-  ${colors.gray}npm run fix-any:check${colors.reset}    # Check for 'any' issues only
-  ${colors.gray}npm run fix-any:fix${colors.reset}      # Fix 'any' issues only
-  ${colors.gray}npm run typecheck:strict${colors.reset} # Strict TypeScript check
+  node dev-toolkit.js check
+  node dev-toolkit.js fix
+  node dev-toolkit.js dev
       `);
       break;
   }
-  
-  log(`\n${colors.magenta}Done! 🎉${colors.reset}`);
 }
 
-main();
+// Run if called directly
+if (require.main === module) {
+  main();
+}
+
+module.exports = { colors, log, runCommand };

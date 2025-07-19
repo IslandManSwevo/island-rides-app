@@ -1,0 +1,107 @@
+services:
+  # Backend API
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - WS_PORT=3001
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/island_rides_dev
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - PAYPAL_CLIENT_ID=your-paypal-client-id
+      - PAYPAL_CLIENT_SECRET=your-paypal-client-secret
+      - PAYPAL_ENVIRONMENT=sandbox
+    volumes:
+      - ../backend:/app
+      - /app/node_modules
+      - backend_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - island-rides-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=island_rides_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - island-rides-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - island-rides-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Frontend React Native Web
+  frontend:
+    build:
+      context: ../IslandRidesApp
+      dockerfile: Dockerfile
+      args:
+        - CI=false
+    ports:
+      - "19006:19006"
+      - "19001:19001"
+      - "8081:8081"
+    environment:
+      - NODE_ENV=development
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
+      - EXPO_USE_FAST_RESOLVER=1
+      - EXPO_NO_DOTENV=1
+      - EXPO_PUBLIC_API_BASE_URL=http://localhost:3000
+      - EXPO_PUBLIC_WS_URL=ws://localhost:3001
+    volumes:
+      - ../IslandRidesApp:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - island-rides-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_uploads:
+
+networks:
+  island-rides-network:
+    driver: bridge

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, Component, ErrorInfo, ReactNode } from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { render, createMockNavigation, createMockRoute } from './test-utils';
 
@@ -6,7 +6,35 @@ import { render, createMockNavigation, createMockRoute } from './test-utils';
 // Copy this template and adapt it for your components
 
 // Placeholder component for template compilation
-import { View, Text, ActivityIndicator, Button } from 'react-native';
+import { View, Text, ActivityIndicator, Button, TextInput } from 'react-native';
+
+// Error Boundary Component
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(_: Error): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.log('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <Text>Something went wrong</Text>;
+    }
+
+    return this.props.children;
+  }
+}
 
 interface ComponentNameProps {
   title?: string;
@@ -14,7 +42,10 @@ interface ComponentNameProps {
   error?: string;
   disabled?: boolean;
   onSubmit?: () => void;
-  apiCall?: () => void;
+  onPress?: () => void;
+  onChangeText?: (text: string) => void;
+  apiCall?: () => Promise<void> | void;
+  data?: Array<{ id: number; name: string }>;
   navigation?: {
     navigate: (screen: string) => void;
     goBack: () => void;
@@ -22,20 +53,63 @@ interface ComponentNameProps {
 }
 
 function ComponentName(props: ComponentNameProps) {
+  const [isToggled, setIsToggled] = useState(false);
+  const [asyncData, setAsyncData] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [apiError, setApiError] = useState('');
+
+  const handleToggle = () => {
+    setIsToggled(true);
+  };
+
+  const handleAsyncAction = () => {
+    setTimeout(() => {
+      setAsyncData('Async Data Loaded');
+    }, 100);
+  };
+
+  const handleTextChange = (text: string) => {
+    setInputValue(text);
+    if (props.onChangeText) {
+      props.onChangeText(text);
+    }
+  };
+
+  const handleApiCall = async () => {
+    try {
+      setApiError('');
+      if (props.apiCall) {
+        await props.apiCall();
+      }
+    } catch (error) {
+      setApiError('Failed to load data');
+    }
+  };
+
   return <View testID="component-name" accessibilityLabel="Component Name" accessibilityState={{disabled: props.disabled}}>
     {props.title && <Text>{props.title}</Text>}
     {props.loading && <ActivityIndicator testID="loading-indicator" />}
     {props.error && <Text>{props.error}</Text>}
+    {apiError && <Text>{apiError}</Text>}
+    {isToggled && <Text>State Updated</Text>}
+    {asyncData && <Text>{asyncData}</Text>}
+    <TextInput
+      value={inputValue}
+      onChangeText={handleTextChange}
+      placeholder="Enter text"
+      testID="text-input"
+    />
     <Button title="Submit" onPress={props.onSubmit || (() => {})} />
+    <Button title="Press Me" onPress={props.onPress || (() => {})} role="button" />
     {props.navigation && (
       <>
         <Button title="Navigate" onPress={() => props.navigation?.navigate('DestinationScreen')} />
         <Button title="Back" onPress={() => props.navigation?.goBack()} />
       </>
     )}
-    <Button title="Toggle" onPress={() => {}} />
-    <Button title="Async Action" onPress={() => {}} />
-    <Button title="Load Data" onPress={props.apiCall || (() => {})} />
+    <Button title="Toggle" onPress={handleToggle} />
+    <Button title="Async Action" onPress={handleAsyncAction} />
+    <Button title="Load Data" onPress={handleApiCall} />
   </View>;
 }
 
@@ -104,9 +178,9 @@ describe('ComponentName', () => {
 
     it('handles text input', () => {
       const mockOnChangeText = jest.fn();
-      const { getByDisplayValue } = renderComponent({ onChangeText: mockOnChangeText });
+      const { getByTestId } = renderComponent({ onChangeText: mockOnChangeText });
       
-      fireEvent.changeText(getByDisplayValue(''), 'test input');
+      fireEvent.changeText(getByTestId('text-input'), 'test input');
       
       expect(mockOnChangeText).toHaveBeenCalledWith('test input');
     });
@@ -224,7 +298,11 @@ describe('ComponentName', () => {
         throw new Error('Component crashed');
       };
       
-      const { getByText } = render(<ThrowError />);
+      const { getByText } = render(
+        <ErrorBoundary>
+          <ThrowError />
+        </ErrorBoundary>
+      );
       
       expect(getByText(/something went wrong/i)).toBeTruthy();
     });
