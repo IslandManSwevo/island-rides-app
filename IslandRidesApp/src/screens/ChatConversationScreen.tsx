@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 // Alert is already imported in the react-native imports below
 import {
   View,
@@ -48,7 +48,7 @@ import { colors, spacing, borderRadius } from '../styles/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// Quick reply templates for car rental context
+// Quick reply templates for car rental context - memoized to prevent recreation
 const QUICK_REPLIES = [
   { id: 1, text: "👋 Hello! I'm interested in this vehicle", category: 'greeting' },
   { id: 2, text: "📅 What dates is it available?", category: 'availability' },
@@ -58,12 +58,12 @@ const QUICK_REPLIES = [
   { id: 6, text: "🆔 What documents do I need?", category: 'requirements' },
   { id: 7, text: "✅ Looks good! How do we proceed?", category: 'confirmation' },
   { id: 8, text: "🙏 Thank you for your time!", category: 'closing' },
-];
+] as const;
 
 // Navigation types
 type ChatConversationScreenProps = StackScreenProps<RootStackParamList, 'Chat'>;
 
-const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, navigation }) => {
+const ChatConversationScreen: React.FC<ChatConversationScreenProps> = React.memo(({ route, navigation }) => {
   const { currentUser: authUser } = useAuth();
   const { context, title: initialTitle } = route.params;
 
@@ -86,24 +86,28 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   // Refs for cleanup
   const isMountedRef = useRef(true);
 
-  /**
-   * Initialize conversation and chat connection
-   */
-  useEffect(() => {
-    initializeChat();
-    requestPermissions();
+  // Memoized current user to prevent recreation
+  const currentUser = useMemo(() => ({
+    _id: authUser?.id || 'anonymous',
+    name: authUser ? `${authUser.firstName} ${authUser.lastName}` : 'Anonymous',
+  }), [authUser?.id, authUser?.firstName, authUser?.lastName]);
 
-    // Cleanup on unmount
-    return () => {
-      isMountedRef.current = false;
-      cleanup();
-    };
-  }, [context]);
+  // Memoized header title
+  const headerTitle = useMemo(() => {
+    if (!conversationData || !context) return initialTitle || 'Chat';
+    
+    return initialTitle || 
+      conversationService.getConversationTitle(
+        context,
+        conversationData.participant,
+        conversationData.vehicle
+      );
+  }, [conversationData, initialTitle, context]);
 
   /**
-   * Request necessary permissions
+   * Request necessary permissions - memoized
    */
-  const requestPermissions = async () => {
+  const requestPermissions = useCallback(async () => {
     try {
       // Request microphone permission for voice messages
       const { status } = await Audio.requestPermissionsAsync();
@@ -123,64 +127,12 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
     } catch (error: unknown) {
       console.error('Error requesting permissions:', String(error));
     }
-  };
+  }, []);
 
   /**
-   * Set up navigation header
+   * Load message history from API - memoized
    */
-  useEffect(() => {
-    if (conversationData) {
-      const headerTitle = initialTitle || 
-        conversationService.getConversationTitle(
-          context,
-          conversationData.participant,
-          conversationData.vehicle
-        );
-
-      navigation.setOptions({
-        headerTitle: headerTitle,
-        headerTitleStyle: { fontSize: 16 },
-      });
-    }
-  }, [conversationData, initialTitle, context, navigation]);
-
-  /**
-   * Initialize chat system
-   */
-  const initializeChat = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      console.log('🚀 Initializing chat with context:', context);
-
-      // Step 1: Resolve conversation context
-      const resolvedConversation = await conversationService.resolveConversation(context);
-      
-      if (!isMountedRef.current) return;
-      
-      setConversationData(resolvedConversation);
-      console.log('✅ Conversation resolved:', resolvedConversation);
-
-      // Step 2: Load message history
-      await loadMessageHistory(resolvedConversation.conversationId);
-
-      // Step 3: Connect to chat server
-      await connectToChat(resolvedConversation.conversationId);
-
-    } catch (error: unknown) {
-      console.error('❌ Failed to initialize chat:', String(error));
-      if (isMountedRef.current) {
-        setError(error instanceof Error ? error.message : String(error));
-        setIsLoading(false);
-      }
-    }
-  };
-
-  /**
-   * Load message history from API
-   */
-  const loadMessageHistory = async (conversationId: number) => {
+  const loadMessageHistory = useCallback(async (conversationId: number) => {
     try {
       console.log('📚 Loading message history...');
       
@@ -198,99 +150,12 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       console.error('❌ Failed to load message history:', String(error));
       // Continue without history - not a critical error
     }
-  };
-
-  /**
-   * Connect to WebSocket chat server
-   */
-  const connectToChat = async (conversationId: number) => {
-    try {
-      setIsConnecting(true);
-      setConnectionStatus('connecting');
-
-      console.log('🔌 Connecting to chat server...');
-
-      // Connect to WebSocket
-      await chatService.connect();
-      
-      if (!isMountedRef.current) return;
-
-      // Join conversation room
-      await chatService.joinConversation(conversationId);
-      
-      if (!isMountedRef.current) return;
-
-      // Set up message listener
-      chatService.onMessage(handleNewMessage);
-      
-      // Set up connection listeners
-      chatService.onConnect(() => {
-        if (isMountedRef.current) {
-          setConnectionStatus('connected');
-        }
-      });
-
-      chatService.onDisconnect(() => {
-        if (isMountedRef.current) {
-          setConnectionStatus('disconnected');
-        }
-      });
-
-      chatService.onError((error: unknown) => {
-        if (isMountedRef.current) {
-          console.error('❌ Chat error:', String(error));
-          setError(String(error));
-        }
-      });
-
-      setConnectionStatus('connected');
-      console.log('✅ Connected to chat server');
-
-    } catch (error: unknown) {
-      console.error('❌ Failed to connect to chat:', String(error));
-      if (isMountedRef.current) {
-        setError(error instanceof Error ? error.message : 'Failed to connect to chat');
-        setConnectionStatus('disconnected');
-      }
-    } finally {
-      if (isMountedRef.current) {
-        setIsConnecting(false);
-        setIsLoading(false);
-      }
-    }
-  };
-
-  /**
-   * Handle new incoming messages
-   */
-  const handleNewMessage = useCallback((message: ChatMessage) => {
-    if (!isMountedRef.current) return;
-
-    console.log('📨 New message received:', message);
-    
-    // Show notification if message is from other user and app is not focused
-    if (message.user._id !== getCurrentUser()._id) {
-      notificationService.info(`${message.user.name}: ${message.text}`, {
-        title: 'New Message',
-        duration: 3000,
-        action: {
-          label: 'Reply',
-          handler: () => {} // Already in chat screen
-        }
-      });
-    }
-    
-    const giftedMessage = transformToGiftedMessage(message);
-    
-    setMessages(previousMessages => 
-      GiftedChat.append(previousMessages, [giftedMessage])
-    );
   }, []);
 
   /**
-   * Transform ChatMessage to GiftedChat IMessage format
+   * Transform ChatMessage to GiftedChat IMessage format - memoized
    */
-  const transformToGiftedMessage = (chatMessage: ChatMessage): IMessage => {
+  const transformToGiftedMessage = useCallback((chatMessage: ChatMessage): IMessage => {
     const baseMessage: IMessage = {
       _id: chatMessage._id,
       text: chatMessage.text,
@@ -313,7 +178,34 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
     }
 
     return baseMessage;
-  };
+  }, []);
+
+  /**
+   * Handle new incoming messages - optimized
+   */
+  const handleNewMessage = useCallback((message: ChatMessage) => {
+    if (!isMountedRef.current) return;
+
+    console.log('📨 New message received:', message);
+    
+    // Show notification if message is from other user and app is not focused
+    if (message.user._id !== currentUser._id) {
+      notificationService.info(`${message.user.name}: ${message.text}`, {
+        title: 'New Message',
+        duration: 3000,
+        action: {
+          label: 'Reply',
+          handler: () => {} // Already in chat screen
+        }
+      });
+    }
+    
+    const giftedMessage = transformToGiftedMessage(message);
+    
+    setMessages(previousMessages => 
+      GiftedChat.append(previousMessages, [giftedMessage])
+    );
+  }, [currentUser._id, transformToGiftedMessage]);
 
   /**
    * Handle sending messages
@@ -373,7 +265,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
   /**
    * Handle quick reply selection
    */
-  const handleQuickReply = (reply: typeof QUICK_REPLIES[0]) => {
+  const handleQuickReply = (reply: { id: number; text: string; category: string }) => {
     const message: IMessage = {
       _id: Math.round(Math.random() * 1000000),
       text: reply.text,
@@ -520,6 +412,94 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       name: `${authUser.firstName} ${authUser.lastName}`,
     };
   };
+
+  /**
+   * Initialize chat connection and load conversation
+   */
+  const initializeChat = useCallback(async () => {
+    if (!context) {
+      setError('Invalid conversation context');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setIsConnecting(true);
+      setError(null);
+
+      console.log('🚀 Initializing chat...', context);
+
+      // Load or create conversation
+      const conversation = await conversationService.resolveConversation(context);
+      
+      if (!isMountedRef.current) return;
+      
+      setConversationData(conversation);
+
+      // Load message history
+      if (conversation.conversationId) {
+        await loadMessageHistory(conversation.conversationId);
+      }
+
+      // Connect to chat service
+      await chatService.connect();
+      
+      // Join the conversation
+      if (conversation.conversationId) {
+        await chatService.joinConversation(conversation.conversationId);
+      }
+
+      // Set up message callback
+      chatService.onMessage(handleNewMessage);
+      chatService.onConnect(() => {
+        if (isMountedRef.current) {
+          setConnectionStatus('connected');
+          setIsConnecting(false);
+        }
+      });
+      chatService.onDisconnect(() => {
+        if (isMountedRef.current) {
+          setConnectionStatus('disconnected');
+          setIsConnecting(false);
+        }
+      });
+      chatService.onError((error: string) => {
+        if (isMountedRef.current) {
+          console.error('❌ Chat connection error:', error);
+          setError('Connection failed. Please check your internet connection.');
+          setConnectionStatus('disconnected');
+          setIsConnecting(false);
+        }
+      });
+
+      setIsLoading(false);
+      console.log('✅ Chat initialized successfully');
+
+    } catch (error: any) {
+      console.error('❌ Failed to initialize chat:', error);
+      
+      if (isMountedRef.current) {
+        setError(error.message || 'Failed to initialize chat');
+        setIsLoading(false);
+        setIsConnecting(false);
+        setConnectionStatus('disconnected');
+      }
+    }
+  }, [context, loadMessageHistory, handleNewMessage]);
+
+  /**
+   * Initialize chat on mount
+   */
+  useEffect(() => {
+    initializeChat();
+    requestPermissions();
+
+    return () => {
+      isMountedRef.current = false;
+      cleanup();
+    };
+  }, [initializeChat, requestPermissions]);
 
   /**
    * Cleanup function
@@ -782,7 +762,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
       
       <AppHeader 
-        title={conversationData ? 
+        title={conversationData && context ? 
           conversationService.getConversationTitle(
             context,
             conversationData.participant,
@@ -828,7 +808,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       )}
     </SafeAreaView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -993,26 +973,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     marginRight: spacing.sm,
   },
-     recordingText: {
-     color: colors.white,
-     fontSize: 14,
-     fontWeight: '600',
-   },
-   // Audio Message Styles
-   audioMessage: {
-     flexDirection: 'row',
-     alignItems: 'center',
-     padding: spacing.md,
-     backgroundColor: colors.offWhite,
-     borderRadius: borderRadius.md,
-     margin: spacing.sm,
-   },
-   audioText: {
-     marginLeft: spacing.sm,
-     fontSize: 16,
-     color: colors.darkGrey,
-     fontWeight: '500',
-   },
- });
+  recordingText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Audio Message Styles
+  audioMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.offWhite,
+    borderRadius: borderRadius.md,
+    margin: spacing.sm,
+  },
+  audioText: {
+    marginLeft: spacing.sm,
+    fontSize: 16,
+    color: colors.darkGrey,
+    fontWeight: '500',
+  },
+});
 
 export default ChatConversationScreen;

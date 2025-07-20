@@ -100,7 +100,7 @@ function ComponentName(props: ComponentNameProps) {
       testID="text-input"
     />
     <Button title="Submit" onPress={props.onSubmit || (() => {})} />
-    <Button title="Press Me" onPress={props.onPress || (() => {})} role="button" />
+    <Button title="Press Me" onPress={props.onPress || (() => {})} />
     {props.navigation && (
       <>
         <Button title="Navigate" onPress={() => props.navigation?.navigate('DestinationScreen')} />

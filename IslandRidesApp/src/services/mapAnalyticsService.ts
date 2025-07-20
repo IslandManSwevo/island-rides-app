@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { VehicleRecommendation, Island, SearchFilters } from '../types';
+import { loggingService } from './LoggingService';
 
 export interface MapInteraction {
   id: string;
@@ -24,7 +25,7 @@ export interface MapSession {
   endTime?: Date;
   totalInteractions: number;
   vehiclesViewed: string[];
-  searchFilters?: any;
+  searchFilters?: SearchFilters;
   userLocation?: {
     latitude: number;
     longitude: number;
@@ -83,7 +84,7 @@ class MapAnalyticsService {
 
       return sessionId;
     } catch (error) {
-      console.error('Failed to start map session:', error);
+      loggingService.error('Failed to start map session', error instanceof Error ? error : undefined);
       return this.generateId();
     }
   }
@@ -105,7 +106,7 @@ class MapAnalyticsService {
       
       this.currentSessionId = null;
     } catch (error) {
-      console.error('Failed to end map session:', error);
+      loggingService.error('Failed to end map session', error instanceof Error ? error : undefined);
     }
   }
 
@@ -129,7 +130,7 @@ class MapAnalyticsService {
       // Update current session
       await this.updateCurrentSession(fullInteraction);
     } catch (error) {
-      console.error('Failed to track map interaction:', error);
+      loggingService.error('Failed to track map interaction', error instanceof Error ? error : undefined);
     }
   }
 
@@ -177,7 +178,7 @@ class MapAnalyticsService {
     });
   }
 
-  async trackFilterChange(filters: any, island: Island): Promise<void> {
+  async trackFilterChange(filters: SearchFilters, island: Island): Promise<void> {
     await this.trackInteraction({
       type: 'filter_change',
       island,
@@ -218,7 +219,7 @@ class MapAnalyticsService {
         userBehavior: this.calculateUserBehavior(filteredSessions, filteredInteractions)
       };
     } catch (error) {
-      console.error('Failed to get map analytics:', error);
+      loggingService.error('Failed to get map analytics', error instanceof Error ? error : undefined);
       return this.getEmptyAnalytics();
     }
   }
@@ -231,7 +232,7 @@ class MapAnalyticsService {
         return session.id;
       }
     } catch (error) {
-      console.error('Failed to get current session ID:', error);
+      loggingService.error('Failed to get current session ID', error instanceof Error ? error : undefined);
     }
     return this.generateId();
   }
@@ -250,7 +251,7 @@ class MapAnalyticsService {
 
       await AsyncStorage.setItem(this.STORAGE_KEYS.CURRENT_SESSION, JSON.stringify(session));
     } catch (error) {
-      console.error('Failed to update current session:', error);
+      loggingService.error('Failed to update current session', error instanceof Error ? error : undefined);
     }
   }
 
@@ -264,7 +265,7 @@ class MapAnalyticsService {
         timestamp: new Date(interaction.timestamp)
       }));
     } catch (error) {
-      console.error('Failed to get interactions:', error);
+      loggingService.error('Failed to get interactions', error instanceof Error ? error : undefined);
       return [];
     }
   }
@@ -280,7 +281,7 @@ class MapAnalyticsService {
         endTime: session.endTime ? new Date(session.endTime) : undefined
       }));
     } catch (error) {
-      console.error('Failed to get sessions:', error);
+      loggingService.error('Failed to get sessions', error instanceof Error ? error : undefined);
       return [];
     }
   }
@@ -408,7 +409,7 @@ class MapAnalyticsService {
       ]);
       this.currentSessionId = null;
     } catch (error) {
-      console.error('Failed to clear map analytics:', error);
+      loggingService.error('Failed to clear map analytics', error instanceof Error ? error : undefined);
     }
   }
 
@@ -445,7 +446,7 @@ class MapAnalyticsService {
         topIslands
       };
     } catch (error) {
-      console.error('Failed to get session summary:', error);
+      loggingService.error('Failed to get session summary', error instanceof Error ? error : undefined);
       return {
         totalSessions: 0,
         totalInteractions: 0,

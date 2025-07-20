@@ -84,7 +84,7 @@ export class PaymentRetryStrategy implements RecoveryStrategy {
   private static retryCounts = new Map<string, number>();
 
   private getErrorId(error: BusinessLogicError): string | undefined {
-    return error.meta?.paymentId || error.meta?.transactionId;
+    return (error.meta?.paymentId as string | undefined) || (error.meta?.transactionId as string | undefined);
   }
 
   canRecover(error: BusinessLogicError): boolean {

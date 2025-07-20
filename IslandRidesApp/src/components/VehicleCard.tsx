@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
@@ -15,30 +15,41 @@ interface VehicleCardProps {
   compact?: boolean;
 }
 
-export const VehicleCard: React.FC<VehicleCardProps> = ({ 
+export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({ 
   vehicle, 
   onPress, 
   showAdvancedInfo = true,
   compact = false 
 }) => {
-  const primaryPhoto = vehicle.photos?.find(p => p.isPrimary) || vehicle.photos?.[0];
-  const isPremium = vehicleFeatureService.isPremiumVehicle(vehicle);
-  const conditionText = vehicle.conditionRating ? vehicleFeatureService.getVehicleConditionText(vehicle.conditionRating) : null;
+  const primaryPhoto = useMemo(() => 
+    vehicle.photos?.find(p => p.isPrimary) || vehicle.photos?.[0], 
+    [vehicle.photos]
+  );
+  
+  const isPremium = useMemo(() => 
+    vehicleFeatureService.isPremiumVehicle(vehicle), 
+    [vehicle]
+  );
+  
+  const conditionText = useMemo(() => 
+    vehicle.conditionRating ? vehicleFeatureService.getVehicleConditionText(vehicle.conditionRating) : null,
+    [vehicle.conditionRating]
+  );
 
-  const getFuelIcon = (fuelType?: string) => {
+  const getFuelIcon = useCallback((fuelType?: string) => {
     switch (fuelType) {
       case 'electric': return '⚡';
       case 'hybrid': return '🔋';
       case 'diesel': return '🛢️';
       default: return '⛽';
     }
-  };
+  }, []);
 
-  const getTransmissionIcon = (transmissionType?: string) => {
+  const getTransmissionIcon = useCallback((transmissionType?: string) => {
     return transmissionType === 'manual' ? '🚗' : '⚙️';
-  };
+  }, []);
 
-  const renderRatingStars = (rating: number) => {
+  const renderRatingStars = useCallback((rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
@@ -48,7 +59,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
       );
     }
     return stars;
-  };
+  }, []);
 
   return (
     <GluestackCard
@@ -234,7 +245,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
       </View>
     </GluestackCard>
   );
-};
+});
 
 const styles = StyleSheet.create({
   // Removed card styles - now handled by StandardCard

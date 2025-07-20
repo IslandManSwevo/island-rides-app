@@ -1,3 +1,4 @@
+import React from 'react';
 import { TextInput, Text, View, StyleSheet } from 'react-native';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 
@@ -12,7 +13,7 @@ interface InputProps {
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
 }
 
-export const Input: React.FC<InputProps> = ({
+export const Input: React.FC<InputProps> = React.memo(({
   label,
   value,
   onChangeText,
@@ -38,7 +39,7 @@ export const Input: React.FC<InputProps> = ({
       {error && <Text style={styles.errorText} accessibilityLiveRegion="polite">{error}</Text>}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

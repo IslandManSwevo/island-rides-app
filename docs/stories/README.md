@@ -14,6 +14,24 @@ This epic focuses on implementing foundational verification systems, island-awar
 | [1.4](./1.4.verified-host-storefront.md) | Verified Host Storefront | Draft | Medium |
 | [1.5](./1.5.pro-host-dashboard.md) | Pro Host Dashboard (Pro Mode) | Draft | Low |
 
+## Epic 2: Advanced Search Intelligence
+
+| Story ID | Title | Status | Priority |
+|----------|-------|--------|----------|
+| [2.1](./2.1.intelligent-island-based-search.md) | Intelligent Island-Based Search | Draft | Medium |
+
+## Epic 3: Brand Transition & Platform Updates
+
+| Story ID | Title | Status | Priority |
+|----------|-------|--------|----------|
+| [3.1](./3.1.keylo-brand-transition.md) | KeyLo Brand Transition | Draft | Medium |
+
+## Epic 4: Production Readiness
+
+| Story ID | Title | Status | Priority |
+|----------|-------|--------|----------|
+| [4.1](./4.1.pre-release-bug-fixing.md) | Pre-Release Bug Fixing and App Polish | Ready for Implementation | Critical |
+
 ### Epic Goals
 
 **Primary Objectives:**

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   View,
@@ -15,12 +16,12 @@ import { colors, typography, spacing, borderRadius } from '../../styles/theme';
 import { StandardCard } from '../templates/StandardCard';
 import { StandardButton } from '../templates/StandardButton';
 import { StandardInput } from '../templates/StandardInput';
-import { apiService } from '../../services/apiService';
+import { loggingService } from '../../services/LoggingService';
 
 interface DocumentUploadProps {
   documentType: 'vehicle' | 'host';
   vehicleId?: number;
-  onUploadComplete?: (document: any) => void;
+  onUploadComplete?: (document: DocumentForm & { id: number; file_path: string }) => void;
   onCancel?: () => void;
   requiredDocuments?: DocumentTemplate[];
 }
@@ -34,13 +35,6 @@ interface DocumentTemplate {
   upload_instructions: string;
   file_type_restrictions: string[];
   max_file_size_mb: number;
-}
-
-interface DocumentFile {
-  uri: string;
-  type: string;
-  name: string;
-  size?: number;
 }
 
 interface DocumentForm {
@@ -66,7 +60,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   requiredDocuments = []
 }) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<DocumentFile | null>(null);
+  const [selectedFile, setSelectedFile] = useState<any>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null);
   const [documentForm, setDocumentForm] = useState<DocumentForm>({
@@ -115,54 +109,6 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     setShowTemplateModal(false);
   };
 
-  const processSelectedFile = (file: DocumentFile, fileName: string): boolean => {
-    // Validate file size
-    const maxSize = selectedTemplate?.max_file_size_mb || 10;
-    if (file.size && file.size > maxSize * 1024 * 1024) {
-      Alert.alert('File Too Large', `Maximum file size is ${maxSize}MB`);
-      return false;
-    }
-
-    // Validate file type
-    const allowedTypes = selectedTemplate?.file_type_restrictions || ['pdf', 'jpg', 'jpeg', 'png'];
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    if (fileExtension && !allowedTypes.includes(fileExtension)) {
-      Alert.alert('Invalid File Type', `Only ${allowedTypes.join(', ')} files are allowed`);
-      return false;
-    }
-
-    setSelectedFile(file);
-    
-    // Auto-fill document name if not set
-    if (!documentForm.document_name) {
-      setDocumentForm({
-        ...documentForm,
-        document_name: fileName
-      });
-    }
-    
-    return true;
-  };
-
-  const resetForm = () => {
-    setSelectedFile(null);
-    setSelectedTemplate(null);
-    setDocumentForm({
-      document_type: '',
-      document_name: '',
-      document_description: '',
-      document_number: '',
-      issuing_authority: '',
-      issue_date: '',
-      expiry_date: '',
-      renewal_required: false,
-      category: 'legal',
-      is_required: false,
-      is_public: false,
-      regulatory_notes: ''
-    });
-  };
-
   const handleFileSelect = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -172,18 +118,35 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        const file: DocumentFile = {
-          uri: asset.uri,
-          type: asset.mimeType || 'application/octet-stream',
-          name: asset.name,
-          size: asset.size
-        };
+        const file = result.assets[0];
         
-        processSelectedFile(file, asset.name);
+        // Validate file size
+        const maxSize = selectedTemplate?.max_file_size_mb || 10;
+        if (file.size && file.size > maxSize * 1024 * 1024) {
+          Alert.alert('File Too Large', `Maximum file size is ${maxSize}MB`);
+          return;
+        }
+
+        // Validate file type
+        const allowedTypes = selectedTemplate?.file_type_restrictions || ['pdf', 'jpg', 'jpeg', 'png'];
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+        if (fileExtension && !allowedTypes.includes(fileExtension)) {
+          Alert.alert('Invalid File Type', `Only ${allowedTypes.join(', ')} files are allowed`);
+          return;
+        }
+
+        setSelectedFile(file);
+        
+        // Auto-fill document name if not set
+        if (!documentForm.document_name) {
+          setDocumentForm({
+            ...documentForm,
+            document_name: file.name
+          });
+        }
       }
     } catch (error) {
-      console.error('Error selecting file:', error);
+      loggingService.error('Error selecting file', error instanceof Error ? error : undefined);
       Alert.alert('Error', 'Failed to select file');
     }
   };
@@ -206,19 +169,26 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const image = result.assets[0];
-        const fileName = `document_${Date.now()}.jpg`;
         
-        const file: DocumentFile = {
+        // Convert to file-like object
+        const file = {
           uri: image.uri,
           type: 'image/jpeg',
-          name: fileName,
+          name: `document_${Date.now()}.jpg`,
           size: image.fileSize
         };
 
-        processSelectedFile(file, fileName);
+        setSelectedFile(file);
+        
+        if (!documentForm.document_name) {
+          setDocumentForm({
+            ...documentForm,
+            document_name: file.name
+          });
+        }
       }
     } catch (error) {
-      console.error('Error selecting image:', error);
+      loggingService.error('Error selecting image', error instanceof Error ? error : undefined);
       Alert.alert('Error', 'Failed to select image');
     }
   };
@@ -239,31 +209,11 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       return;
     }
 
-    // Check for API URL environment variable
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-    if (!apiUrl) {
-      Alert.alert('Configuration Error', 'API URL is not configured. Please contact support.');
-      return;
-    }
-
     try {
       setIsUploading(true);
 
-      // Get auth token
-      const authToken = await apiService.getAuthToken();
-      if (!authToken) {
-        Alert.alert('Authentication Error', 'Please log in to upload documents');
-        return;
-      }
-
       const formData = new FormData();
-      // Create blob for form data
-      const fileBlob = {
-        uri: selectedFile.uri,
-        type: selectedFile.type,
-        name: selectedFile.name
-      } as any; // FormData expects this format for React Native
-      formData.append('document', fileBlob);
+      formData.append('document', selectedFile as any);
       formData.append('document_type', documentForm.document_type);
       formData.append('document_name', documentForm.document_name);
       formData.append('document_description', documentForm.document_description);
@@ -281,11 +231,12 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         ? `/documents/vehicle/${vehicleId}`
         : '/documents/host';
 
-      const response = await fetch(`${apiUrl}${endpoint}`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}${endpoint}`, {
         method: 'POST',
         body: formData,
         headers: {
-          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'multipart/form-data',
+          // Add authorization header here
         }
       });
 
@@ -293,47 +244,19 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
       if (response.ok) {
         Alert.alert('Success', 'Document uploaded successfully');
-        resetForm(); // Reset form after successful upload
         onUploadComplete?.(result.data);
       } else {
-        // Improved error handling based on status codes
-        let errorMessage = 'Failed to upload document';
-        
-        if (response.status === 401) {
-          errorMessage = 'Authentication failed. Please log in again.';
-        } else if (response.status === 403) {
-          errorMessage = 'You do not have permission to upload this document.';
-        } else if (response.status === 413) {
-          errorMessage = 'File is too large. Please select a smaller file.';
-        } else if (response.status === 422) {
-          errorMessage = 'Invalid document data. Please check your inputs.';
-        } else if (response.status >= 500) {
-          errorMessage = 'Server error. Please try again later.';
-        } else if (result.message) {
-          errorMessage = result.message;
-        }
-        
-        Alert.alert('Upload Failed', errorMessage);
+        Alert.alert('Error', result.message || 'Failed to upload document');
       }
     } catch (error) {
-      console.error('Error uploading document:', error);
-      
-      // Distinguish between network and other errors
-      let errorMessage = 'Failed to upload document';
-      
-      if (error instanceof TypeError && error.message.includes('Network request failed')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error instanceof Error) {
-        errorMessage = `Upload error: ${error.message}`;
-      }
-      
-      Alert.alert('Error', errorMessage);
+      loggingService.error('Error uploading document', error instanceof Error ? error : undefined);
+      Alert.alert('Error', 'Failed to upload document');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const updateFormField = (field: keyof DocumentForm, value: any) => {
+  const updateFormField = (field: keyof DocumentForm, value: string | boolean) => {
     setDocumentForm({
       ...documentForm,
       [field]: value

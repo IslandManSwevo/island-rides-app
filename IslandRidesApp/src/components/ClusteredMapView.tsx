@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -36,7 +36,7 @@ interface ClusteredMapViewProps {
   style?: ViewStyle;
 }
 
-export const ClusteredMapView: React.FC<ClusteredMapViewProps> = ({
+export const ClusteredMapView: React.FC<ClusteredMapViewProps> = React.memo(({
   vehicles,
   island,
   onVehiclePress,
@@ -62,29 +62,30 @@ export const ClusteredMapView: React.FC<ClusteredMapViewProps> = ({
     return createClusters(vehicles, region, mapDimensions, clusterRadius, minClusterSize);
   }, [vehicles, region, mapDimensions, clusterRadius, minClusterSize, isMapReady]);
 
-  useEffect(() => {
-    const newRegion = getIslandRegion(island);
-    setRegion(newRegion);
-    if (isMapReady && mapRef.current) {
-      mapRef.current.animateToRegion(newRegion, 1000);
-    }
-  }, [island, isMapReady]);
+  // Memoize island region calculation
+  const islandRegion = useMemo(() => getIslandRegion(island), [island]);
 
-  const handleRegionChangeComplete = (newRegion: Region) => {
+  const handleRegionChangeComplete = useCallback((newRegion: Region) => {
     setRegion(newRegion);
     onRegionChange?.(newRegion);
-  };
+  }, [onRegionChange]);
 
-  const handleMapReady = () => {
+  const handleMapReady = useCallback(() => {
     setIsMapReady(true);
-  };
+  }, []);
 
-  const handleLayout = (event: NativeSyntheticEvent<any>) => {
+  const handleLayout = useCallback((event: NativeSyntheticEvent<any>) => {
     const { width, height } = event.nativeEvent.layout;
     setMapDimensions({ width, height });
-  };
+  }, []);
 
-  const renderClusterMarker = (cluster: VehicleCluster) => {
+  const handleMyLocationPress = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(islandRegion, 1000);
+    }
+  }, [islandRegion]);
+
+  const renderClusterMarker = useCallback((cluster: VehicleCluster) => {
     if (cluster.isCluster) {
       return (
         <Marker
@@ -158,9 +159,9 @@ export const ClusteredMapView: React.FC<ClusteredMapViewProps> = ({
         </Marker>
       );
     }
-  };
+  }, [onVehiclePress, onClusterPress]);
 
-  const renderAvailabilityIndicator = () => {
+  const renderAvailabilityIndicator = useCallback(() => {
     const availableCount = vehicles.filter(v => v.vehicle.available !== false).length;
     const totalCount = vehicles.length;
     
@@ -195,7 +196,14 @@ export const ClusteredMapView: React.FC<ClusteredMapViewProps> = ({
         </View>
       </View>
     );
-  };
+  }, [vehicles]);
+
+  useEffect(() => {
+    setRegion(islandRegion);
+    if (isMapReady && mapRef.current) {
+      mapRef.current.animateToRegion(islandRegion, 1000);
+    }
+  }, [islandRegion, isMapReady]);
 
   return (
     <View style={[styles.container, style]} onLayout={handleLayout}>
@@ -218,17 +226,13 @@ export const ClusteredMapView: React.FC<ClusteredMapViewProps> = ({
       
       <TouchableOpacity
         style={styles.myLocationButton}
-        onPress={() => {
-          if (mapRef.current) {
-            mapRef.current.animateToRegion(getIslandRegion(island), 1000);
-          }
-        }}
+        onPress={handleMyLocationPress}
       >
         <Ionicons name="location" size={20} color={colors.primary} />
       </TouchableOpacity>
     </View>
   );
-};
+});
 
 // Helper functions
 function getIslandRegion(island: Island): Region {

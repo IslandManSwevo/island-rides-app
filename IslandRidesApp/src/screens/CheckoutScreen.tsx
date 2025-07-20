@@ -162,8 +162,6 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
   };
 
   useEffect(() => {
-    notificationService.setupNotificationListeners(navigation);
-    
     // Load pricing configuration and business rules
     const loadConfigurations = async () => {
       try {

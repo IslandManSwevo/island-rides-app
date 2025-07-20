@@ -5,6 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { Vehicle, VehicleRecommendation, Island } from '../types';
 import { ClusteredMapView } from './ClusteredMapView';
 
+interface VehicleCluster {
+  id: string;
+  latitude: number;
+  longitude: number;
+  vehicles: VehicleRecommendation[];
+  count: number;
+  isCluster: boolean;
+}
+
 const { width, height } = Dimensions.get('window');
 
 interface MapViewProps {
@@ -57,7 +66,7 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
     handleMarkerPress(vehicle);
   };
 
-  const handleClusterPress = (cluster: any) => {
+  const handleClusterPress = (cluster: VehicleCluster) => {
     if (mapRef.current) {
       const coordinates = cluster.vehicles.map((v: VehicleRecommendation) => ({
         latitude: v.vehicle.latitude || 0,

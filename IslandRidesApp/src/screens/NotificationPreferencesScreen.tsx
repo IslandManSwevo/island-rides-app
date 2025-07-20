@@ -110,7 +110,7 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
       setLoading(true);
       const prefs = await notificationService.getNotificationPreferences();
       if (prefs) {
-        setPreferences(prefs);
+        setPreferences(prefs as NotificationPreferences);
       }
     } catch (error: unknown) {
       console.error('Error fetching preferences:', String(error));

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TouchableOpacity, Animated, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiService } from '../services/apiService';
@@ -15,7 +15,7 @@ interface FavoriteButtonProps {
   onToggle?: (isFavorited: boolean) => void;
 }
 
-export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
+export const FavoriteButton: React.FC<FavoriteButtonProps> = React.memo(({
   vehicleId,
   size = 24,
   style,
@@ -24,8 +24,9 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   const [isFavorited, setIsFavorited] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
-  const scaleAnim = new Animated.Value(1);
-  const pulseAnim = new Animated.Value(1);
+  
+  const scaleAnim = useMemo(() => new Animated.Value(1), []);
+  const pulseAnim = useMemo(() => new Animated.Value(1), []);
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
@@ -43,7 +44,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     checkFavoriteStatus();
   }, [vehicleId]);
 
-  const animatePress = () => {
+  const animatePress = useCallback(() => {
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 0.8,
@@ -61,9 +62,9 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         useNativeDriver: true
       })
     ]).start();
-  };
+  }, [scaleAnim]);
 
-  const animateSuccess = () => {
+  const animateSuccess = useCallback(() => {
     Animated.sequence([
       Animated.timing(pulseAnim, {
         toValue: 1.3,
@@ -76,9 +77,9 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         useNativeDriver: true
       })
     ]).start();
-  };
+  }, [pulseAnim]);
 
-  const toggleFavorite = async () => {
+  const toggleFavorite = useCallback(async () => {
     if (loading || checking) return;
 
     animatePress();
@@ -138,13 +139,33 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading, checking, animatePress, isFavorited, vehicleId, onToggle, animateSuccess]);
+
+  const accessibilityLabel = useMemo(() => 
+    isFavorited ? 'Remove from favorites' : 'Add to favorites',
+    [isFavorited]
+  );
+
+  const iconName = useMemo(() => 
+    isFavorited ? 'heart' : 'heart-outline',
+    [isFavorited]
+  );
+
+  const iconColor = useMemo(() => 
+    isFavorited ? colors.error : colors.darkGrey,
+    [isFavorited]
+  );
+
+  const activityIndicatorSize = useMemo(() => 
+    size > 20 ? 'small' : size,
+    [size]
+  );
 
   // Show loading spinner while checking initial status
   if (checking) {
     return (
       <TouchableOpacity style={style} disabled>
-        <ActivityIndicator size={size > 20 ? 'small' : size} color={colors.primary} />
+        <ActivityIndicator size={activityIndicatorSize} color={colors.primary} />
       </TouchableOpacity>
     );
   }
@@ -155,7 +176,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       style={style}
       disabled={loading}
       activeOpacity={0.7}
-      accessibilityLabel={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+      accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
     >
       <Animated.View 
@@ -167,15 +188,15 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         }}
       >
         {loading ? (
-          <ActivityIndicator size={size > 20 ? 'small' : size} color={colors.primary} />
+          <ActivityIndicator size={activityIndicatorSize} color={colors.primary} />
         ) : (
           <Ionicons
-            name={isFavorited ? 'heart' : 'heart-outline'}
+            name={iconName}
             size={size}
-            color={isFavorited ? colors.error : colors.darkGrey}
+            color={iconColor}
           />
         )}
       </Animated.View>
     </TouchableOpacity>
   );
-};
+});

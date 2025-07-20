@@ -8,6 +8,15 @@ const STORAGE_KEYS = {
   REMEMBER_EMAIL: '@auth/remember_email',
 } as const;
 
+// Define a concrete user type for stronger typing
+interface AuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  role?: string;
+  // Add other user properties as needed
+}
+
 export const authStorage = {
   /**
    * Store access token
@@ -40,14 +49,17 @@ export const authStorage = {
   /**
    * Store user data
    */
-  setUserData: async (userData: object): Promise<void> => {
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+  setUserData: async (userData: AuthUser): Promise<void> => {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.USER_DATA,
+      JSON.stringify(userData)
+    );
   },
 
   /**
    * Get user data
    */
-  getUserData: async (): Promise<object | null> => {
+  getUserData: async (): Promise<AuthUser | null> => {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
     return data ? JSON.parse(data) : null;
   },
@@ -121,7 +133,7 @@ export const authStorage = {
   getAllAuthData: async (): Promise<{
     accessToken: string | null;
     refreshToken: string | null;
-    userData: object | null;
+    userData: AuthUser | null;
     lastLogin: number | null;
     rememberedEmail: string | null;
   }> => {
@@ -148,7 +160,7 @@ export const authStorage = {
   setAuthSession: async (data: {
     accessToken: string;
     refreshToken: string;
-    userData: object;
+    userData: AuthUser;
     rememberEmail?: boolean;
     email?: string;
   }): Promise<void> => {
@@ -168,3 +180,5 @@ export const authStorage = {
     }
   },
 };
+
+export type { AuthUser };

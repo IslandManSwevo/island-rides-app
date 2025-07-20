@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -63,12 +63,13 @@ interface SearchFilters {
   sortBy: 'popularity' | 'price_low' | 'price_high' | 'rating' | 'newest' | 'condition';
 }
 
-export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
+export const SearchScreen: React.FC<SearchScreenProps> = React.memo(({ navigation, route }) => {
   const { getMetrics, resetMetrics } = usePerformanceMonitoring('SearchScreen', {
     slowRenderThreshold: 16,
     enableLogging: __DEV__,
     trackMemory: true,
   });
+
   const { island } = (route.params as any) || {};
   
   const [filters, setFilters] = useState<SearchFilters>({
@@ -103,6 +104,23 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
   const [availableFeatures, setAvailableFeatures] = useState<VehicleFeature[]>([]);
   const [featureCategories, setFeatureCategories] = useState<VehicleFeatureCategory[]>([]);
   const [loadingFeatures, setLoadingFeatures] = useState(false);
+
+  const loadAvailableFeatures = useCallback(async () => {
+    try {
+      setLoadingFeatures(true);
+      const [featuresResponse, categories] = await Promise.all([
+        vehicleFeatureService.getVehicleFeatures(),
+        vehicleFeatureService.getFeatureCategories()
+      ]);
+      setAvailableFeatures(featuresResponse.features);
+      setFeatureCategories(categories);
+    } catch (error) {
+      console.error('Failed to load features:', error);
+      notificationService.error('Failed to load vehicle features');
+    } finally {
+      setLoadingFeatures(false);
+    }
+  }, []);
 
   useEffect(() => {
     const loadPersistedFilters = async () => {
@@ -164,31 +182,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
     saveFilters();
   }, [filters]);
 
-  useEffect(() => {
-    loadAvailableFeatures();
-    if (island) {
-      performSearch();
-    }
-  }, []);
-
-  const loadAvailableFeatures = async () => {
-    try {
-      setLoadingFeatures(true);
-      const [featuresResponse, categories] = await Promise.all([
-        vehicleFeatureService.getVehicleFeatures(),
-        vehicleFeatureService.getFeatureCategories()
-      ]);
-      setAvailableFeatures(featuresResponse.features);
-      setFeatureCategories(categories);
-    } catch (error) {
-      console.error('Failed to load features:', error);
-      notificationService.error('Failed to load vehicle features');
-    } finally {
-      setLoadingFeatures(false);
-    }
-  };
-
-  const performSearch = async () => {
+  const performSearch = useCallback(async () => {
     try {
       setLoading(true);
       setHasSearched(true);
@@ -237,13 +231,20 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
     } finally {
       setLoading(false);
     }
-  };
+  }, [showAllIslands, filters]);
 
-  const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
+  useEffect(() => {
+    loadAvailableFeatures();
+    if (island) {
+      performSearch();
+    }
+  }, [loadAvailableFeatures, performSearch, island]);
+
+  const updateFilter = useCallback(<K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-  };
+  }, []);
 
-  const toggleArrayFilter = (key: string, value: string) => {
+  const toggleArrayFilter = useCallback((key: string, value: string) => {
     setFilters(prev => {
       const currentValue = prev[key as keyof SearchFilters];
       
@@ -261,18 +262,18 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
           : [...currentArray, value]
       };
     });
-  };
+  }, []);
 
-  const toggleFeature = (featureId: number) => {
+  const toggleFeature = useCallback((featureId: number) => {
     setFilters(prev => ({
       ...prev,
       features: prev.features.includes(featureId)
         ? prev.features.filter(id => id !== featureId)
         : [...prev.features, featureId]
     }));
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setFilters({
       island: island || 'Freeport', // Default to Grand Bahama (Freeport)
       startDate: null,
@@ -291,25 +292,25 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
       sortBy: 'popularity'
     });
     setShowAllIslands(false);
-  };
+  }, [island]);
 
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate: Date | undefined, type: 'start' | 'end') => {
+  const handleDateChange = useCallback((event: DateTimePickerEvent, selectedDate: Date | undefined, type: 'start' | 'end') => {
     setShowDatePicker(null);
     if (selectedDate) {
       updateFilter(type === 'start' ? 'startDate' : 'endDate', selectedDate);
     }
-  };
+  }, [updateFilter]);
 
-  const formatDate = (date: Date | null) => {
+  const formatDate = useCallback((date: Date | null) => {
     if (!date) return 'Select Date';
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric', 
       year: 'numeric' 
     });
-  };
+  }, []);
 
-  const renderFilterSection = () => (
+  const renderFilterSection = useCallback(() => (
     <View style={styles.filtersContainer}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <DateFilter
@@ -382,9 +383,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
         </View>
       </ScrollView>
     </View>
-  );
+  ), [filters, availableFeatures, featureCategories, loadingFeatures, toggleArrayFilter, toggleFeature, clearFilters, performSearch, formatDate, updateFilter]);
 
-  const renderSearchResults = () => {
+  const renderSearchResults = useCallback(() => {
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
@@ -433,11 +434,22 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
         )}
         contentContainerStyle={styles.resultsContainer}
         showsVerticalScrollIndicator={false}
+        // Performance optimizations
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={8}
+        windowSize={10}
+        getItemLayout={(data, index) => ({
+          length: 280, // Approximate VehicleCard height
+          offset: 280 * index,
+          index,
+        })}
       />
     );
-  };
+  }, [loading, hasSearched, searchResults, clearFilters, navigation]);
 
-  const renderIslandSelectorModal = () => (
+  const renderIslandSelectorModal = useCallback(() => (
     <Modal
       visible={showIslandSelector}
       transparent
@@ -490,9 +502,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
         </View>
       </View>
     </Modal>
-  );
+  ), [showIslandSelector, filters.island, islands, updateFilter, hasSearched, performSearch]);
 
-  const renderSortModal = () => (
+  const renderSortModal = useCallback(() => (
     <Modal
       visible={showSortModal}
       transparent
@@ -540,7 +552,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
         </View>
       </View>
     </Modal>
-  );
+  ), [showSortModal, filters.sortBy, updateFilter]);
 
   return (
     <View style={styles.container}>
@@ -661,7 +673,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
       {renderSortModal()}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -1179,3 +1191,5 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
 });
+
+export default SearchScreen;

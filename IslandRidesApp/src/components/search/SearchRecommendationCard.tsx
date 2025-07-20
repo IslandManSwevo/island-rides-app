@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ interface SearchRecommendationCardProps {
   showExplanation?: boolean;
 }
 
-export const SearchRecommendationCard: React.FC<SearchRecommendationCardProps> = ({
+export const SearchRecommendationCard: React.FC<SearchRecommendationCardProps> = React.memo(({
   recommendation,
   onPress,
   onExplainPress,
@@ -27,32 +27,18 @@ export const SearchRecommendationCard: React.FC<SearchRecommendationCardProps> =
   const recommendationReasons = recommendation.reasons || [];
   const displayScore = recommendation.score || recommendationScore;
 
-  const getScoreColor = (score: number) => {
+  const getScoreColor = useCallback((score: number) => {
     if (score >= 0.8) return colors.success;
     if (score >= 0.6) return colors.warning;
     return colors.text;
-  };
+  }, []);
 
-  const getBadgeIcon = () => {
-    if (isPersonalized) return 'person';
-    if (isTrending) return 'trending-up';
-    if (isCollaborativeMatch) return 'people';
-    return 'star';
-  };
-
-  const getBadgeText = () => {
-    if (isPersonalized) return 'For You';
-    if (isTrending) return 'Trending';
-    if (isCollaborativeMatch) return 'Popular';
-    return 'Recommended';
-  };
-
-  const getBadgeColor = () => {
-    if (isPersonalized) return colors.primary;
-    if (isTrending) return colors.success;
-    if (isCollaborativeMatch) return colors.warning;
-    return colors.primary;
-  };
+  const badgeInfo = useMemo(() => {
+    if (isPersonalized) return { icon: 'person', text: 'For You', color: colors.primary };
+    if (isTrending) return { icon: 'trending-up', text: 'Trending', color: colors.success };
+    if (isCollaborativeMatch) return { icon: 'people', text: 'Popular', color: colors.warning };
+    return { icon: 'star', text: 'Recommended', color: colors.primary };
+  }, [isPersonalized, isTrending, isCollaborativeMatch]);
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
@@ -67,9 +53,9 @@ export const SearchRecommendationCard: React.FC<SearchRecommendationCardProps> =
         )}
         
         {/* Recommendation Badge */}
-        <View style={[styles.badge, { backgroundColor: getBadgeColor() }]}>
-          <Ionicons name={getBadgeIcon() as any} size={12} color={colors.white} />
-          <Text style={styles.badgeText}>{getBadgeText()}</Text>
+        <View style={[styles.badge, { backgroundColor: badgeInfo.color }]}>
+          <Ionicons name={badgeInfo.icon as any} size={12} color={colors.white} />
+          <Text style={styles.badgeText}>{badgeInfo.text}</Text>
         </View>
 
         {/* Recommendation Score */}
@@ -152,7 +138,7 @@ export const SearchRecommendationCard: React.FC<SearchRecommendationCardProps> =
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

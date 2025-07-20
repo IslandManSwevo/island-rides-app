@@ -13,11 +13,7 @@ import { vehicleFeatureService } from '../services/vehicleFeatureService';
 import { VehicleHeader } from '../components/vehicle/VehicleHeader';
 import { VehicleSpecs } from '../components/vehicle/VehicleSpecs';
 import { VehicleReviews } from '../components/vehicle/VehicleReviews';
-
-type RootStackParamList = {
-  VehicleDetail: { vehicle: Vehicle };
-  Checkout: { vehicle: Vehicle };
-};
+import { RootStackParamList, ROUTES } from '../navigation/routes';
 
 type VehicleDetailScreenNavigationProp = StackNavigationProp<RootStackParamList, 'VehicleDetail'>;
 type VehicleDetailScreenRouteProp = RouteProp<RootStackParamList, 'VehicleDetail'>;
@@ -33,7 +29,25 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
     enableLogging: __DEV__,
     trackMemory: true,
   });
+  
   const { vehicle } = route.params;
+  
+  // Handle case where vehicle is not provided
+  if (!vehicle) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Vehicle not found</Text>
+          <StandardButton
+            title="Go Back"
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+  
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     specs: true,
     features: true,
@@ -52,7 +66,11 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
   ];
 
   const handleBookNow = useCallback(() => {
-    navigation.navigate('Checkout', { vehicle });
+    navigation.navigate(ROUTES.CHECKOUT, { 
+      vehicle, 
+      startDate: new Date().toISOString(), 
+      endDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() 
+    });
   }, [navigation, vehicle]);
 
   const toggleSection = useCallback((sectionName: string) => {
@@ -498,5 +516,20 @@ const styles = StyleSheet.create({
   safetyFeatureText: {
     ...typography.body,
     marginLeft: spacing.xs,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  errorText: {
+    ...typography.heading3,
+    color: colors.error,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  backButton: {
+    minWidth: 120,
   },
 });

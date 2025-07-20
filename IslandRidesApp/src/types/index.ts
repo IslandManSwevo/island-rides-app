@@ -532,7 +532,7 @@ export type FleetVehicle = Vehicle & {
   verificationStatus: 'pending' | 'verified' | 'rejected' | 'expired';
   conditionRating: number;
   mileage: number;
-  nextMaintenanceDate: string | null;
+  nextMaintenanceDate: string | undefined;
   activeBookings: number;
   upcomingBookings: number;
   lastCleaned: string | null;

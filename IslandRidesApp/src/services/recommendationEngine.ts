@@ -5,9 +5,9 @@ import { vehicleService } from './vehicleService';
 // Constants for vehicle types and islands
 export const VEHICLE_TYPES = {
   SEDAN: 'sedan',
-  LUXURY: 'luxury',
+  CONVERTIBLE: 'convertible', // Using convertible instead of luxury
   SUV: 'suv',
-  JEEP: 'jeep'
+  TRUCK: 'truck' // Using truck instead of jeep
 } as const;
 
 export const ISLANDS = {
@@ -19,7 +19,9 @@ export const TRIP_PURPOSES = {
   BUSINESS: 'business',
   LEISURE: 'leisure',
   FAMILY: 'family',
-  ADVENTURE: 'adventure'
+  ADVENTURE: 'adventure',
+  LUXURY: 'luxury',
+  UNKNOWN: 'unknown'
 } as const;
 
 // User preferences interface based on searchIntelligenceService structure
@@ -177,7 +179,7 @@ class RecommendationEngine {
 
       // Weekend vs weekday boosting
       if (context.dayOfWeek === 'weekend') {
-        if ([TRIP_PURPOSES.LEISURE, TRIP_PURPOSES.FAMILY, TRIP_PURPOSES.ADVENTURE].includes(context.tripPurpose.type)) {
+        if ([TRIP_PURPOSES.LEISURE, TRIP_PURPOSES.FAMILY, TRIP_PURPOSES.ADVENTURE].includes(context.tripPurpose.type as any)) {
           boost += 0.15;
           newReasons.push('Perfect for weekend activities');
         }
@@ -190,19 +192,19 @@ class RecommendationEngine {
 
       // Island-specific boosting
       if (context.island === ISLANDS.NASSAU) {
-        if ([VEHICLE_TYPES.SEDAN, VEHICLE_TYPES.LUXURY].includes(vehicle.vehicle.vehicleType || '')) {
+        if ([VEHICLE_TYPES.SEDAN, VEHICLE_TYPES.CONVERTIBLE].includes(vehicle.vehicle.vehicleType as any)) {
           boost += 0.1;
           newReasons.push('Great for Nassau city driving');
         }
       } else if (context.island === ISLANDS.EXUMA) {
-        if ([VEHICLE_TYPES.SUV, VEHICLE_TYPES.JEEP].includes(vehicle.vehicle.vehicleType || '')) {
+        if ([VEHICLE_TYPES.SUV, VEHICLE_TYPES.TRUCK].includes(vehicle.vehicle.vehicleType as any)) {
           boost += 0.15;
           newReasons.push('Perfect for Exuma adventures');
         }
       }
 
       // Experience level boosting
-      if (!context.userPreferences.hasBookings) {
+      if (!context.userPreferences?.hasBookings) {
         if (vehicle.vehicle.verificationStatus === 'verified') {
           boost += 0.2;
           newReasons.push('Verified for first-time renters');
@@ -315,7 +317,7 @@ class RecommendationEngine {
     }
 
     // Personalization explanation
-    if (context.userPreferences.preferredVehicleTypes?.length > 0) {
+    if (context.userPreferences?.preferredVehicleTypes?.length && context.userPreferences.preferredVehicleTypes.length > 0) {
       explanations.push('Based on your previous vehicle preferences');
     }
 

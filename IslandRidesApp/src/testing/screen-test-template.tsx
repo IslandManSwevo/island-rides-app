@@ -8,13 +8,23 @@ import { render, createMockNavigation, createMockRoute } from './test-utils';
 // Placeholder component for template compilation
 import { View, ActivityIndicator, Text, Button, ScrollView, TextInput } from 'react-native';
 
-function ScreenName(props: Record<string, unknown>) {
+interface ScreenProps {
+  loading?: boolean;
+  navigation?: {
+    navigate: (screen: string) => void;
+    goBack: () => void;
+    setOptions: (options: any) => void;
+  };
+  [key: string]: any;
+}
+
+function ScreenName(props: ScreenProps) {
   return (
     <View testID="screen-name">
       {props.loading && <ActivityIndicator testID="loading-indicator" />}
       <Text>Data Container</Text>
       <Button title="Back" onPress={() => {}} />
-      <Button title="Next" onPress={() => props.navigation.navigate('NextScreen')} />
+      <Button title="Next" onPress={() => props.navigation?.navigate('NextScreen')} />
       <ScrollView testID="scroll-view">
         <Text>Search Results</Text>
         <Text>Test Item</Text>

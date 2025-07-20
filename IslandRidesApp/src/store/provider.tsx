@@ -4,7 +4,7 @@ import { store, persistor } from './index';
 import { View, ActivityIndicator } from 'react-native';
 
 // Conditional import for redux-persist PersistGate
-let PersistGate: any;
+let PersistGate: React.ComponentType<{ loading?: React.ReactNode; persistor?: any; children: React.ReactNode }>;
 try {
   PersistGate = require('redux-persist/integration/react').PersistGate;
 } catch {

@@ -6,7 +6,13 @@ import { persistStore, persistReducer } from 'redux-persist';
 import { combineReducers } from '@reduxjs/toolkit';
 
 // Conditional storage for web compatibility
-let storage: any;
+interface Storage {
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+  removeItem: (key: string) => Promise<void>;
+}
+
+let storage: Storage;
 try {
   const AsyncStorage = require('@react-native-async-storage/async-storage').default;
   storage = AsyncStorage;

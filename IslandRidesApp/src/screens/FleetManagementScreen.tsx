@@ -19,7 +19,7 @@ import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
 import { RootStackParamList } from '../navigation/routes';
-import { FleetVehicle } from '../types';
+import { FleetVehicle, Vehicle } from '../types';
 
 import { FleetVehicleCard } from '../components/FleetVehicleCard';
 
@@ -79,10 +79,11 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
         // Transform Vehicle[] to FleetVehicle[] by adding missing properties
         const fleetVehicles: FleetVehicle[] = (response.data || []).map(vehicle => ({
           ...vehicle,
+          licensePlate: vehicle.licensePlate || '',
           verificationStatus: vehicle.verificationStatus || 'pending',
           conditionRating: vehicle.conditionRating || 5,
           mileage: vehicle.mileage || 0,
-          nextMaintenanceDate: vehicle.nextMaintenanceDate,
+          nextMaintenanceDate: vehicle.nextMaintenanceDate || undefined,
           activeBookings: 0, // Default values - would be populated by backend
           upcomingBookings: 0,
           lastCleaned: null,

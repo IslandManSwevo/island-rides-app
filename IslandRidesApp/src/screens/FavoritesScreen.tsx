@@ -249,6 +249,17 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
           favorites.length === 0 && styles.emptyContainer
         ]}
         showsVerticalScrollIndicator={false}
+        // Performance optimizations
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={8}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={6}
+        windowSize={8}
+        getItemLayout={(data, index) => ({
+          length: 300, // Approximate favorite item height
+          offset: 300 * index,
+          index,
+        })}
       />
     </SafeAreaView>
   );

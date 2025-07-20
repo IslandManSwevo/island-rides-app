@@ -22,7 +22,9 @@
       "Bash(cmd.exe /c \"cd IslandRidesApp && npx tsc --noEmit\")",
       "Bash(tail:*)",
       "Bash(npm run type-check:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(npm run fix-any:check:*)",
+      "Bash(npm test)"
     ],
     "deny": []
   }

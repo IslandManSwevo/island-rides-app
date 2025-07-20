@@ -188,6 +188,215 @@ KeyLo creates a trusted, mobile-first marketplace that enables Bahamians to rent
 - Local payment preferences and banking integration requirements
 - User experience research with target demographics
 
+## Documentation References
+
+### Core Technical Documentation
+- **Architecture Overview**: `docs/architecture.md` - High-level system architecture and design decisions
+- **Frontend Architecture**: `docs/frontend-architecture.md` - React Native app structure and patterns
+- **Fullstack Architecture**: `docs/fullstack-architecture.md` - Complete system integration design
+- **UI Architecture**: `docs/ui-architecture.md` - Component design system and user interface patterns
+- **Frontend Specifications**: `docs/front-end-spec.md` - Detailed frontend implementation requirements
+
+### Product Documentation
+- **Product Requirements Document**: `docs/prd.md` - Detailed feature requirements and specifications
+- **Testing Documentation**: `docs/TESTING_SUMMARY.md` - Testing strategies and procedures
+
+### User Stories and Implementation
+- **Story Overview**: `docs/stories/README.md` - Implementation story tracking and status
+- **Foundational Features**: `docs/stories/1.1.foundational-verification.md` - Core verification system
+- **Search and Discovery**: `docs/stories/1.2.island-aware-search-discovery.md` - Island-based search functionality
+- **Host Dashboard Features**: 
+  - `docs/stories/1.3.standard-host-dashboard.md` - Basic host management tools
+  - `docs/stories/1.5.pro-host-dashboard.md` - Advanced host analytics and tools
+- **Host Storefront**: `docs/stories/1.4.verified-host-storefront.md` - Public host profile and listings
+- **Advanced Search**: `docs/stories/2.1.intelligent-island-based-search.md` - AI-powered search enhancements
+- **Brand Implementation**: `docs/stories/3.1.keylo-brand-transition.md` - KeyLo branding and design system
+
+### Reference Format
+All documentation references follow the pattern: `docs/filename.md#section-name` for specific sections within documents.
+
+## Testing Strategy
+
+### MVP Testing Requirements
+
+#### Unit Testing
+- **Authentication Module**: Test Firebase integration, phone verification, user registration/login flows
+- **Search Engine**: Test island filtering, vehicle type filtering, availability calculations
+- **Booking System**: Test calendar integration, booking creation, confirmation workflows
+- **Payment Processing**: Test TransFi integration, payment flows, payout calculations
+- **Real-time Features**: Test WebSocket connections, message delivery, connection handling
+
+#### Integration Testing
+- **API Integration**: Test all REST endpoints for data consistency and error handling
+- **Payment Gateway**: Test TransFi payment processing, webhooks, and transaction states
+- **Authentication Flow**: Test Firebase Auth integration with backend user management
+- **Database Operations**: Test data persistence, relationships, and query performance
+- **File Upload**: Test vehicle photo upload, storage, and retrieval
+
+#### User Acceptance Testing (UAT)
+- **User Registration Flow**: Complete registration with phone verification
+- **Vehicle Listing Creation**: Host creates complete vehicle listing with photos and pricing
+- **Search and Discovery**: Renter finds and filters vehicles by island and criteria
+- **Booking Process**: End-to-end booking from search to payment confirmation
+- **Host Dashboard**: Host manages bookings, views earnings, updates availability
+- **Communication**: Real-time messaging between hosts and renters
+
+#### Performance Testing
+- **Load Testing**: Simulate 100+ concurrent users for search and booking operations
+- **Mobile Performance**: Verify <2s app launch time and <3s search result loading
+- **Database Performance**: Test query optimization for search and booking operations
+- **API Response Times**: Ensure <500ms response times for core API endpoints
+- **Image Loading**: Test CDN performance for vehicle photo loading
+
+#### Security Testing
+- **Authentication Security**: Test token validation, session management, and unauthorized access
+- **Data Protection**: Verify PCI DSS compliance for payment data handling
+- **API Security**: Test input validation, SQL injection prevention, and rate limiting
+- **File Upload Security**: Test upload validation, virus scanning, and storage security
+- **Privacy Compliance**: Verify GDPR data handling and user consent mechanisms
+
+### Testing Tools and Framework
+- **Unit Testing**: Jest for JavaScript/TypeScript unit tests
+- **Integration Testing**: Supertest for API endpoint testing
+- **Mobile Testing**: Detox for React Native app testing
+- **Performance Testing**: Artillery for load testing, Lighthouse for mobile performance
+- **Security Testing**: OWASP ZAP for vulnerability scanning
+
+### Continuous Testing Requirements
+- **Pre-commit Testing**: Unit tests must pass before code commits
+- **CI/CD Pipeline**: Automated test execution on pull requests and deployments
+- **Staging Environment**: Full integration testing before production deployment
+- **Production Monitoring**: Real-time performance and error monitoring
+
+### Test Data Management
+- **Test Database**: Isolated test environment with representative data
+- **Mock Services**: Mock TransFi payment gateway and Firebase services for testing
+- **Test Users**: Dedicated test accounts for various user types and scenarios
+
+## Technical Dependencies and Existing Codebase
+
+### Current Implementation Status
+Based on existing stories and architecture documentation:
+
+#### Completed Foundation (Story 3.1)
+- **React Native App Structure**: Basic app framework with navigation
+- **Backend API Framework**: Node.js/Express foundation with core routing
+- **Authentication Integration**: Firebase Auth implementation
+- **Database Schema**: Initial user and vehicle data models
+- **Development Environment**: Local development setup and build processes
+
+#### In Progress/Planned Features
+- **Island-Aware Search**: Geographic filtering and search optimization (`docs/stories/1.2.island-aware-search-discovery.md`)
+- **Host Dashboard System**: Tiered dashboard features for different host levels
+- **Verification System**: User and vehicle verification workflows
+- **Advanced Search**: AI-powered search and recommendation engine
+
+### External Service Dependencies
+- **Firebase Authentication**: User management and phone verification
+- **TransFi Payment Gateway**: Payment processing and payouts for Bahamian market
+- **AWS/Google Cloud**: Infrastructure hosting and CDN services
+- **Push Notification Service**: Mobile app engagement and booking notifications
+
+### Development Dependencies
+- **React Native/Expo**: Mobile app development framework
+- **TypeScript**: Type safety across frontend and backend
+- **Node.js/Express**: Backend API development
+- **PostgreSQL**: Production database (SQLite for development)
+- **Tamagui**: Design system and UI components
+
+### Integration Mapping
+- **Payment Flow**: App → Backend API → TransFi Gateway → Banking System
+- **Authentication Flow**: App → Firebase Auth → Backend Verification → Database
+- **Search Flow**: App → Backend API → Database → Geographic Services
+- **Real-time Features**: App ↔ WebSocket Server ↔ Database
+
+## API and Integration Specifications
+
+### Core API Endpoints
+
+#### Authentication API
+```
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/verify-phone
+GET /api/auth/profile
+PUT /api/auth/profile
+```
+
+#### Vehicle Management API
+```
+GET /api/vehicles/search?island={island}&type={type}&date={date}
+POST /api/vehicles/create
+PUT /api/vehicles/{id}
+GET /api/vehicles/{id}
+DELETE /api/vehicles/{id}
+POST /api/vehicles/{id}/photos
+```
+
+#### Booking Management API
+```
+POST /api/bookings/create
+GET /api/bookings/user/{userId}
+GET /api/bookings/host/{hostId}
+PUT /api/bookings/{id}/status
+GET /api/bookings/{id}
+```
+
+#### Payment Integration API
+```
+POST /api/payments/create-intent
+POST /api/payments/confirm
+GET /api/payments/history
+POST /api/payouts/request
+```
+
+### TransFi Payment Integration
+- **Sandbox Environment**: Test payment processing with Bahamian banking simulation
+- **Production Setup**: Live payment processing with local bank integration
+- **Webhook Handling**: Payment status updates and transaction confirmations
+- **Currency Support**: Bahamian Dollar (BSD) primary, USD secondary
+- **Payout Schedule**: Weekly automated payouts to host bank accounts
+
+### Firebase Integration
+- **Authentication Methods**: Phone number verification, email optional
+- **User Data Sync**: Firebase user profiles synchronized with backend database
+- **Security Rules**: Custom Firebase security rules for user data access
+- **Real-time Features**: Firebase Realtime Database for chat and notifications
+
+## Security and Compliance Requirements
+
+### Data Protection Standards
+- **PCI DSS Level 1**: Full compliance for payment card data handling
+- **GDPR Compliance**: User consent management and data portability
+- **SOC 2 Type II**: Security controls for customer data protection
+- **Data Encryption**: AES-256 encryption for data at rest, TLS 1.3 for data in transit
+
+### Authentication Security
+- **Multi-Factor Authentication**: Phone verification required for all users
+- **Session Management**: JWT tokens with configurable expiration
+- **Password Requirements**: Minimum security standards for user accounts
+- **Account Lockout**: Protection against brute force attacks
+
+### Application Security
+- **Input Validation**: Comprehensive validation for all user inputs
+- **SQL Injection Prevention**: Parameterized queries and ORM security
+- **XSS Protection**: Content Security Policy and input sanitization
+- **CSRF Protection**: Token-based CSRF prevention for web interfaces
+- **Rate Limiting**: API throttling to prevent abuse and DoS attacks
+
+### Privacy Requirements
+- **Data Minimization**: Collect only necessary user information
+- **Consent Management**: Clear opt-in for data collection and marketing
+- **Right to Deletion**: User account and data deletion capabilities
+- **Data Portability**: User data export functionality
+- **Privacy Policy**: Clear disclosure of data collection and usage
+
+### Compliance Monitoring
+- **Security Audits**: Quarterly penetration testing and vulnerability assessments
+- **Compliance Reporting**: Regular compliance status reports and remediation tracking
+- **Incident Response**: Defined procedures for security incident handling
+- **Data Breach Notification**: Legal compliance for breach disclosure requirements
+
 ## Next Steps
 
 ### Immediate Actions

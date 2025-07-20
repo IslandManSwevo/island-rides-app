@@ -81,11 +81,11 @@ class FirebaseAuthService {
         user: response.user,
         token: response.token
       };
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       console.error('Google sign-in failed:', error);
       return {
         success: false,
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
       };
     }
   }
@@ -97,11 +97,11 @@ class FirebaseAuthService {
       this.currentUser = null;
       this.authToken = null;
       return { success: true };
-    } catch (error: Error | unknown) {
+    } catch (error: unknown) {
       console.error('Sign out failed:', error);
       return {
         success: false,
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
       };
     }
   }
