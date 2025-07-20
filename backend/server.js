@@ -776,7 +776,11 @@ app.get('/api/conversations/:conversationId/messages', authenticateToken, async 
   try {
     const { conversationId } = req.params;
     const { page = 1, limit = 50 } = req.query;
-    const offset = (page - 1) * limit;
+    
+    // Validate and sanitize pagination parameters
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50)); // Max 100 items per page
+    const offset = (pageNum - 1) * limitNum;
 
     const conversation = conversations.find(c =>
       c.id === parseInt(conversationId) &&
@@ -790,7 +794,7 @@ app.get('/api/conversations/:conversationId/messages', authenticateToken, async 
     const conversationMessages = messages
       .filter(m => m.conversation_id === parseInt(conversationId))
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-      .slice(offset, offset + parseInt(limit))
+      .slice(offset, offset + limitNum)
       .map(m => {
         const sender = users.find(u => u.id === m.sender_id);
         return {
@@ -980,7 +984,7 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
       });
     }
 
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
     const totalAmount = days * vehicle.daily_rate;
 
     const booking = {
