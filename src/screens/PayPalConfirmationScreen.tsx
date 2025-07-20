@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StackScreenProps } from '@react-navigation/stack';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing } from '../styles/Theme';
+import { colors, typography, spacing } from '../styles/theme';
 import { RootStackParamList } from '../navigation/routes';
 
 type PayPalConfirmationScreenProps = StackScreenProps<RootStackParamList, 'PayPalConfirmation'>;

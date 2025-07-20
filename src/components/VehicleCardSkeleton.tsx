@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import ShimmerLoading from './ShimmerLoading';
-import { borderRadius, spacing, shadows, colors } from '../styles/Theme';
+import { borderRadius, spacing, shadows, colors } from '../styles/theme';
 
 const VehicleCardSkeleton: React.FC = () => {
   return (

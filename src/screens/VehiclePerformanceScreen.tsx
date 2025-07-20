@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
@@ -183,8 +183,8 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
         make: vehicle.make,
         model: vehicle.model,
         year: vehicle.year,
-        ownerId: vehicle.ownerId || 0, // Add required property
-        location: vehicle.location || '', // Add required property
+        ownerId: vehicle.ownerId,
+        location: vehicle.location,
         dailyRate: vehicle.dailyRate,
         available: vehicle.available,
         driveSide: 'LHD' as const, // Add required property with default

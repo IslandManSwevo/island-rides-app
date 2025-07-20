@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 import hostStorefrontService from '../services/hostStorefrontService';
 import { vehicleService } from '../services/vehicleService';
@@ -91,17 +91,31 @@ export const HostStorefrontScreen: React.FC<HostStorefrontScreenProps> = ({
   navigation, 
   route 
 }) => {
-  const { hostId } = route.params;
+  // Handle case where route params are undefined
+  const hostId = route.params?.hostId;
+  
+  // If no hostId provided, redirect to appropriate screen
+  React.useEffect(() => {
+    if (!hostId) {
+      notificationService.error('Host not found');
+      navigation.goBack();
+      return;
+    }
+  }, [hostId, navigation]);
   const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [visibleReviews, setVisibleReviews] = useState(5);
 
   useEffect(() => {
-    loadHostProfile();
+    if (hostId) {
+      loadHostProfile();
+    }
   }, [hostId]);
 
   const loadHostProfile = async (showLoader = true) => {
+    if (!hostId) return;
+    
     try {
       if (showLoader) setLoading(true);
       const data = await hostStorefrontService.getHostStorefront(hostId);

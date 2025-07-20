@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '../../styles/Theme';
+import { colors, typography, spacing } from '../../styles/theme';
 import { Vehicle } from '../../types';
 
 interface VehicleSpecsProps {

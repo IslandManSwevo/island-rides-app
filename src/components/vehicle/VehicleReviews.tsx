@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '../../styles/Theme';
+import { colors, typography, spacing } from '../../styles/theme';
 import { apiService } from '../../services/apiService';
 import { notificationService } from '../../services/notificationService';
 

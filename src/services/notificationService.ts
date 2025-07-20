@@ -1,8 +1,11 @@
-import { Notification, NotificationType } from '../types';
+import { Notification, NotificationType, ApiResponse } from '../types';
 import { BehaviorSubject } from 'rxjs';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { NavigationProp } from '@react-navigation/native';
 import { apiService } from './apiService';
+import { NavigationContainerRef } from '@react-navigation/native';
+import { RootStackParamList } from '../navigation/routes';
 
 // Check if running in Expo Go
 const isExpoGo = Constants.appOwnership === 'expo';
@@ -136,7 +139,14 @@ class NotificationService {
     }
   }
 
-  setupNotificationListeners(navigation: any) {
+  setupNotificationListeners(navigation: NavigationContainerRef<RootStackParamList>) {
+    interface NotificationData {
+      screen?: string;
+      conversationId?: string;
+      vehicleId?: string;
+      bookingId?: string;
+      type?: string;
+    }
     if (isExpoGo || !Notifications) {
       console.log('Notification listeners not available in Expo Go');
       return;
@@ -153,10 +163,9 @@ class NotificationService {
           });
         }
       );
-
       this.responseListener = Notifications.addNotificationResponseReceivedListener(
         (response: any) => {
-          const data = response.notification.request.content.data;
+          const data: NotificationData | undefined = response.notification?.request?.content?.data;
           
           if (data?.screen) {
             switch (data.screen) {
@@ -168,18 +177,30 @@ class NotificationService {
                 break;
               case 'Chat':
                 navigation.navigate('Chat', { 
-                  conversationId: data.conversationId 
+                  conversationId: data.conversationId ? Number(data.conversationId) : undefined 
                 });
                 break;
               case 'VehicleDetail':
                 navigation.navigate('VehicleDetail', { 
-                  vehicleId: data.vehicleId 
+                  vehicleId: data.vehicleId ? Number(data.vehicleId) : undefined 
                 });
                 break;
               case 'WriteReview':
-                navigation.navigate('WriteReview', { 
-                  bookingId: data.bookingId 
-                });
+                if (data.bookingId) {
+                  // Create a booking object with the required structure
+                  const booking = {
+                    id: Number(data.bookingId),
+                    start_date: '',  // These fields are required by the type
+                    end_date: '',    // but might be populated later
+                    vehicle: {
+                      id: 0,
+                      make: '',
+                      model: '',
+                      year: 0
+                    }
+                  };
+                  navigation.navigate('WriteReview', { booking });
+                }
                 break;
               default:
                 if (data?.type === 'booking') {
@@ -210,7 +231,7 @@ class NotificationService {
     }
   }
 
-  async scheduleLocalNotification(title: string, body: string, data: any, trigger: Date) {
+  async scheduleLocalNotification(title: string, body: string, data: Record<string, unknown>, trigger: Date) {
     if (isExpoGo || !Notifications) {
       console.log('Local notifications not available in Expo Go');
       return;
@@ -264,7 +285,7 @@ class NotificationService {
 
   async getNotificationPreferences() {
     try {
-      const response: any = await apiService.get('/api/notifications/preferences');
+      const response: ApiResponse<unknown> = await apiService.get('/api/notifications/preferences');
       return response.preferences || {};
     } catch (error) {
       console.error('Error fetching notification preferences:', error);

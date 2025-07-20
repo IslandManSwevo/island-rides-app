@@ -2,7 +2,7 @@ export class BusinessLogicError extends Error {
   constructor(
     message: string,
     public readonly code: string,
-    public readonly meta?: Record<string, any>
+    public readonly meta?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'BusinessLogicError';
@@ -18,7 +18,7 @@ export class BusinessLogicError extends Error {
     };
   }
 
-  static isBusinessLogicError(error: any): error is BusinessLogicError {
+  static isBusinessLogicError(error: Error | unknown): error is BusinessLogicError {
     return error instanceof BusinessLogicError;
   }
 }

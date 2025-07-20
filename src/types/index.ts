@@ -61,7 +61,7 @@ export interface ErrorMeta {
   message: string;
   timestamp: string;
   path?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 export interface User {
@@ -78,25 +78,27 @@ export interface User {
 export interface ApiError {
   error: string;
   code?: ApiErrorCode;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 export interface ApiResponse<T = any> {
   data: T;
   message?: string;
   timestamp: string;
+  notification?: Record<string, unknown>;
+  preferences?: Record<string, unknown>;
 }
 
 export interface WebSocketMessage {
   type: 'message' | 'notification' | 'status';
-  payload: any;
+  payload: Record<string, unknown>;
   timestamp: string;
 }
 
 export interface WebSocketError {
   code: string;
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export interface ConnectionStatus {
@@ -187,6 +189,7 @@ export interface Vehicle {
   deliveryRadius?: number; // in kilometers
   airportPickup?: boolean;
   airportPickupFee?: number;
+  instantBooking?: boolean;
   
   // Related data
   photos?: VehiclePhoto[];
@@ -194,6 +197,14 @@ export interface Vehicle {
   amenities?: VehicleAmenity[];
   averageRating?: number;
   totalReviews?: number;
+  price?: number; // For compatibility with map components
+  rating?: number; // For compatibility with map components
+  
+  // Booking and analytics data
+  lastBookingDate?: string;
+  totalBookings?: number;
+  island?: string;
+  type?: string;
 }
 
 export interface VehiclePhoto {
@@ -297,6 +308,9 @@ export interface VehicleRecommendation {
     vehicleRating: number;
     hostPopularity: number;
   };
+  // Extended properties for AI-powered recommendations
+  score?: number;
+  reasons?: string[];
 }
 
 export interface Booking {
@@ -478,3 +492,50 @@ export interface NewGoal {
   targetValue: string;
   targetPeriod: 'monthly' | 'quarterly' | 'yearly';
 }
+
+// Search-related interfaces
+export interface SearchFilters {
+  island: Island | '';
+  startDate: Date | null;
+  endDate: Date | null;
+  priceRange: [number, number];
+  vehicleTypes: string[];
+  fuelTypes: string[];
+  transmissionTypes: string[];
+  minSeatingCapacity: number;
+  features: number[]; // Feature IDs
+  minConditionRating: number;
+  verificationStatus: ('pending' | 'verified' | 'rejected' | 'expired')[];
+  deliveryAvailable: boolean;
+  airportPickup: boolean;
+  instantBooking: boolean;
+  sortBy: 'popularity' | 'price_low' | 'price_high' | 'rating' | 'newest' | 'condition';
+}
+
+export interface UserPreferences {
+  hasBookings?: boolean;
+  preferredVehicleTypes?: Array<{ type: string; count: number }>;
+  preferredPriceRange?: [number, number];
+  preferredIslands?: Island[];
+  preferredFeatures?: number[];
+  searchHistory?: string[];
+  bookingHistory?: string[];
+  lastSearchDate?: string;
+  favoriteHosts?: number[];
+}
+
+// Re-export VehicleFilters from store slice
+export type { VehicleFilters } from '../store/slices/vehicleSlice';
+
+export type FleetVehicle = Vehicle & {
+  licensePlate: string;
+  verificationStatus: 'pending' | 'verified' | 'rejected' | 'expired';
+  conditionRating: number;
+  mileage: number;
+  nextMaintenanceDate: string | null;
+  activeBookings: number;
+  upcomingBookings: number;
+  lastCleaned: string | null;
+  insuranceExpiry: string | null;
+  registrationExpiry: string | null;
+};

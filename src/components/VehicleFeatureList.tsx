@@ -6,14 +6,15 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ViewStyle,
 } from 'react-native';
 import { VehicleFeature, VehicleFeatureCategory } from '../types';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
-import { colors } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 
 interface VehicleFeatureListProps {
   features: VehicleFeature[];
-  style?: any;
+  style?: ViewStyle;
   showCategories?: boolean;
   showPremiumBadges?: boolean;
   showAdditionalCosts?: boolean;

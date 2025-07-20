@@ -1,7 +1,7 @@
 /**
  * Authentication API routes configuration
  * 
- * Centralized collection of authentication-related API endpoints for the Island Rides app.
+ * Centralized collection of authentication-related API endpoints for the KeyLo app.
  * This object provides type-safe access to authentication routes and ensures consistency
  * across the application when making API calls.
  * 

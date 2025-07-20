@@ -44,7 +44,7 @@ import chatService from '../services/chatService';
 import { mediaUploadService } from '../services/mediaUploadService';
 import { AppHeader } from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
-import { colors, spacing, borderRadius } from '../styles/Theme';
+import { colors, spacing, borderRadius } from '../styles/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -120,8 +120,8 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
           [{ text: 'OK' }]
         );
       }
-    } catch (error) {
-      console.error('Error requesting permissions:', error);
+    } catch (error: unknown) {
+      console.error('Error requesting permissions:', String(error));
     }
   };
 
@@ -168,10 +168,10 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       // Step 3: Connect to chat server
       await connectToChat(resolvedConversation.conversationId);
 
-    } catch (error) {
-      console.error('❌ Failed to initialize chat:', error);
+    } catch (error: unknown) {
+      console.error('❌ Failed to initialize chat:', String(error));
       if (isMountedRef.current) {
-        setError(error instanceof Error ? error.message : 'Failed to initialize chat');
+        setError(error instanceof Error ? error.message : String(error));
         setIsLoading(false);
       }
     }
@@ -194,8 +194,8 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
       setMessages(giftedMessages);
       console.log(`✅ Loaded ${giftedMessages.length} messages`);
 
-    } catch (error) {
-      console.error('❌ Failed to load message history:', error);
+    } catch (error: unknown) {
+      console.error('❌ Failed to load message history:', String(error));
       // Continue without history - not a critical error
     }
   };
@@ -236,18 +236,18 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, 
         }
       });
 
-      chatService.onError((error) => {
+      chatService.onError((error: unknown) => {
         if (isMountedRef.current) {
-          console.error('❌ Chat error:', error);
-          setError(error);
+          console.error('❌ Chat error:', String(error));
+          setError(String(error));
         }
       });
 
       setConnectionStatus('connected');
       console.log('✅ Connected to chat server');
 
-    } catch (error) {
-      console.error('❌ Failed to connect to chat:', error);
+    } catch (error: unknown) {
+      console.error('❌ Failed to connect to chat:', String(error));
       if (isMountedRef.current) {
         setError(error instanceof Error ? error.message : 'Failed to connect to chat');
         setConnectionStatus('disconnected');

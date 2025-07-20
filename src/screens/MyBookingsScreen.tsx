@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList } from '../navigation/routes';
 import { BookingService } from '../services/bookingService';
 import { BookingResponse } from '../types';

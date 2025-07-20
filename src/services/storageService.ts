@@ -75,7 +75,7 @@ export class StorageService extends BaseService {
   }
 
   // User preferences storage
-  async setUserPreferences(preferences: Record<string, any>): Promise<void> {
+  async setUserPreferences(preferences: Record<string, unknown>): Promise<void> {
     await this.set('userPreferences', preferences);
   }
 

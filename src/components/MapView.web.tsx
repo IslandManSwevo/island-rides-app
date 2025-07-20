@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Vehicle } from '../types';
-import { colors, typography, spacing } from '../styles/Theme';
+import { colors, typography, spacing } from '../styles/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -54,7 +54,7 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
               <View style={styles.vehicleHeader}>
                 <View style={[
                   styles.statusIndicator,
-                  { backgroundColor: vehicle.available ? '#007AFF' : '#FF3B30' }
+                  { backgroundColor: (vehicle.available ? '#007AFF' : '#FF3B30') as string }
                 ]} />
                 <Text style={styles.vehicleName}>
                   {vehicle.make} {vehicle.model}

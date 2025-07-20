@@ -125,7 +125,7 @@ class ReceiptService {
 
       await Sharing.shareAsync(pdfUri, {
         mimeType: 'application/pdf',
-        dialogTitle: `Receipt - ${receipt.company?.name || 'Island Rides'}`,
+        dialogTitle: `Receipt - ${receipt.company?.name || 'KeyLo'}`,
       });
       
       notificationService.success('Receipt shared successfully!');

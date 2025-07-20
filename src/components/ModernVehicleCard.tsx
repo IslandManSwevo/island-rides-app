@@ -6,15 +6,17 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { borderRadius, spacing, shadows, colors } from '../styles/Theme';
+import { borderRadius, spacing, shadows, colors } from '../styles/theme';
 import { Vehicle } from '../types';
 
 interface ModernVehicleCardProps {
   vehicle: Vehicle;
   onPress?: () => void;
-  style?: any;
+  style?: ViewStyle | TextStyle;
 }
 
 const ModernVehicleCard: React.FC<ModernVehicleCardProps> = ({

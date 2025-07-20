@@ -1,4 +1,4 @@
-# Island Rides App
+# KeyLo App
 
 A vehicle rental platform for the Bahamas built with React Native and TypeScript.
 
@@ -33,3 +33,4 @@ npm install
 ```bash
 npm start
 ```
+

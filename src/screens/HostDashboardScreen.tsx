@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { AppHeader } from '../components/AppHeader';
 import { apiService } from '../services/apiService';
-import { colors, typography, spacing } from '../styles/Theme';
+import { colors, typography, spacing } from '../styles/theme';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
@@ -24,6 +24,12 @@ type HostDashboardScreenNavigationProp = StackNavigationProp<RootStackParamList,
 
 interface HostDashboardScreenProps {
   navigation: HostDashboardScreenNavigationProp;
+}
+
+interface EarningsOverTime {
+  month: string;
+  netRevenue: number;
+  totalBookings: number;
 }
 
 interface HostBooking {
@@ -51,6 +57,34 @@ interface HostDashboardData {
   recentBookings: HostBooking[];
 }
 
+interface TopPerformingVehicle {
+  id: number;
+  make: string;
+  model: string;
+  year: number;
+  revenue: number;
+  bookings: number;
+  avg_rating: number;
+  daily_rate: number;
+}
+
+interface ProDashboardData {
+  earningsOverTime: EarningsOverTime[];
+  topPerformingVehicles: TopPerformingVehicle[];
+  totalRevenue: number;
+  totalBookings: number;
+}
+
+interface DashboardResponse {
+  success: boolean;
+  data: HostDashboardData;
+}
+
+interface ProDashboardResponse {
+  success: boolean;
+  data: ProDashboardData;
+}
+
 export const HostDashboardScreen = ({ navigation }: HostDashboardScreenProps) => {
   const [activeTab, setActiveTab] = useState('standard');
   const [loading, setLoading] = useState(true);
@@ -65,15 +99,15 @@ export const HostDashboardScreen = ({ navigation }: HostDashboardScreenProps) =>
       if (showLoader) setLoading(true);
       setError(null);
       
-      const response = await apiService.get('/api/host/dashboard');
+      const response = await apiService.get<DashboardResponse>('/api/host/dashboard');
       
-      if ((response as any).success) {
-        setDashboardData((response as any).data);
+      if (response.success) {
+        setDashboardData(response.data);
       } else {
         throw new Error('Failed to load dashboard data');
       }
-    } catch (error) {
-      console.error('Dashboard error:', error);
+    } catch (error: unknown) {
+      console.error('Dashboard error:', String(error));
       setError('Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
@@ -82,16 +116,17 @@ export const HostDashboardScreen = ({ navigation }: HostDashboardScreenProps) =>
 
   const loadProData = useCallback(async () => {
     try {
-      const response = await apiService.get('/api/host/dashboard/pro');
-      if ((response as any).success) {
-        setProData((response as any).data);
+      const response = await apiService.get<ProDashboardResponse>('/api/host/dashboard/pro');
+      if (response.success) {
+        setProData(response.data);
         setQualifiesForPro(true);
       }
-    } catch (error) {
-      if ((error as any).response?.status === 403) {
+    } catch (error: unknown) {
+      const err = error as Error & { response?: { status: number } };
+      if (err.response?.status === 403) {
         setQualifiesForPro(false);
       } else {
-        console.error('Pro dashboard fetch error:', error);
+        console.error('Pro dashboard fetch error:', String(error));
       }
     }
   }, []);
@@ -200,12 +235,12 @@ export const HostDashboardScreen = ({ navigation }: HostDashboardScreenProps) =>
     if (!proData?.earningsOverTime?.length) return null;
     
     const chartData = {
-      labels: proData.earningsOverTime.slice(0, 6).reverse().map((item: any) => {
+      labels: proData.earningsOverTime.slice(0, 6).reverse().map((item: EarningsOverTime) => {
         const date = new Date(item.month);
         return date.toLocaleDateString('en-US', { month: 'short' });
       }),
       datasets: [{
-        data: proData.earningsOverTime.slice(0, 6).reverse().map((item: any) => item.netRevenue),
+        data: proData.earningsOverTime.slice(0, 6).reverse().map((item: EarningsOverTime) => item.netRevenue),
         color: (opacity = 1) => `rgba(46, 125, 50, ${opacity})`,
         strokeWidth: 3
       }]
@@ -273,7 +308,7 @@ export const HostDashboardScreen = ({ navigation }: HostDashboardScreenProps) =>
     return (
       <View style={styles.topVehiclesContainer}>
         <Text style={styles.sectionTitle}>Top Performing Vehicles</Text>
-        {proData.topPerformingVehicles.slice(0, 5).map((vehicle: any, index: number) => (
+        {proData.topPerformingVehicles.slice(0, 5).map((vehicle: TopPerformingVehicle, index: number) => (
           <View key={vehicle.id} style={styles.vehicleCard}>
             <View style={styles.vehicleRank}>
               <Text style={styles.rankText}>#{index + 1}</Text>

@@ -9,14 +9,16 @@ import {
   Modal,
   ActivityIndicator,
   FlatList,
-  Alert
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { usePerformanceMonitoring } from '../hooks/usePerformanceMonitoring';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
-import Button from '../components/Button';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { StandardButton } from '../components/templates/StandardButton';
 import { VehicleCard } from '../components/VehicleCard';
 import { vehicleService } from '../services/vehicleService';
 import { notificationService } from '../services/notificationService';
@@ -33,6 +35,7 @@ import ServiceOptionsFilter from '../components/ServiceOptionsFilter';
 import { VEHICLE_TYPES, FUEL_TYPES, TRANSMISSION_TYPES, VERIFICATION_STATUS_OPTIONS, SORT_OPTIONS } from '../constants/filters';
 import { islands } from '../constants/islands';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
+import { IntelligentFilterComponent } from '../components/search';
 
 type SearchScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.SEARCH>;
 type SearchScreenRouteProp = RouteProp<RootStackParamList, typeof ROUTES.SEARCH>;
@@ -56,10 +59,16 @@ interface SearchFilters {
   verificationStatus: ('pending' | 'verified' | 'rejected' | 'expired')[];
   deliveryAvailable: boolean;
   airportPickup: boolean;
+  instantBooking: boolean;
   sortBy: 'popularity' | 'price_low' | 'price_high' | 'rating' | 'newest' | 'condition';
 }
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
+  const { getMetrics, resetMetrics } = usePerformanceMonitoring('SearchScreen', {
+    slowRenderThreshold: 16,
+    enableLogging: __DEV__,
+    trackMemory: true,
+  });
   const { island } = (route.params as any) || {};
   
   const [filters, setFilters] = useState<SearchFilters>({
@@ -76,6 +85,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
     verificationStatus: [],
     deliveryAvailable: false,
     airportPickup: false,
+    instantBooking: false,
     sortBy: 'popularity'
   });
 
@@ -93,6 +103,66 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
   const [availableFeatures, setAvailableFeatures] = useState<VehicleFeature[]>([]);
   const [featureCategories, setFeatureCategories] = useState<VehicleFeatureCategory[]>([]);
   const [loadingFeatures, setLoadingFeatures] = useState(false);
+
+  useEffect(() => {
+    const loadPersistedFilters = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('searchFilters');
+        if (saved) {
+          const parsedFilters = JSON.parse(saved);
+          // Validate that parsed data has expected structure
+          if (parsedFilters && typeof parsedFilters === 'object') {
+            setFilters(parsedFilters);
+          } else {
+            throw new Error('Invalid filter data format');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load filters', error);
+        let errorMessage = 'Failed to load your saved search preferences. Using default settings.';
+        
+        if (error instanceof SyntaxError) {
+          errorMessage = 'Your saved search preferences are corrupted. Using default settings.';
+        } else if (error instanceof Error && error.message.includes('Invalid filter data')) {
+          errorMessage = 'Your saved search preferences have an invalid format. Using default settings.';
+        }
+        
+        Alert.alert(
+          'Settings Load Error',
+          errorMessage,
+          [{ text: 'OK' }]
+        );
+      }
+    };
+    loadPersistedFilters();
+  }, []);
+
+  useEffect(() => {
+    const saveFilters = async () => {
+      try {
+        await AsyncStorage.setItem('searchFilters', JSON.stringify(filters));
+      } catch (error) {
+        console.error('Failed to save filters', error);
+        
+        // Provide specific error messages based on error type
+        let message = 'Failed to save search preferences';
+        
+        if (error instanceof Error) {
+          if (error.message.includes('storage quota')) {
+            message = 'Storage full - cannot save search preferences';
+          } else if (error.message.includes('permission')) {
+            message = 'Permission denied - cannot save search preferences';
+          }
+        }
+        
+        // Show a less intrusive notification for save errors to avoid overwhelming the user
+        notificationService.warning(message, {
+          duration: 3000
+        });
+      }
+    };
+    saveFilters();
+  }, [filters]);
 
   useEffect(() => {
     loadAvailableFeatures();
@@ -136,6 +206,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
         verificationStatus: filters.verificationStatus.length > 0 ? filters.verificationStatus.join(',') : undefined,
         deliveryAvailable: filters.deliveryAvailable ? 'true' : undefined,
         airportPickup: filters.airportPickup ? 'true' : undefined,
+        instantBooking: filters.instantBooking ? 'true' : undefined,
         sortBy: filters.sortBy,
         page: 1,
         limit: 50
@@ -174,7 +245,15 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
 
   const toggleArrayFilter = (key: string, value: string) => {
     setFilters(prev => {
-      const currentArray = prev[key as keyof SearchFilters] as string[];
+      const currentValue = prev[key as keyof SearchFilters];
+      
+      // Type guard to ensure currentValue is an array
+      if (!Array.isArray(currentValue)) {
+        console.warn(`Expected array for filter key "${key}", but got:`, typeof currentValue);
+        return prev; // Return unchanged state if not an array
+      }
+      
+      const currentArray = currentValue as string[];
       return {
         ...prev,
         [key]: currentArray.includes(value)
@@ -208,12 +287,13 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
       verificationStatus: [],
       deliveryAvailable: false,
       airportPickup: false,
+      instantBooking: false,
       sortBy: 'popularity'
     });
     setShowAllIslands(false);
   };
 
-  const handleDateChange = (event: any, selectedDate: Date | undefined, type: 'start' | 'end') => {
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate: Date | undefined, type: 'start' | 'end') => {
     setShowDatePicker(null);
     if (selectedDate) {
       updateFilter(type === 'start' ? 'startDate' : 'endDate', selectedDate);
@@ -291,12 +371,13 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
           <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
             <Text style={styles.clearButtonText}>Clear All</Text>
           </TouchableOpacity>
-          <Button
+          <StandardButton
             title="Apply Filters"
             onPress={() => {
               setShowFilters(false);
               performSearch();
             }}
+            fullWidth
           />
         </View>
       </ScrollView>
@@ -466,6 +547,14 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
       {/* Search Header */}
       <View style={styles.searchHeader}>
         <Text style={styles.title}>Search Vehicles</Text>
+        
+        {/* Intelligent Filter Component */}
+        <IntelligentFilterComponent
+          filters={filters}
+          onFiltersChange={setFilters}
+          searchHistory={[]}
+          userPreferences={{}}
+        />
         
         {/* Island Selector - Prominent as per Story 1.2 */}
         <View style={styles.islandSelectorContainer}>

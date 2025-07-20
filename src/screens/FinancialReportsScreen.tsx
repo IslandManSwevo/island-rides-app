@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
@@ -292,7 +292,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
               value={startDate}
               mode="date"
               display="default"
-              onChange={(event, selectedDate) => {
+              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
                 const currentDate = selectedDate || startDate;
                 setShowStartDatePicker(false);
                 setStartDate(currentDate);
@@ -310,7 +310,7 @@ export const FinancialReportsScreen: React.FC<FinancialReportsScreenProps> = ({ 
               value={endDate}
               mode="date"
               display="default"
-              onChange={(event, selectedDate) => {
+              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
                 const currentDate = selectedDate || endDate;
                 setShowEndDatePicker(false);
                 setEndDate(currentDate);

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import Button from '../components/Button';
+import { StandardButton } from '../components/templates/StandardButton';
 import { notificationService } from '../services/notificationService';
-import { Input } from '../components/Input';
+import { StandardInput } from '../components/templates/StandardInput';
 import { useAuth } from '../context/AuthContext';
-import { colors, typography, spacing } from '../styles/Theme';
+import { colors, typography, spacing } from '../styles/theme';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
@@ -79,7 +79,7 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
         formData.lastName.trim(),
         defaultRole
       );
-      notificationService.success('Welcome to Island Rides!', {
+      notificationService.success('Welcome to KeyLo!', {
         title: 'Registration Successful',
         duration: 3000
       });
@@ -107,7 +107,7 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          <Text style={styles.title}>🏝️ Join Island Rides</Text>
+          <Text style={styles.title}>🔑 Join KeyLo</Text>
           <Text style={styles.subtitle}>Create your account to get started</Text>
           
           {error && (
@@ -117,7 +117,7 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
           )}
           
           <View style={styles.form}>
-            <Input
+            <StandardInput
               label="First Name"
               value={formData.firstName}
               onChangeText={(value) => updateFormData('firstName', value)}
@@ -126,7 +126,7 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
               error={formErrors.firstName}
             />
             
-            <Input
+            <StandardInput
               label="Last Name"
               value={formData.lastName}
               onChangeText={(value) => updateFormData('lastName', value)}
@@ -135,7 +135,7 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
               error={formErrors.lastName}
             />
             
-            <Input
+            <StandardInput
               label="Email"
               value={formData.email}
               onChangeText={(value) => updateFormData('email', value)}
@@ -145,7 +145,7 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
               error={formErrors.email}
             />
             
-            <Input
+            <StandardInput
               label="Password"
               value={formData.password}
               onChangeText={(value) => updateFormData('password', value)}
@@ -154,7 +154,7 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
               error={formErrors.password}
             />
             
-            <Input
+            <StandardInput
               label="Confirm Password"
               value={formData.confirmPassword}
               onChangeText={(value) => updateFormData('confirmPassword', value)}
@@ -163,16 +163,18 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
               error={formErrors.confirmPassword}
             />
             
-            <Button
+            <StandardButton
               title="Create Account"
               onPress={handleRegister}
               loading={isLoading}
+              fullWidth
             />
             
-            <Button
+            <StandardButton
               title="Already have an account? Sign in"
               onPress={() => navigation.navigate(ROUTES.LOGIN)}
               variant="secondary"
+              fullWidth
             />
           </View>
         </View>

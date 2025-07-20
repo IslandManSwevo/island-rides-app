@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, spacing } from '../styles/Theme';
+import { colors, spacing } from '../styles/theme';
+import { GluestackButton } from './templates/GluestackButton';
 
 interface OptionFilterProps {
   title: string;
@@ -17,24 +18,16 @@ const OptionFilter: React.FC<OptionFilterProps> = ({ title, options, selectedOpt
         {options.map(option => {
           const isSelected = selectedOptions.includes(option);
           return (
-            <TouchableOpacity
+            <GluestackButton
               key={option}
-              style={[
-                styles.optionChip,
-                isSelected && styles.optionChipSelected
-              ]}
+              title={option}
               onPress={() => onToggleOption(option)}
+              variant={isSelected ? "solid" : "outline"}
+              action="primary"
+              size="sm"
               accessibilityLabel={`${option}, ${isSelected ? 'selected' : 'not selected'}`}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isSelected }}
-            >
-              <Text style={[
-                styles.optionChipText,
-                isSelected && styles.optionChipTextSelected
-              ]}>
-                {option}
-              </Text>
-            </TouchableOpacity>
+              accessibilityHint={`Toggle ${option} filter option`}
+            />
           );
         })}
       </View>

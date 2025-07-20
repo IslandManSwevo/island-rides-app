@@ -13,7 +13,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { VehiclePhoto } from '../types';
-import { colors } from '../styles/Theme';
+import { colors } from '../styles/theme';
 import { PhotoIndicators } from './PhotoIndicators';
 import { PhotoThumbnails } from './PhotoThumbnails';
 import { FullscreenModal } from './FullscreenModal';

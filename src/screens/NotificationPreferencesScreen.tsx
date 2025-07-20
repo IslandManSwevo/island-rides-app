@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { notificationService } from '../services/notificationService';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
 interface NotificationPreferences extends Record<string, boolean> {
@@ -112,8 +112,8 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
       if (prefs) {
         setPreferences(prefs);
       }
-    } catch (error) {
-      console.error('Error fetching preferences:', error);
+    } catch (error: unknown) {
+      console.error('Error fetching preferences:', String(error));
       notificationService.error('Failed to load notification preferences', {
         duration: 4000
       });

@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../styles/Theme';
+import { colors, spacing } from '../styles/theme';
+import { GluestackButton } from './templates/GluestackButton';
 
 interface PriceRangeFilterProps {
   /** The current price range as a tuple of [minimum, maximum] values */
@@ -31,25 +32,33 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
       <View style={styles.priceRangeContainer}>
         <Text style={styles.priceLabel}>${priceRange[0]}</Text>
         <View style={styles.priceSliderContainer}>
-          <TouchableOpacity
-            style={styles.priceButton}
+          <GluestackButton
+            title=""
             onPress={() => {
               const newMin = Math.max(priceRange[0] - step, minValue);
               onUpdateFilter('priceRange', [newMin, priceRange[1]]);
             }}
-          >
-            <Ionicons name="remove" size={16} color={colors.primary} />
-          </TouchableOpacity>
+            variant="outline"
+            action="primary"
+            icon="remove"
+            size="sm"
+            accessibilityLabel="Decrease minimum price"
+            accessibilityHint={`Decrease minimum price by $${step}`}
+          />
           <View style={styles.priceBar} />
-          <TouchableOpacity
-            style={styles.priceButton}
+          <GluestackButton
+            title=""
             onPress={() => {
               const newMax = Math.min(priceRange[1] + step, maxValue);
               onUpdateFilter('priceRange', [priceRange[0], newMax]);
             }}
-          >
-            <Ionicons name="add" size={16} color={colors.primary} />
-          </TouchableOpacity>
+            variant="outline"
+            action="primary"
+            icon="add"
+            size="sm"
+            accessibilityLabel="Increase maximum price"
+            accessibilityHint={`Increase maximum price by $${step}`}
+          />
         </View>
         <Text style={styles.priceLabel}>${priceRange[1]}</Text>
       </View>

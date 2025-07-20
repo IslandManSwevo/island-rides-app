@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import ModernVehicleCard from './ModernVehicleCard';
 import VehicleCardSkeleton from './VehicleCardSkeleton';
-import Theme from '../styles/Theme';
+import Theme from '../styles/theme';
 import { Vehicle } from '../types';
 
 const ModernVehicleCardDemo: React.FC = () => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Notification } from '../types';
-import { colors, borderRadius, elevationStyles } from '../styles/Theme';
+import { colors, borderRadius, elevationStyles } from '../styles/theme';
 
 interface NotificationItemProps {
   notification: Notification;

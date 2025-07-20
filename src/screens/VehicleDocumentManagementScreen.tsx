@@ -13,7 +13,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { ComponentProps } from 'react';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';

@@ -28,7 +28,7 @@ import { WriteReviewScreen } from '../screens/WriteReviewScreen';
 import { ROUTES, RootStackParamList } from './routes';
 import { useAuth } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { colors, typography, spacing } from '../styles/Theme';
+import { colors, typography, spacing } from '../styles/theme';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -39,7 +39,7 @@ const AppNavigator: React.FC = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading Island Rides...</Text>
+        <Text style={styles.loadingText}>Loading KeyLo...</Text>
       </View>
     );
   }
@@ -48,7 +48,7 @@ const AppNavigator: React.FC = () => {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorTitle}>Connection Error</Text>
-        <Text style={styles.errorMessage}>{error}</Text>
+        <Text style={styles.errorMessage}>{String(error)}</Text>
       </View>
     );
   }

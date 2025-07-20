@@ -15,14 +15,21 @@ class ErrorHandlerService {
     handler();
   }
 
-  handleApiError(error: any, category: ErrorCategory = ErrorCategory.TECHNICAL) {
+  handleApiError(error: Error | unknown, category: ErrorCategory = ErrorCategory.TECHNICAL) {
     let code: ApiErrorCode = 'SERVER_ERROR';
     let message = 'An unexpected error occurred';
 
-    if (error.response && error.response.data) {
-      const data = error.response.data;
+    const errorWithResponse = error as Error & { 
+      response?: { 
+        data?: Record<string, unknown>;
+        status?: number;
+      } 
+    };
+
+    if (errorWithResponse.response && errorWithResponse.response.data) {
+      const data = errorWithResponse.response.data;
       if (typeof data === 'object' && data !== null && typeof data.code === 'string') {
-        code = data.code;
+        code = data.code as ApiErrorCode;
         message = typeof data.message === 'string' 
                   ? data.message 
                   : 'An error occurred. Please try again.';

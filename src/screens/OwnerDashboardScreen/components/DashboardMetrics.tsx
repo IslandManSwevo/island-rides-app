@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { styles } from '../styles';
-import { colors } from '../../../styles/Theme';
+import { colors } from '../../../styles/theme';
 import { DashboardOverview } from '../../../types';
 import { formatCurrency, formatPercentage } from '../../../utils/formatters';
 import MetricCard from './MetricCard';

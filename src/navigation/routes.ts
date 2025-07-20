@@ -3,7 +3,7 @@
  * Centralized route names to prevent typos and ease refactoring
  */
 
-import { ChatContext, Vehicle, VehicleRecommendation } from '../types';
+import { ChatContext, SearchFilters, Vehicle, VehicleRecommendation } from '../types';
 
 export const ROUTES = {
   // Authentication routes
@@ -43,6 +43,9 @@ export const ROUTES = {
   BULK_RATE_UPDATE: 'BulkRateUpdate',
   COMPARE_VEHICLES: 'CompareVehicles',
   VEHICLE_DOCUMENT_MANAGEMENT: 'VehicleDocumentManagement',
+  
+  // Saved Searches
+  SAVED_SEARCHES: 'SavedSearches',
 } as const;
 
 export type RouteNames = typeof ROUTES[keyof typeof ROUTES];
@@ -76,9 +79,12 @@ export type RootStackParamList = {
     island: string;
     vehicles: VehicleRecommendation[];
   };
-  [ROUTES.SEARCH]: undefined;
+  [ROUTES.SEARCH]: {
+    filters?: SearchFilters; // SearchFilters type
+  } | undefined;
   [ROUTES.VEHICLE_DETAIL]: {
-    vehicle: Vehicle;
+    vehicle?: Vehicle;
+    vehicleId?: number;
   };
   [ROUTES.CHECKOUT]: {
     vehicle: Vehicle;
@@ -106,7 +112,8 @@ export type RootStackParamList = {
   };
   [ROUTES.PAYMENT_HISTORY]: undefined;
   [ROUTES.CHAT]: {
-    context: ChatContext;
+    context?: ChatContext;
+    conversationId?: number;
     title?: string;
   };
   [ROUTES.FAVORITES]: undefined;
@@ -204,5 +211,8 @@ export type RootStackParamList = {
   };
   [ROUTES.VEHICLE_DOCUMENT_MANAGEMENT]: {
     vehicleId: number;
+  };
+  [ROUTES.SAVED_SEARCHES]: {
+    filters?: SearchFilters;
   };
 };

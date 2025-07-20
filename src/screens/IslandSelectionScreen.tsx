@@ -3,8 +3,9 @@ import { View, StyleSheet, SafeAreaView, Alert, ScrollView, Text, TouchableOpaci
 import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../components/AppHeader';
 import { vehicleService } from '../services/vehicleService';
+import { locationService } from '../services/LocationService';
 import { useAuth } from '../context/AuthContext';
-import { colors, typography, spacing, borderRadius } from '../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Island, VehicleRecommendation } from '../types';
 import { ROUTES, RootStackParamList } from '../navigation/routes';
 import { islands, IslandOption } from '../constants/islands';
@@ -21,6 +22,55 @@ const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({
   // ✅ NO useEffect auth check - App.tsx guarantees we're authenticated
 
   const [isLoading, setIsLoading] = React.useState(false);
+  const [recommendedIslands, setRecommendedIslands] = React.useState<Island[]>([]);
+  const [detectedIsland, setDetectedIsland] = React.useState<Island | null>(null);
+  const [showLocationPrompt, setShowLocationPrompt] = React.useState(false);
+
+  // Load intelligent island recommendations on component mount
+  React.useEffect(() => {
+    const loadIntelligentRecommendations = async () => {
+      try {
+        // Get recommended islands based on user context
+        const recommendations = await locationService.getRecommendedIslands();
+        setRecommendedIslands(recommendations);
+
+        // Try to detect current island
+        const detected = await locationService.detectCurrentIsland();
+        setDetectedIsland(detected);
+
+        // Show location prompt if no previous interaction and location not detected
+        const hasAsked = await locationService.hasAskedForLocationPermission();
+        if (!hasAsked && !detected) {
+          setShowLocationPrompt(true);
+        }
+      } catch (error) {
+        console.error('Error loading intelligent recommendations:', error);
+        // Fallback to default island order
+        setRecommendedIslands(['Nassau', 'Freeport', 'Exuma']);
+      }
+    };
+
+    loadIntelligentRecommendations();
+  }, []);
+
+  const handleLocationRequest = async () => {
+    setShowLocationPrompt(false);
+    try {
+      const detected = await locationService.detectCurrentIsland();
+      if (detected) {
+        setDetectedIsland(detected);
+        // Update recommendations with detected island first
+        const updated = await locationService.getRecommendedIslands();
+        setRecommendedIslands(updated);
+      }
+    } catch (error) {
+      console.error('Error requesting location:', error);
+    }
+  };
+
+  const handleLocationDecline = () => {
+    setShowLocationPrompt(false);
+  };
 
   const handleIslandSelect = async (island: string) => {
     console.log('🏝️ Island selected:', island);
@@ -34,6 +84,9 @@ const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({
     try {
       setIsLoading(true);
       console.log('🔄 Starting vehicle fetch for island:', island);
+      
+      // Save island preference for future recommendations
+      await locationService.saveIslandPreference(island as Island);
       
       // Add timeout to prevent indefinite loading
       const timeoutPromise = new Promise((_, reject) => 
@@ -117,7 +170,7 @@ const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({
   return (
     <SafeAreaView style={styles.container}>
       <AppHeader 
-        title="Island Rides" 
+        title="KeyLo" 
         navigation={navigation}
         showBackButton={false}
       />
@@ -125,11 +178,40 @@ const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Welcome to Island Rides! 🏝️</Text>
+          <Text style={styles.welcomeTitle}>Welcome to KeyLo! 🔑</Text>
           <Text style={styles.welcomeSubtitle}>
             Choose your destination to find the perfect vehicle for your adventure
           </Text>
+          {detectedIsland && (
+            <View style={styles.detectedLocationContainer}>
+              <Ionicons name="location" size={16} color={colors.primary} />
+              <Text style={styles.detectedLocationText}>
+                Detected: {detectedIsland}
+              </Text>
+            </View>
+          )}
         </View>
+
+        {/* Location Permission Prompt */}
+        {showLocationPrompt && (
+          <View style={styles.locationPrompt}>
+            <View style={styles.locationPromptContent}>
+              <Ionicons name="location-outline" size={24} color={colors.primary} />
+              <Text style={styles.locationPromptTitle}>Enable Smart Recommendations</Text>
+              <Text style={styles.locationPromptText}>
+                Allow location access to automatically show vehicles on your current island
+              </Text>
+              <View style={styles.locationPromptButtons}>
+                <TouchableOpacity style={styles.locationAllowButton} onPress={handleLocationRequest}>
+                  <Text style={styles.locationAllowText}>Allow Location</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.locationDeclineButton} onPress={handleLocationDecline}>
+                  <Text style={styles.locationDeclineText}>Not Now</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Quick Actions */}
         <View style={styles.quickActionsSection}>
@@ -156,7 +238,13 @@ const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({
         {/* Islands Section */}
         <View style={styles.islandsSection}>
           <Text style={styles.sectionTitle}>Select Your Island</Text>
-          {islands.map(renderIslandCard)}
+          <Text style={styles.sectionSubtitle}>
+            {detectedIsland ? 'Recommendations based on your location' : 'Choose your destination'}
+          </Text>
+          {recommendedIslands.map(islandId => {
+            const islandData = islands.find(island => island.id === islandId);
+            return islandData ? renderIslandCard(islandData) : null;
+          })}
         </View>
 
         {/* Test Section - Remove in production */}
@@ -208,6 +296,78 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+  detectedLocationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.primaryLight + '20',
+    borderRadius: borderRadius.md,
+  },
+  detectedLocationText: {
+    fontSize: typography.bodySmall.fontSize,
+    color: colors.primary,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
+  },
+  locationPrompt: {
+    marginBottom: spacing.lg,
+    backgroundColor: colors.white,
+    marginHorizontal: spacing.md,
+    borderRadius: borderRadius.lg,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  locationPromptContent: {
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  locationPromptTitle: {
+    fontSize: typography.heading4.fontSize,
+    fontWeight: 'bold',
+    color: colors.darkGrey,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  locationPromptText: {
+    fontSize: typography.body.fontSize,
+    color: colors.lightGrey,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.lg,
+  },
+  locationPromptButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  locationAllowButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+  },
+  locationAllowText: {
+    color: colors.white,
+    fontWeight: '600',
+    fontSize: typography.body.fontSize,
+  },
+  locationDeclineButton: {
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  locationDeclineText: {
+    color: colors.lightGrey,
+    fontWeight: '600',
+    fontSize: typography.body.fontSize,
+  },
   quickActionsSection: {
     marginBottom: spacing.xl,
   },
@@ -216,6 +376,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.darkGrey,
     marginBottom: spacing.md,
+  },
+  sectionSubtitle: {
+    fontSize: typography.bodySmall.fontSize,
+    color: colors.lightGrey,
+    marginBottom: spacing.lg,
   },
   quickActionsContainer: {
     flexDirection: 'row',

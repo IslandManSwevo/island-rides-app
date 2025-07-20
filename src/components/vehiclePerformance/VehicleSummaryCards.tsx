@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography, spacing, borderRadius } from '../../styles/Theme';
+import { colors, typography, spacing, borderRadius } from '../../styles/theme';
 
 interface VehiclePerformance {
   id: number;

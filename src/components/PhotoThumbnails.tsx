@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
 import { VehiclePhoto } from '../types';
-import { colors } from '../styles/Theme';
+import { colors } from '../styles/theme';
 
 interface PhotoThumbnailsProps {
   photos: VehiclePhoto[];

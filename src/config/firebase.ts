@@ -1,4 +1,4 @@
-// Firebase configuration for Island Rides App
+// Firebase configuration for KeyLo App
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, GoogleAuthProvider, signInWithPopup, signOut, User, UserCredential } from 'firebase/auth';
 
@@ -43,11 +43,30 @@ const validateFirebaseConfig = (config: FirebaseConfig): void => {
   }
 };
 
-// Validate configuration before initializing
-validateFirebaseConfig(firebaseConfig);
+// Check if we're in development and allow mock config
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Initialize Firebase
-const app: FirebaseApp = initializeApp(firebaseConfig);
+// Validate configuration before initializing (skip in development with demo values)
+if (!isDevelopment || firebaseConfig.apiKey !== 'demo-api-key') {
+  validateFirebaseConfig(firebaseConfig);
+}
+
+// Initialize Firebase (use mock in development if demo values)
+let app: FirebaseApp;
+if (isDevelopment && firebaseConfig.apiKey === 'demo-api-key') {
+  console.warn('Using demo Firebase configuration - Authentication will not work');
+  // Create minimal mock config for development
+  app = initializeApp({
+    apiKey: 'demo-api-key',
+    authDomain: 'island-rides-demo.firebaseapp.com',
+    projectId: 'island-rides-demo',
+    storageBucket: 'island-rides-demo.appspot.com',
+    messagingSenderId: '123456789',
+    appId: '1:123456789:web:abcdef123456789'
+  });
+} else {
+  app = initializeApp(firebaseConfig);
+}
 export const auth: Auth = getAuth(app);
 export const googleProvider: GoogleAuthProvider = new GoogleAuthProvider();
 
