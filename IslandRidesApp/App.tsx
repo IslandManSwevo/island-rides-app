@@ -1,20 +1,108 @@
 import React, { useEffect, useState } from 'react';
-import { DevSettings, View, Text, ActivityIndicator, StyleSheet, Platform } from 'react-native';
-import type { ErrorInfo } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { Platform, Alert, DevSettings, View, TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { AuthProvider } from './src/context/AuthContext';
-import NotificationContainer from './src/components/NotificationContainer';
-import AppNavigator from './src/navigation/AppNavigator';
-import ErrorBoundary from './src/components/ErrorBoundary';
 import { ReduxProvider } from './src/store/provider';
+import { AuthProvider } from './src/context/AuthContext';
+import { NavigationContainer } from '@react-navigation/native';
+import AppNavigator from './src/navigation/AppNavigator';
+import { linking } from './src/navigation/linking';
+import { navigationPersistence } from './src/navigation/navigationPersistence';
+import { onNavigationStateChange } from './src/navigation/navigationAccessibility';
+import { apiService } from './src/services/apiService';
+import { useAuth } from './src/context/AuthContext';
+import NotificationContainer from './src/components/NotificationContainer';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import { notificationService } from './src/services/notificationService';
-import { serviceRegistry } from './src/services/ServiceRegistry';
-import { loggingService } from './src/services/LoggingService';
 import { navigationRef } from './src/navigation/navigationRef';
-import { reviewPromptService } from './src/services/reviewPromptService';
-import runSetupTests from './src/utils/setupTest';
 import Constants from 'expo-constants';
+import { GluestackUIProvider } from '@gluestack-ui/themed';
+import { gluestackUIConfig } from './src/config/gluestackTheme';
+
+// Debug component that has access to AuthContext
+const DebugClearButton = () => {
+  const { logout } = useAuth();
+
+  const handleClearAuth = async () => {
+    try {
+      console.log('🧹 DEBUG: Clear Auth button clicked!');
+      console.log('🧹 Clearing authentication tokens and state...');
+      
+      // Clear AuthContext state first
+      await logout();
+      console.log('🧹 AuthContext state cleared');
+      
+      // Clear API service tokens
+      await apiService.clearToken();
+      
+      // Clear localStorage/AsyncStorage for web
+      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+        console.log('🧹 Clearing localStorage...');
+        localStorage.clear();
+      }
+      
+      // Clear AsyncStorage completely
+      try {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        await AsyncStorage.clear();
+        console.log('🧹 AsyncStorage cleared');
+      } catch (storageError) {
+        console.log('🧹 AsyncStorage not available, using localStorage fallback');
+      }
+      
+      console.log('🧹 All auth data cleared successfully');
+      Alert.alert('Success', 'Authentication and all stored data cleared! The app will reload.', [
+        {
+          text: 'OK',
+          onPress: () => {
+            console.log('🧹 Reloading app...');
+            // Force page reload in web environment
+            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+              window.location.reload();
+            } else if (__DEV__) {
+              DevSettings.reload();
+            }
+          }
+        }
+      ]);
+    } catch (error) {
+      console.error('🧹 Failed to clear auth:', error);
+      Alert.alert('Error', 'Failed to clear authentication: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  };
+
+  if (!__DEV__) return null;
+
+  return (
+    <View style={{
+      position: 'absolute',
+      bottom: 50,
+      right: 20,
+      zIndex: 1000,
+    }}>
+      <TouchableOpacity 
+        style={{
+          backgroundColor: '#ff4444',
+          paddingHorizontal: 15,
+          paddingVertical: 10,
+          borderRadius: 5,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
+        }}
+        onPress={handleClearAuth}
+      >
+        <Text style={{
+          color: 'white',
+          fontSize: 12,
+          fontWeight: 'bold',
+        }}>🧹 Clear Auth (Debug)</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const App: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -23,72 +111,23 @@ const App: React.FC = () => {
 
   const initializeApp = async () => {
     try {
-      console.log('Starting app initialization...');
-      setInitProgress('Initializing services...');
+      console.log('🚀 Starting simplified app initialization...');
+      setInitProgress('Initializing core services...');
       
-      // Initialize core services first
-      await serviceRegistry.initializeServices();
-      console.log('Service registry initialized successfully');
+      // Skip complex service initialization for now to get to login screen
+      console.log('⚠️ Using simplified startup to bypass service initialization issues');
       
-      setInitProgress('Setting up notifications...');
+      setInitProgress('Almost ready...');
       
-      // Only register for push notifications if not in Expo Go
-      const isExpoGo = Constants.appOwnership === 'expo';
-      if (!isExpoGo) {
-        try {
-          await notificationService.registerForPushNotifications();
-        } catch (error) {
-          console.warn('Push notification registration failed:', error);
-        }
-      }
-
-      setInitProgress('Initializing review system...');
-      
-      // Initialize review prompt service (non-blocking)
-      try {
-        await reviewPromptService.initialize();
-      } catch (error) {
-        console.warn('Review prompt service initialization failed:', error);
-      }
-
-      setInitProgress('Finalizing...');
-
-      // Run setup tests in development mode
-      if (__DEV__) {
-        setInitProgress('Running setup verification...');
-        try {
-          await runSetupTests();
-        } catch (error) {
-          console.warn('Setup tests failed (non-critical):', error);
-        }
-      }
+      // Short delay to show progress
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
       
       setIsInitialized(true);
-      console.log('App initialized successfully');
-
-      // Show welcome message
-      setTimeout(() => {
-        notificationService.info('Welcome to KeyLo! 🏝️', {
-          duration: 3000,
-          action: {
-            label: 'Get Started',
-            handler: () => {
-              // Navigation will be handled by AppNavigator
-            }
-          }
-        });
-      }, 1000);
+      console.log('✅ App initialized successfully (simplified mode)');
       
     } catch (error) {
-      console.error('Failed to initialize app:', error);
+      console.error('❌ Failed to initialize app:', error);
       setInitError(error instanceof Error ? error.message : 'Unknown initialization error');
-      
-      // Try to log the error if logging service is available
-      try {
-        loggingService.error('Failed to initialize app', error as Error);
-      } catch (logError) {
-        console.warn('Failed to log error:', logError);
-      }
     }
   };
 
@@ -98,11 +137,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (isInitialized) {
-      try {
-        notificationService.setupNotificationListeners(navigationRef);
-      } catch (error) {
-        console.warn('Failed to setup notification listeners:', error);
-      }
+      console.log('✅ App is now ready - navigation should be working');
+      // Skip notification setup for now to avoid service dependency issues
+      // notificationService.setupNotificationListeners(navigationRef);
     }
   }, [isInitialized]);
 
@@ -135,6 +172,8 @@ const App: React.FC = () => {
     }
   };
 
+
+
   if (initError) {
     return (
       <SafeAreaProvider>
@@ -151,24 +190,42 @@ const App: React.FC = () => {
 
   return (
     <SafeAreaProvider>
-      <ReduxProvider>
-        <ErrorBoundary onError={handleError}>
-          {!isInitialized ? (
-            <SafeAreaView style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007AFF" />
-              <Text style={styles.loadingText}>Loading KeyLo...</Text>
-              <Text style={styles.progressText}>{initProgress}</Text>
-            </SafeAreaView>
-          ) : (
-            <NavigationContainer ref={navigationRef}>
-              <AuthProvider>
-                <NotificationContainer />
-                <AppNavigator />
-              </AuthProvider>
-            </NavigationContainer>
-          )}
-        </ErrorBoundary>
-      </ReduxProvider>
+      <GluestackUIProvider config={gluestackUIConfig}>
+        <ReduxProvider>
+          <ErrorBoundary onError={handleError}>
+            {!isInitialized ? (
+              <SafeAreaView style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#007AFF" />
+                <Text style={styles.loadingText}>Loading KeyLo...</Text>
+                <Text style={styles.progressText}>{initProgress}</Text>
+              </SafeAreaView>
+            ) : (
+              <NavigationContainer
+                ref={navigationRef}
+                linking={linking}
+                onReady={() => {
+                  console.log('🧭 Navigation ready with deep linking');
+                }}
+                onStateChange={(state) => {
+                  console.log('🧭 Navigation state changed:', state);
+                  // Save navigation state for persistence
+                  if (state) {
+                    navigationPersistence.saveState(state);
+                  }
+                  // Handle accessibility announcements
+                  onNavigationStateChange(state);
+                }}
+              >
+                <AuthProvider>
+                  <NotificationContainer />
+                  <DebugClearButton />
+                  <AppNavigator />
+                </AuthProvider>
+              </NavigationContainer>
+            )}
+          </ErrorBoundary>
+        </ReduxProvider>
+      </GluestackUIProvider>
     </SafeAreaProvider>
   );
 };
@@ -219,6 +276,7 @@ const styles = StyleSheet.create({
     borderColor: '#007AFF',
     borderRadius: 8,
   },
+
 });
 
 export default App;

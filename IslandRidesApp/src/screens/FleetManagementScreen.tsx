@@ -753,3 +753,5 @@ const styles = StyleSheet.create({
     color: colors.darkGrey,
   },
 });
+
+export default FleetManagementScreen;

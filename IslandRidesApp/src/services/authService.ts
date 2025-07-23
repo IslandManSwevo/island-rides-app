@@ -28,7 +28,7 @@ class AuthService extends BaseService {
     super();
   }
 
-  protected async onInit(): Promise<void> {
+  protected override async onInit(): Promise<void> {
     // Wait for apiService to be initialized first
     await apiService.waitForInitialization();
     this.initializeFailedAttempts();

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TouchableOpacity, Animated, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiService } from '../services/apiService';
+import { useServices } from '../services/ServiceRegistry';
 import { notificationService } from '../services/notificationService';
 import { colors } from '../styles/theme';
 import { navigationRef } from '../navigation/navigationRef';
@@ -21,6 +22,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = React.memo(({
   style,
   onToggle
 }) => {
+  const services = useServices();
   const [isFavorited, setIsFavorited] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -32,8 +34,8 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = React.memo(({
     const checkFavoriteStatus = async () => {
       try {
         setChecking(true);
-        const response: ApiResponse<{ isFavorited: boolean }> = await apiService.get(`/favorites/check/${vehicleId}`);
-        setIsFavorited(response.data.isFavorited);
+        const isFavoritedStatus = await services.vehicle.checkFavoriteStatus(vehicleId.toString());
+        setIsFavorited(isFavoritedStatus);
       } catch (error) {
         console.error('Error checking favorite status:', error);
         // Don't show error for checking status, just log it
@@ -87,14 +89,14 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = React.memo(({
 
     try {
       if (isFavorited) {
-        await apiService.delete(`/favorites/${vehicleId}`);
+        await services.vehicle.removeFromFavorites(vehicleId.toString());
         setIsFavorited(false);
         onToggle?.(false);
         notificationService.info('Removed from favorites', {
           duration: 2000
         });
       } else {
-        await apiService.post('/favorites', { vehicleId });
+        await services.vehicle.addToFavorites(vehicleId.toString());
         setIsFavorited(true);
         onToggle?.(true);
         animateSuccess();

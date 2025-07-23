@@ -1,5 +1,26 @@
 import { useEffect, useRef, useCallback } from 'react';
 
+declare global {
+  var global: typeof globalThis;
+}
+
+// Extended Performance interface to include memory property
+interface ExtendedPerformance extends Performance {
+  memory?: {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+}
+
+// Polyfill for performance API if not available
+if (typeof performance === 'undefined') {
+  global.performance = {
+    now: () => Date.now(),
+    memory: undefined,
+  } as ExtendedPerformance;
+}
+
 interface PerformanceMetrics {
   renderCount: number;
   averageRenderTime: number;
@@ -31,8 +52,8 @@ export const usePerformanceMonitoring = (
 
   // Initialize memory baseline
   useEffect(() => {
-    if (trackMemory && (performance as any)?.memory) {
-      memoryBaseline.current = (performance as any).memory.usedJSHeapSize;
+    if (trackMemory && (performance as ExtendedPerformance)?.memory) {
+      memoryBaseline.current = (performance as ExtendedPerformance).memory!.usedJSHeapSize;
     }
   }, [trackMemory]);
 
@@ -95,11 +116,11 @@ export const usePerformanceMonitoring = (
 
   // Get memory usage (if available)
   const getMemoryUsage = useCallback(() => {
-    if (!trackMemory || !(performance as any)?.memory) {
+    if (!trackMemory || !(performance as ExtendedPerformance)?.memory) {
       return null;
     }
     
-    const current = (performance as any).memory.usedJSHeapSize;
+    const current = (performance as ExtendedPerformance).memory!.usedJSHeapSize;
     const baseline = memoryBaseline.current || 0;
     
     return {
@@ -116,8 +137,8 @@ export const usePerformanceMonitoring = (
     slowRenderCount.current = 0;
     startTime.current = Date.now();
     
-    if (trackMemory && (performance as any)?.memory) {
-      memoryBaseline.current = (performance as any).memory.usedJSHeapSize;
+    if (trackMemory && (performance as ExtendedPerformance)?.memory) {
+      memoryBaseline.current = (performance as ExtendedPerformance).memory!.usedJSHeapSize;
     }
   }, [trackMemory]);
 

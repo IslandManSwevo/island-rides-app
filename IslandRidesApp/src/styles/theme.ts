@@ -33,6 +33,7 @@ export const colors = {
   inputBackground: '#F8F8F8',
   premium: '#FFD700',
   partial: '#FF9500',
+  successLight: '#E8F5E8',
   gradient: {
     primary: ['#007AFF', '#5856D6'],
     secondary: ['#5856D6', '#AF52DE'],

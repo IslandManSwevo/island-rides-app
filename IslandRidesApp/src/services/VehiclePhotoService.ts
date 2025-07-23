@@ -2,17 +2,8 @@ import { BaseService } from './base/BaseService';
 import { apiService } from './apiService';
 import { VehiclePhoto } from '../types';
 
-interface VehiclePhotoUploadData extends FormData {
-  append(name: 'photo', value: {
-    uri: string;
-    type: string;
-    name: string;
-  }): void;
-  append(name: 'photoType', value: string): void;
-  append(name: 'caption', value: string): void;
-  append(name: 'isPrimary', value: string): void;
-  append(name: string, value: string | Blob): void;
-}
+// Use standard FormData for React Native compatibility
+type VehiclePhotoUploadData = FormData;
 
 class VehiclePhotoService extends BaseService {
   static getVehiclePhotos(vehicleId: number) {
@@ -27,7 +18,7 @@ class VehiclePhotoService extends BaseService {
   static uploadVehiclePhoto(vehicleId: number, formData: VehiclePhotoUploadData) {
     throw new Error('Method not implemented.');
   }
-  protected async onInit(): Promise<void> {
+  protected override async onInit(): Promise<void> {
     await apiService.waitForInitialization();
   }
 

@@ -164,7 +164,7 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView style={styles.scrollContent}>
       {/* Photo Gallery */}
       {vehicle.photos && vehicle.photos.length > 0 ? (
         <VehiclePhotoGallery 
@@ -313,6 +313,44 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
       </View>
 
     </ScrollView>
+    
+    {/* Sticky Booking Bar */}
+    {vehicle.available && (
+      <View style={styles.stickyBookingBar}>
+        <View style={styles.bookingBarContent}>
+          <View style={styles.priceSection}>
+            <Text style={styles.priceLabel}>From</Text>
+            <Text style={styles.priceValue}>${vehicle.dailyRate}/day</Text>
+            <View style={styles.socialProof}>
+              <Ionicons name="star" size={14} color={colors.warning} />
+              <Text style={styles.ratingText}>4.8</Text>
+              <Text style={styles.reviewCount}>(124)</Text>
+            </View>
+          </View>
+          
+          <View style={styles.bookingActions}>
+            <TouchableOpacity style={styles.availabilityButton}>
+              <Ionicons name="calendar" size={16} color={colors.primary} />
+              <Text style={styles.availabilityText}>Select Dates</Text>
+            </TouchableOpacity>
+            
+            <StandardButton
+              title="Book Now"
+              onPress={handleBookNow}
+              variant="primary"
+              style={styles.stickyBookButton}
+            />
+          </View>
+        </View>
+        
+        {/* Urgency Indicator */}
+        <View style={styles.urgencyBanner}>
+          <Ionicons name="flash" size={16} color={colors.warning} />
+          <Text style={styles.urgencyText}>🔥 19 people booked today</Text>
+          <Text style={styles.urgencySubtext}>Last booking 2 hours ago</Text>
+        </View>
+      </View>
+    )}
     </SafeAreaView>
   );
 };
@@ -321,6 +359,101 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.offWhite,
+  },
+  scrollContent: {
+    paddingBottom: 160, // Space for sticky booking bar
+  },
+  stickyBookingBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.lightGrey,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    shadowColor: colors.darkGrey,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  bookingBarContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  priceSection: {
+    flex: 1,
+  },
+  priceLabel: {
+    ...typography.caption,
+    color: colors.lightGrey,
+    marginBottom: 2,
+  },
+  priceValue: {
+    ...typography.heading2,
+    color: colors.primary,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
+  },
+  socialProof: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  ratingText: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.darkGrey,
+  },
+  reviewCount: {
+    ...typography.caption,
+    color: colors.lightGrey,
+  },
+  bookingActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  availabilityButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.offWhite,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    gap: spacing.xs,
+  },
+  availabilityText: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  stickyBookButton: {
+    minWidth: 120,
+  },
+  urgencyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.warning + '10',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    gap: spacing.sm,
+  },
+  urgencyText: {
+    ...typography.caption,
+    fontWeight: '600',
+    color: colors.warning,
+    flex: 1,
+  },
+  urgencySubtext: {
+    ...typography.caption,
+    color: colors.lightGrey,
   },
   galleryContainer: {
     position: 'relative',

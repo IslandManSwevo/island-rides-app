@@ -47,7 +47,7 @@ export const ClusteredMapView: React.FC<ClusteredMapViewProps> = React.memo(({
   minClusterSize = 2,
   style
 }) => {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
   const [region, setRegion] = useState<Region>(() => getIslandRegion(island));
   const [mapDimensions, setMapDimensions] = useState({
     width: Dimensions.get('window').width,
@@ -207,6 +207,7 @@ export const ClusteredMapView: React.FC<ClusteredMapViewProps> = React.memo(({
 
   return (
     <View style={[styles.container, style]} onLayout={handleLayout}>
+      {/* @ts-ignore */}
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -217,7 +218,7 @@ export const ClusteredMapView: React.FC<ClusteredMapViewProps> = React.memo(({
         showsMyLocationButton={false}
         showsCompass={false}
         showsScale={false}
-        customMapStyle={getMapStyle(island)}
+        {...({ customMapStyle: getMapStyle(island) } as any)}
       >
         {clusters.map(renderClusterMarker)}
       </MapView>

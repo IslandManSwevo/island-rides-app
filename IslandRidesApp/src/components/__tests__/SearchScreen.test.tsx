@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { render } from '../../testing/test-utils';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -154,7 +155,7 @@ describe('SearchScreen', () => {
     test('should perform search when search button is pressed', async () => {
       renderWithNavigation();
 
-      const searchButton = screen.getByTestId('search-button') || screen.getByRole('button', { name: /search/i });
+      const searchButton = screen.getByTestId('search-button') || screen.getByText(/search/i);
       fireEvent.press(searchButton);
 
       await waitFor(() => {
@@ -170,7 +171,7 @@ describe('SearchScreen', () => {
     test('should display search results after successful search', async () => {
       renderWithNavigation();
 
-      const searchButton = screen.getByTestId('search-button') || screen.getByRole('button', { name: /search/i });
+      const searchButton = screen.getByTestId('search-button') || screen.getByText(/search/i);
       fireEvent.press(searchButton);
 
       await waitFor(() => {
@@ -181,12 +182,12 @@ describe('SearchScreen', () => {
 
     test('should show loading state during search', async () => {
       (vehicleService.searchVehicles as jest.Mock).mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve(mockSearchResults), 100))
+        () => new Promise<any>(resolve => setTimeout(() => resolve(mockSearchResults), 100))
       );
 
       renderWithNavigation();
 
-      const searchButton = screen.getByTestId('search-button') || screen.getByRole('button', { name: /search/i });
+      const searchButton = screen.getByTestId('search-button') || screen.getByText(/search/i);
       fireEvent.press(searchButton);
 
       expect(screen.getByText('Searching vehicles...')).toBeTruthy();
@@ -201,7 +202,7 @@ describe('SearchScreen', () => {
 
       renderWithNavigation();
 
-      const searchButton = screen.getByTestId('search-button') || screen.getByRole('button', { name: /search/i });
+      const searchButton = screen.getByTestId('search-button') || screen.getByText(/search/i);
       fireEvent.press(searchButton);
 
       await waitFor(() => {
@@ -215,7 +216,7 @@ describe('SearchScreen', () => {
 
       renderWithNavigation();
 
-      const searchButton = screen.getByTestId('search-button') || screen.getByRole('button', { name: /search/i });
+      const searchButton = screen.getByTestId('search-button') || screen.getByText(/search/i);
       fireEvent.press(searchButton);
 
       await waitFor(() => {
@@ -391,7 +392,7 @@ describe('SearchScreen', () => {
       // First perform a search to make sort button visible
       renderWithNavigation();
 
-      const searchButton = screen.getByTestId('search-button') || screen.getByRole('button', { name: /search/i });
+      const searchButton = screen.getByTestId('search-button') || screen.getByText(/search/i);
       fireEvent.press(searchButton);
 
       await waitFor(() => {
@@ -407,7 +408,7 @@ describe('SearchScreen', () => {
     test('should update sort option and perform search', async () => {
       renderWithNavigation();
 
-      const searchButton = screen.getByTestId('search-button') || screen.getByRole('button', { name: /search/i });
+      const searchButton = screen.getByTestId('search-button') || screen.getByText(/search/i);
       fireEvent.press(searchButton);
 
       await waitFor(() => {
@@ -436,7 +437,7 @@ describe('SearchScreen', () => {
     test('should navigate to vehicle detail when vehicle card is pressed', async () => {
       renderWithNavigation();
 
-      const searchButton = screen.getByTestId('search-button') || screen.getByRole('button', { name: /search/i });
+      const searchButton = screen.getByTestId('search-button') || screen.getByText(/search/i);
       fireEvent.press(searchButton);
 
       await waitFor(() => {
@@ -520,7 +521,7 @@ describe('SearchScreen', () => {
 
       renderWithNavigation();
 
-      const searchButton = screen.getByTestId('search-button') || screen.getByRole('button', { name: /search/i });
+      const searchButton = screen.getByTestId('search-button') || screen.getByText(/search/i);
       fireEvent.press(searchButton);
 
       await waitFor(() => {

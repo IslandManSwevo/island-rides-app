@@ -5,6 +5,17 @@ import { render } from '@testing-library/react-native';
 // npm install --save-dev @testing-library/react-native
 import { ApiResponse } from '../types';
 
+declare global {
+  var global: typeof globalThis;
+}
+
+// Polyfill for performance API in test environment
+if (typeof performance === 'undefined') {
+  global.performance = {
+    now: () => Date.now(),
+  } as Performance;
+}
+
 export * from './test-utils';
 
 // Test templates (for reference, not for runtime import)
@@ -19,9 +30,9 @@ export const mockTimers = () => {
   return () => jest.useRealTimers();
 };
 
-export const flushPromises = () => new Promise(resolve => setImmediate(resolve));
+export const flushPromises = () => new Promise(resolve => setImmediate(() => resolve(undefined)));
 
-export const waitForNextTick = () => new Promise(resolve => process.nextTick(resolve));
+export const waitForNextTick = () => new Promise<void>(resolve => process.nextTick(() => resolve()));
 
 // Mock implementations for common React Native modules
 export const mockReactNativeModules = () => {

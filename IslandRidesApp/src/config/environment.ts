@@ -5,10 +5,10 @@ import { ENV_CONFIG_CACHE_DURATION_MS, PORT_DETECTION_CACHE_DURATION_MS } from '
 const PORT_CONFIG = {
   DETECTION_TIMEOUT: 1000, // Reduced to 1 second for faster fallback
   COMMON_API_PORTS: [3003, 3000, 3001, 3005, 3006, 3007, 3008, 8000, 8001, 8080, 8081],
-  COMMON_WS_PORTS: [3004, 3001, 3002, 8080, 8081],
+  COMMON_WS_PORTS: [3003, 3000, 3001, 3005, 3006, 3007, 3008, 8000, 8001, 8080, 8081], // Use same ports as API since Socket.io runs on same server
   HEALTH_ENDPOINTS: ['/api/health', '/health', '/api/status', '/status'],
   DEFAULT_API_PORT: 3003,
-  DEFAULT_WS_PORT: 3004,
+  DEFAULT_WS_PORT: 3003, // Changed to match API port since Socket.io runs on same server
   PORT_STATUS_TIMEOUT: 1000, // Reduced timeout
   MAX_CONCURRENT_CHECKS: 3, // Limit concurrent port checks
 };
@@ -176,28 +176,16 @@ class PortDetectionManager {
   }
 
   async getWebSocketPort(): Promise<number> {
-    const wsPort = parseInt(process.env.EXPO_PUBLIC_WS_PORT || String(PORT_CONFIG.DEFAULT_WS_PORT));
-    
-    // Quick check with timeout
-    try {
-      const timeoutPromise = new Promise<PortDetectionResult>((_, reject) => 
-        setTimeout(() => reject(new Error('WebSocket detection timeout')), 1000)
-      );
-      
-      const result = await Promise.race([
-        this.checkSinglePort(wsPort),
-        timeoutPromise
-      ]);
-      
-      if (result.available) {
-        console.log(`✅ WebSocket server found on port ${wsPort}`);
-        return wsPort;
-      }
-    } catch (error) {
-      console.warn(`⚠️ WebSocket detection timed out, using default port ${PORT_CONFIG.DEFAULT_WS_PORT}`);
+    // WebSocket runs on the same port as the API server since we're using Socket.io
+    const serverDetection = await this.detectAvailableServer();
+    if (serverDetection) {
+      console.log(`✅ WebSocket server found on port ${serverDetection.port} (same as API)`);
+      return serverDetection.port;
     }
-
-    return PORT_CONFIG.DEFAULT_WS_PORT;
+    
+    // Fallback to default API port
+    console.log(`⚠️ Using default port ${PORT_CONFIG.DEFAULT_API_PORT} for WebSocket`);
+    return PORT_CONFIG.DEFAULT_API_PORT;
   }
 
   clearCache(): void {
@@ -214,7 +202,7 @@ class PortDetectionManager {
 
 const portManager = PortDetectionManager.getInstance();
 
-const getEnvVars = async (env = process.env.NODE_ENV): Promise<EnvironmentConfig> => {
+const getEnvVars = async (env: string = process.env.NODE_ENV || 'development'): Promise<EnvironmentConfig> => {
   console.log('🔧 Starting environment configuration...');
   let apiBaseUrl: string;
   let wsUrl: string;

@@ -1,0 +1,3 @@
+// REMOVED: This file has been moved to backup as part of auth system cleanup
+// The AuthContext system is now the single source of truth for authentication
+// Original file moved to authSlice.ts.backup on cleanup

@@ -476,11 +476,11 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = React.memo
       setIsLoading(false);
       console.log('✅ Chat initialized successfully');
 
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('❌ Failed to initialize chat:', error);
       
       if (isMountedRef.current) {
-        setError(error.message || 'Failed to initialize chat');
+        setError(error instanceof Error ? error.message : 'Failed to initialize chat');
         setIsLoading(false);
         setIsConnecting(false);
         setConnectionStatus('disconnected');
@@ -599,7 +599,7 @@ const ChatConversationScreen: React.FC<ChatConversationScreenProps> = React.memo
   const renderMessageImage = (props: MessageImageProps<IMessage>) => (
     <TouchableOpacity
       onPress={() => {
-        setSelectedImage(props.currentMessage.image || null);
+        setSelectedImage(props.currentMessage?.image || null);
         setShowImageViewer(true);
       }}
     >

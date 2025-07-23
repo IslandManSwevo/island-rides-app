@@ -190,27 +190,26 @@ KeyLo creates a trusted, mobile-first marketplace that enables Bahamians to rent
 
 ## Documentation References
 
-### Core Technical Documentation
+### Core Documentation
+- **Documentation Index**: `docs/README.md` - Complete documentation navigation and organization
+- **Product Requirements Document**: `docs/prd.md` - Detailed feature requirements and specifications
 - **Architecture Overview**: `docs/architecture.md` - High-level system architecture and design decisions
 - **Frontend Architecture**: `docs/frontend-architecture.md` - React Native app structure and patterns
-- **Fullstack Architecture**: `docs/fullstack-architecture.md` - Complete system integration design
 - **UI Architecture**: `docs/ui-architecture.md` - Component design system and user interface patterns
 - **Frontend Specifications**: `docs/front-end-spec.md` - Detailed frontend implementation requirements
 
-### Product Documentation
-- **Product Requirements Document**: `docs/prd.md` - Detailed feature requirements and specifications
-- **Testing Documentation**: `docs/TESTING_SUMMARY.md` - Testing strategies and procedures
+### Authentication & Security
+- **Authentication Analysis**: `docs/AUTHENTICATION_ANALYSIS.md` - Authentication system architecture and security considerations
+- **Authentication Testing**: `docs/AUTHENTICATION_TESTING_PLAN.md` - Comprehensive testing procedures for auth features
+- **Authentication Validation**: `docs/AUTHENTICATION_VALIDATION_RESULTS.md` - Implementation status and validation results
 
-### User Stories and Implementation
-- **Story Overview**: `docs/stories/README.md` - Implementation story tracking and status
-- **Foundational Features**: `docs/stories/1.1.foundational-verification.md` - Core verification system
-- **Search and Discovery**: `docs/stories/1.2.island-aware-search-discovery.md` - Island-based search functionality
-- **Host Dashboard Features**: 
-  - `docs/stories/1.3.standard-host-dashboard.md` - Basic host management tools
-  - `docs/stories/1.5.pro-host-dashboard.md` - Advanced host analytics and tools
-- **Host Storefront**: `docs/stories/1.4.verified-host-storefront.md` - Public host profile and listings
-- **Advanced Search**: `docs/stories/2.1.intelligent-island-based-search.md` - AI-powered search enhancements
-- **Brand Implementation**: `docs/stories/3.1.keylo-brand-transition.md` - KeyLo branding and design system
+### Development & Technical
+- **Testing Documentation**: `docs/TESTING_SUMMARY.md` - Testing strategies and procedures
+- **Documentation Cleanup Plan**: `docs/DOCUMENTATION_CLEANUP_PLAN.md` - Documentation organization and maintenance strategy
+
+### Archived Documentation
+- **Legacy User Stories**: `docs/archive/stories/` - Previous implementation stories and planning documents
+- **Template Files**: `docs/archive/` - Incomplete templates and outdated documentation
 
 ### Reference Format
 All documentation references follow the pattern: `docs/filename.md#section-name` for specific sections within documents.

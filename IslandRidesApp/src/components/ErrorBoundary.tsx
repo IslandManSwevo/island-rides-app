@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ErrorBoundaryProps } from '../types';
 import { notificationService } from '../services/notificationService';
 import { colors, typography, spacing } from '../styles/theme';
+import { loggingService } from '../services/LoggingService';
+import { createError, ErrorType, ErrorAnalytics } from '../utils/errorHandler';
 
 interface State {
   hasError: boolean;
@@ -25,9 +27,25 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Create structured error
+    const appError = createError(
+      ErrorType.UNKNOWN,
+      error.message,
+      {
+        context: 'ErrorBoundary',
+        details: {
+          stack: error.stack,
+          componentStack: errorInfo.componentStack
+        }
+      }
+    );
+
     // Log error to logging service
-    console.error('Error caught by boundary:', error, errorInfo);
+    loggingService.error('Component error caught', error);
+
+    // Track error analytics
+    ErrorAnalytics.logError(appError, 'ErrorBoundary');
 
     // Show error notification.
     // A duration of 0 makes the notification persistent until the user interacts with it.
@@ -55,7 +73,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
     }
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;

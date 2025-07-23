@@ -8,6 +8,17 @@ import { authService } from './authService';
 import { ErrorRecoveryManager } from './errors/ErrorRecoveryManager';
 import { SessionRecoveryStrategy } from './errors/RecoveryStrategy';
 
+// Domain Services
+import { vehicleService } from './domains/VehicleService';
+import { bookingService } from './domains/BookingService';
+import { userService } from './domains/UserService';
+import { hostService } from './domains/HostService';
+import { paymentService } from './domains/PaymentService';
+
+// Performance and Feature Services
+import { performanceMonitor } from './PerformanceMonitor';
+import { featureFlags } from './FeatureFlagService';
+
 class ServiceRegistry extends BaseService {
   private initializedServices: Set<string> = new Set();
   private readonly SERVICE_INIT_TIMEOUT = 10000; // 10 seconds
@@ -157,3 +168,17 @@ class ServiceRegistry extends BaseService {
 }
 
 export const serviceRegistry = ServiceRegistry.getInstance<ServiceRegistry>();
+
+// Domain Services Registry - Easy access to domain-specific services
+export const services = {
+  vehicle: vehicleService,
+  booking: bookingService,
+  user: userService,
+  host: hostService,
+  payment: paymentService,
+  performance: performanceMonitor,
+  features: featureFlags,
+};
+
+// React hook for easy access to services in components
+export const useServices = () => services;

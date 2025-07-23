@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { notificationService } from '../services/notificationService';
+import { apiService } from '../services/apiService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
@@ -137,7 +138,7 @@ export const NotificationPreferencesScreen: React.FC<NotificationPreferencesScre
           text: 'Enable',
           onPress: async () => {
             try {
-              await notificationService.registerForPushNotifications();
+              await notificationService.registerForPushNotifications(apiService.post.bind(apiService));
               updatePreference('pushEnabled', true);
               notificationService.success('Push notifications enabled!', {
                 duration: 3000

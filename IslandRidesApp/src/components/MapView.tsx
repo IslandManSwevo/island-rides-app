@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
-import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Callout } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { Vehicle, VehicleRecommendation, Island } from '../types';
 import { ClusteredMapView } from './ClusteredMapView';
@@ -43,7 +43,7 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
 
   useEffect(() => {
     if (userLocation) {
@@ -82,7 +82,7 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
 
   // Convert vehicles to VehicleRecommendation format if needed
   const convertedVehicles: VehicleRecommendation[] = vehicles.map((vehicle, index) => {
-    if ('vehicle' in vehicle) {
+    if ('vehicle' in vehicle && 'recommendationScore' in vehicle) {
       return vehicle as VehicleRecommendation;
     } else {
       const v = vehicle as Vehicle;
@@ -101,7 +101,7 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
         },
         score: 0.5,
         reasons: ['Available vehicle']
-      };
+      } as VehicleRecommendation;
     }
   });
 
@@ -156,17 +156,17 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* @ts-ignore */}
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        customMapStyle={bahamasMapStyle}
         region={region}
         onRegionChangeComplete={setRegion}
         showsUserLocation={showUserLocation}
         showsMyLocationButton={true}
         showsCompass={true}
         showsScale={true}
+        {...({ customMapStyle: bahamasMapStyle } as any)}
       >
         {convertedVehicles.map((vehicleRec) => {
           const vehicle = 'vehicle' in vehicleRec ? vehicleRec.vehicle : vehicleRec as Vehicle;

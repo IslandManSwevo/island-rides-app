@@ -15,6 +15,7 @@ import { RouteProp } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { apiService } from '../services/apiService';
+import { VerificationSkeleton } from '../components/skeletons/VerificationSkeleton';
 import { RootStackParamList } from '../navigation/routes';
 
 interface VerificationStatus {
@@ -177,12 +178,7 @@ export const VerificationScreen: React.FC<VerificationScreenProps> = ({ navigati
   };
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading verification status...</Text>
-      </View>
-    );
+    return <VerificationSkeleton />;
   }
 
   return (

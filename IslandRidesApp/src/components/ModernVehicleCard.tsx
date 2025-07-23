@@ -14,10 +14,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { borderRadius, spacing, shadows, colors } from '../styles/theme';
 import { Vehicle } from '../types';
 
+// Helper function moved outside component for better performance
+const formatPrice = (price: number): string => {
+  return `$${price}/day`;
+};
+
 interface ModernVehicleCardProps {
   vehicle: Vehicle;
   onPress?: () => void;
-  style?: ViewStyle | TextStyle;
+  style?: ViewStyle;
 }
 
 const ModernVehicleCard: React.FC<ModernVehicleCardProps> = React.memo(({
@@ -47,9 +52,6 @@ const ModernVehicleCard: React.FC<ModernVehicleCardProps> = React.memo(({
     }).start();
   }, [scaleAnim]);
 
-  const formatPrice = useCallback((price: number) => {
-    return `$${price}/day`;
-  }, []);
 
   const getPrimaryPhoto = useMemo(() => {
     if (vehicle.photos && vehicle.photos.length > 0) {
@@ -105,6 +107,8 @@ const ModernVehicleCard: React.FC<ModernVehicleCardProps> = React.memo(({
               resizeMode="cover"
               onLoad={handleImageLoad}
               onError={handleImageError}
+              accessible={true}
+              accessibilityLabel={`${vehicle.make} ${vehicle.model} vehicle image`}
             />
             
             {imageLoading && (
@@ -140,7 +144,7 @@ const ModernVehicleCard: React.FC<ModernVehicleCardProps> = React.memo(({
             </View>
 
             <Text style={styles.description} numberOfLines={2}>
-              {vehicle.description || 'Premium vehicle with excellent features'}
+              {vehicle.description || 'Vehicle details not available'}
             </Text>
 
             <View style={styles.features}>
@@ -163,7 +167,9 @@ const ModernVehicleCard: React.FC<ModernVehicleCardProps> = React.memo(({
                 </Text>
               </View>
               <View style={styles.locationContainer}>
-                <Text style={styles.location}>📍 {vehicle.location}</Text>
+                <Text style={styles.location}>
+                  📍 {vehicle.location || 'Location unavailable'}
+                </Text>
               </View>
             </View>
           </View>

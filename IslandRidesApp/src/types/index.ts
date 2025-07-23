@@ -64,15 +64,23 @@ export interface ErrorMeta {
   details?: Record<string, unknown>;
 }
 
+export type UserRole = 'user' | 'host' | 'owner' | 'admin';
+
 export interface User {
   id: number;
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  role: UserRole;
   createdAt?: string;
   failedLoginAttempts?: number;
   lockoutUntil?: string | null;
+  profileImageUrl?: string;
+  phoneNumber?: string;
+  isVerified?: boolean;
+  preferredIsland?: string;
+  onboardingCompleted?: boolean;
+  permissions?: Record<string, boolean>;
 }
 
 export interface ApiError {
@@ -539,3 +547,80 @@ export type FleetVehicle = Vehicle & {
   insuranceExpiry: string | null;
   registrationExpiry: string | null;
 };
+
+// ============================================================================
+// Navigation Types
+// ============================================================================
+
+export type RootStackParamList = {
+  Auth: undefined;
+  Main: undefined;
+  VehicleDetail: { vehicleId: string };
+  Booking: { vehicleId: string };
+  Profile: { userId?: string };
+  Settings: undefined;
+  HostDashboard: undefined;
+  OwnerDashboard: undefined;
+};
+
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  ForgotPassword: undefined;
+};
+
+export type MainTabParamList = {
+  Home: undefined;
+  Search: undefined;
+  Bookings: undefined;
+  Profile: undefined;
+  Host?: undefined;
+};
+
+// ============================================================================
+// Redux Store Types
+// ============================================================================
+
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface RootState {
+  auth: AuthState;
+  vehicles: {
+    list: Vehicle[];
+    current: Vehicle | null;
+    loading: boolean;
+    error: string | null;
+  };
+  bookings: {
+    list: Booking[];
+    current: Booking | null;
+    loading: boolean;
+    error: string | null;
+  };
+  ui: {
+    theme: 'light' | 'dark';
+    notifications: boolean;
+    language: string;
+  };
+}
+
+// ============================================================================
+// Utility Types
+// ============================================================================
+
+export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
+
+export interface AsyncState<T = any> {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+}
+
+export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;

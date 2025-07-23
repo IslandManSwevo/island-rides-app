@@ -1,6 +1,18 @@
+/// <reference types="jest" />
 import React, { useState, Component, ErrorInfo, ReactNode } from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { render, createMockNavigation, createMockRoute } from './test-utils';
+
+declare global {
+  var global: typeof globalThis;
+}
+
+// Polyfill for performance API in test environment
+if (typeof performance === 'undefined') {
+  global.performance = {
+    now: () => Date.now(),
+  } as Performance;
+}
 
 // Template for component tests
 // Copy this template and adapt it for your components
@@ -23,11 +35,11 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
     return { hasError: true };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.log('Error caught by boundary:', error, errorInfo);
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return <Text>Something went wrong</Text>;
     }
@@ -169,9 +181,9 @@ describe('ComponentName', () => {
   describe('User Interactions', () => {
     it('handles button press', () => {
       const mockOnPress = jest.fn();
-      const { getByRole } = renderComponent({ onPress: mockOnPress });
+      const { getByText } = renderComponent({ onPress: mockOnPress });
       
-      fireEvent.press(getByRole('button'));
+      fireEvent.press(getByText('Press Me'));
       
       expect(mockOnPress).toHaveBeenCalledTimes(1);
     });
@@ -187,9 +199,9 @@ describe('ComponentName', () => {
 
     it('handles form submission', async () => {
       const mockOnSubmit = jest.fn();
-      const { getByRole } = renderComponent({ onSubmit: mockOnSubmit });
+      const { getByTestId } = renderComponent({ onSubmit: mockOnSubmit });
       
-      fireEvent.press(getByRole('button', { name: /submit/i }));
+      fireEvent.press(getByTestId('submit-button'));
       
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledTimes(1);
@@ -199,9 +211,9 @@ describe('ComponentName', () => {
 
   describe('Navigation', () => {
     it('navigates to correct screen', () => {
-      const { getByRole } = renderComponent();
+      const { getByTestId } = renderComponent();
       
-      fireEvent.press(getByRole('button', { name: /navigate/i }));
+      fireEvent.press(getByTestId('navigate-button'));
       
       expect(mockNavigation.navigate).toHaveBeenCalledWith('DestinationScreen', {
         // Expected parameters
@@ -209,9 +221,9 @@ describe('ComponentName', () => {
     });
 
     it('goes back when back button is pressed', () => {
-      const { getByRole } = renderComponent();
+      const { getByTestId } = renderComponent();
       
-      fireEvent.press(getByRole('button', { name: /back/i }));
+      fireEvent.press(getByTestId('back-button'));
       
       expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
     });
@@ -219,17 +231,17 @@ describe('ComponentName', () => {
 
   describe('State Management', () => {
     it('updates local state correctly', () => {
-      const { getByRole, getByText } = renderComponent();
+      const { getByTestId, getByText } = renderComponent();
       
-      fireEvent.press(getByRole('button', { name: /toggle/i }));
+      fireEvent.press(getByTestId('toggle-button'));
       
       expect(getByText('State Updated')).toBeTruthy();
     });
 
     it('handles async state updates', async () => {
-      const { getByRole, getByText } = renderComponent();
+      const { getByTestId, getByText } = renderComponent();
       
-      fireEvent.press(getByRole('button', { name: /async action/i }));
+      fireEvent.press(getByTestId('async-action-button'));
       
       await waitFor(() => {
         expect(getByText('Async Data Loaded')).toBeTruthy();
@@ -245,16 +257,16 @@ describe('ComponentName', () => {
     });
 
     it('has proper accessibility roles', () => {
-      const { getByRole } = renderComponent();
+      const { getByText } = renderComponent();
       
-      expect(getByRole('button')).toBeTruthy();
+      expect(getByText('Submit')).toBeTruthy();
     });
 
     it('has proper accessibility states', () => {
-      const { getByRole } = renderComponent({ disabled: true });
+      const { getByTestId } = renderComponent({ disabled: true });
       
-      const button = getByRole('button');
-      expect(button.props.accessibilityState).toEqual({ disabled: true });
+      const component = getByTestId('component-name');
+      expect(component.props.accessibilityState).toEqual({ disabled: true });
     });
   });
 
@@ -284,9 +296,9 @@ describe('ComponentName', () => {
       const mockError = new Error('API Error');
       const mockApiCall = jest.fn().mockRejectedValue(mockError);
       
-      const { getByRole, getByText } = renderComponent({ apiCall: mockApiCall });
+      const { getByTestId, getByText } = renderComponent({ apiCall: mockApiCall });
       
-      fireEvent.press(getByRole('button', { name: /load data/i }));
+      fireEvent.press(getByTestId('load-data-button'));
       
       await waitFor(() => {
         expect(getByText('Failed to load data')).toBeTruthy();

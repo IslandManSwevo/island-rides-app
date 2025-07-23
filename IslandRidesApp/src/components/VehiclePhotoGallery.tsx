@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -58,8 +58,7 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
   // Get screen width dynamically within component
   const { width: screenWidth } = useWindowDimensions();
 
-  // Memoize photo type colors to avoid recalculation
-  const photoTypeColors = useMemo(() => PHOTO_TYPE_COLORS, []);
+  // Use photo type colors directly (no memoization needed for constants)
 
   // Preload adjacent images for better UX
   const preloadAdjacentImages = useCallback((index: number) => {
@@ -70,25 +69,38 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
     ];
     
     indicesToPreload.forEach(i => {
-      if (!loadedImages.has(i) && !loadingImages.has(i)) {
-        setLoadingImages(prev => new Set(prev).add(i));
-        Image.prefetch(photos[i].photoUrl).then(() => {
-          setLoadedImages(prev => new Set(prev).add(i));
-          setLoadingImages(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(i);
-            return newSet;
+      // Use functional updates to access current state without dependencies
+      setLoadingImages(prevLoading => {
+        setLoadedImages(prevLoaded => {
+          // Skip if already loaded or loading
+          if (prevLoaded.has(i) || prevLoading.has(i)) {
+            return prevLoaded;
+          }
+          
+          // Start prefetching
+          Image.prefetch(photos[i].photoUrl).then(() => {
+            setLoadedImages(prev => new Set(prev).add(i));
+            setLoadingImages(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(i);
+              return newSet;
+            });
+          }).catch(() => {
+            setLoadingImages(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(i);
+              return newSet;
+            });
           });
-        }).catch(() => {
-          setLoadingImages(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(i);
-            return newSet;
-          });
+          
+          return prevLoaded; // No change to loaded images yet
         });
-      }
+        
+        // Add to loading set if not already there
+        return prevLoading.has(i) ? prevLoading : new Set(prevLoading).add(i);
+      });
     });
-  }, [photos, loadedImages, loadingImages]);
+  }, [photos]);
 
   if (!photos || photos.length === 0) {
     return (

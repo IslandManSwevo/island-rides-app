@@ -6,18 +6,25 @@ require('dotenv').config();
 // Database configuration
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isTest = process.env.NODE_ENV === 'test';
+const useSQLite = process.env.DATABASE_TYPE === 'sqlite' || isTest;
 
 // Determine database configuration based on environment
 let dbConfig = {};
 
-if (isTest) {
-  // Use SQLite for testing (faster setup)
+if (useSQLite) {
+  // Use SQLite for testing or when DATABASE_TYPE=sqlite
   const sqlite3 = require('sqlite3').verbose();
-  const dbFile = ':memory:';
+  const dbFile = isTest ? ':memory:' : (process.env.DATABASE_URL || './island-rides.db');
   
-  const db = new sqlite3.Database(dbFile);
+  const db = new sqlite3.Database(dbFile, (err) => {
+    if (err) {
+      console.error('❌ SQLite connection error:', err.message);
+    } else {
+      console.log('✅ Connected to SQLite database:', dbFile);
+    }
+  });
   
-  // Initialize test database schema
+  // Initialize database schema
   const initTestDb = () => {
     return new Promise((resolve, reject) => {
       const schemaPath = path.join(__dirname, 'schema.sql');
@@ -48,7 +55,7 @@ if (isTest) {
     pool: null
   };
 } else {
-  // Use PostgreSQL for development and production
+  // Use PostgreSQL for production when DATABASE_TYPE is not sqlite
   dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,

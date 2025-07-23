@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing } from '../../styles/theme';
+import { VehicleReviewsSkeleton } from '../skeletons/VehicleReviewsSkeleton';
 import { apiService } from '../../services/apiService';
 import { notificationService } from '../../services/notificationService';
 
@@ -41,13 +42,28 @@ export const VehicleReviews: React.FC<VehicleReviewsProps> = ({ vehicleId }) => 
       const response = await apiService.get<VehicleReviewsResponse>(`/reviews/vehicle/${vehicleId}`);
       setReviews(response.reviews || []);
       setAverageRating(response.averageRating || 0);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error fetching reviews:', error);
       
       let errorMessage = 'Failed to load reviews';
       
+      // Type guard for axios error with response
+      const hasResponse = (err: any): err is { response: { status: number } } => {
+        return err && typeof err === 'object' && err.response && typeof err.response.status === 'number';
+      };
+      
+      // Type guard for error with code property
+      const hasCode = (err: any): err is { code: string } => {
+        return err && typeof err === 'object' && typeof err.code === 'string';
+      };
+      
+      // Type guard for error with message property
+      const hasMessage = (err: any): err is { message: string } => {
+        return err && typeof err === 'object' && typeof err.message === 'string';
+      };
+      
       // Check for specific error types and HTTP status codes
-      if (error?.response?.status) {
+      if (hasResponse(error)) {
         switch (error.response.status) {
           case 401:
             errorMessage = 'Please log in to view reviews';
@@ -69,11 +85,11 @@ export const VehicleReviews: React.FC<VehicleReviewsProps> = ({ vehicleId }) => 
           default:
             errorMessage = `Failed to load reviews (Error ${error.response.status})`;
         }
-      } else if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('Network')) {
+      } else if (hasCode(error) && (error.code === 'NETWORK_ERROR' || (hasMessage(error) && error.message.includes('Network')))) {
         errorMessage = 'Network error. Please check your connection and try again';
-      } else if (error?.code === 'TIMEOUT_ERROR' || error?.message?.includes('timeout')) {
+      } else if (hasCode(error) && (error.code === 'TIMEOUT_ERROR' || (hasMessage(error) && error.message.includes('timeout')))) {
         errorMessage = 'Request timed out. Please try again';
-      } else if (error?.message) {
+      } else if (hasMessage(error)) {
         errorMessage = `Failed to load reviews: ${error.message}`;
       }
       
@@ -134,15 +150,7 @@ export const VehicleReviews: React.FC<VehicleReviewsProps> = ({ vehicleId }) => 
   );
 
   if (loadingReviews) {
-    return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Reviews</Text>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading reviews...</Text>
-        </View>
-      </View>
-    );
+    return <VehicleReviewsSkeleton reviewCount={3} />;
   }
 
   if (reviews.length === 0) {

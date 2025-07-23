@@ -21,6 +21,7 @@ import {
   searchNotificationService 
 } from '../services/searchNotificationService';
 import { SearchFilters } from '../types';
+import { SavedSearchesSkeleton } from '../components/skeletons/SavedSearchesSkeleton';
 
 type SavedSearchesScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.SAVED_SEARCHES>;
 type SavedSearchesScreenRouteProp = RouteProp<RootStackParamList, typeof ROUTES.SAVED_SEARCHES>;
@@ -255,10 +256,16 @@ export const SavedSearchesScreen: React.FC<SavedSearchesScreenProps> = ({ naviga
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading saved searches...</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Saved Searches</Text>
+          <TouchableOpacity onPress={() => setShowSavedSearchModal(true)}>
+            <Ionicons name="add" size={24} color={colors.primary} />
+          </TouchableOpacity>
         </View>
+        <SavedSearchesSkeleton itemCount={5} />
       </SafeAreaView>
     );
   }

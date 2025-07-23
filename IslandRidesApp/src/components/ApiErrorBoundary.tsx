@@ -10,11 +10,11 @@ import { colors } from '../styles/theme';
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
+  errorInfo: React.ErrorInfo | null;
   isRetrying: boolean;
 }
 
-export class ApiErrorBoundary extends Component<ErrorBoundaryProps, State> {
+export class ApiErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -34,7 +34,7 @@ export class ApiErrorBoundary extends Component<ErrorBoundaryProps, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     this.setState({ errorInfo });
     
     // Log error to your error tracking service
@@ -137,7 +137,7 @@ export class ApiErrorBoundary extends Component<ErrorBoundaryProps, State> {
     this.props.onReset?.();
   };
 
-  render(): React.ReactNode {
+  override render(): React.ReactNode {
     const { hasError, error, isRetrying } = this.state;
     const { children, fallback } = this.props;
 

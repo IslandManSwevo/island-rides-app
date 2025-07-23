@@ -141,7 +141,7 @@ export const cachingMiddleware = {
   clearCache: async (pattern?: string): Promise<void> => {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const cacheKeys = keys.filter(key => {
+      const cacheKeys = keys.filter((key: string) => {
         if (!key.startsWith(CACHE_PREFIX)) return false;
         if (pattern) {
           return key.includes(pattern);
@@ -164,7 +164,7 @@ export const cachingMiddleware = {
   getCacheSize: async (): Promise<number> => {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const cacheKeys = keys.filter(key => key.startsWith(CACHE_PREFIX));
+      const cacheKeys = keys.filter((key: string) => key.startsWith(CACHE_PREFIX));
       return cacheKeys.length;
     } catch (error) {
       if (__DEV__) {

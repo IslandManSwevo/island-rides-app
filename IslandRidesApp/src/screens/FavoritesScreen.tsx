@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { VehicleCard } from '../components/VehicleCard';
+import { VehicleCardSkeleton } from '../components/skeletons/VehicleCardSkeleton';
 import { apiService } from '../services/apiService';
+import { useServices } from '../services/ServiceRegistry';
 import { notificationService } from '../services/notificationService';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Vehicle } from '../types';
@@ -34,6 +36,7 @@ interface FavoritesScreenProps {
 }
 
 export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
+  const services = useServices();
   const [favorites, setFavorites] = useState<FavoriteVehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,7 +49,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
   const fetchFavorites = async () => {
     try {
-      const response = await apiService.get('/favorites');
+      const response = await services.user.getFavorites();
       setFavorites((response as any).favorites || []);
     } catch (error: unknown) {
       console.error('Error fetching favorites:', String(error));
@@ -219,9 +222,20 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading your favorites...</Text>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.title}>My Favorites</Text>
+            <Text style={styles.subtitle}>Loading...</Text>
+          </View>
+        </View>
+        <View style={styles.listContainer}>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <View key={index} style={styles.vehicleContainer}>
+              <VehicleCardSkeleton compact={false} />
+            </View>
+          ))}
+        </View>
       </SafeAreaView>
     );
   }

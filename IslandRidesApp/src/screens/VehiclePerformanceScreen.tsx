@@ -14,6 +14,7 @@ import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
+import { VehiclePerformanceSkeleton } from '../components/skeletons/VehiclePerformanceSkeleton';
 import { VehicleSummaryCards } from '../components/vehiclePerformance/VehicleSummaryCards';
 import { VehicleSortControls } from '../components/vehiclePerformance/VehicleSortControls';
 import { VehiclePerformanceCard } from '../components/vehiclePerformance/VehiclePerformanceCard';
@@ -210,8 +211,9 @@ export const VehiclePerformanceScreen: React.FC<VehiclePerformanceScreenProps> =
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading vehicle performance...</Text>
+      <View style={styles.container}>
+        <AppHeader title="Vehicle Performance" navigation={navigation} showBackButton />
+        <VehiclePerformanceSkeleton vehicleCount={5} />
       </View>
     );
   }

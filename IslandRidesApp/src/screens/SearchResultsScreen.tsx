@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { notificationService } from '../services/notificationService';
 import { colors, typography, spacing } from '../styles/theme';
 import { VehicleCard } from '../components/VehicleCard';
+import { SearchResultsSkeleton } from '../components/skeletons/SearchResultsSkeleton';
 import { vehicleService } from '../services/vehicleService';
 import { VehicleRecommendation, Island, Vehicle } from '../types';
 import { StackScreenProps } from '@react-navigation/stack';
@@ -89,10 +90,17 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ naviga
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Finding vehicles in {island}...</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>🚗 Available in {island}</Text>
+          <Text style={styles.subtitle}>Finding vehicles...</Text>
+        </View>
+        <SearchResultsSkeleton 
+          itemCount={6}
+          showHeader={false}
+          compact={false}
+        />
+      </SafeAreaView>
     );
   }
 

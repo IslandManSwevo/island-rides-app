@@ -26,7 +26,7 @@ try {
 }
 
 // Slice imports (will add as we create them)
-import authReducer from './slices/authSlice';
+// Note: authSlice removed - using AuthContext for authentication
 import userReducer from './slices/userSlice';
 import vehicleReducer from './slices/vehicleSlice';
 import bookingReducer from './slices/bookingSlice';
@@ -37,13 +37,13 @@ import searchReducer from './slices/searchSlice';
 const persistConfig = {
   key: 'root',
   storage: storage,
-  whitelist: ['auth', 'user'], // Only persist auth and user data
+  whitelist: ['user'], // Only persist user data (auth handled by AuthContext)
   blacklist: ['search', 'notification'], // Don't persist temporary data
 };
 
 // Root reducer
 const rootReducer = combineReducers({
-  auth: authReducer,
+  // Note: auth removed - using AuthContext for authentication
   user: userReducer,
   vehicle: vehicleReducer,
   booking: bookingReducer,

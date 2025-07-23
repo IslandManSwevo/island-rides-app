@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { NavigationProp } from '@react-navigation/native';
-import { apiService } from './apiService';
+// apiService import removed to break circular dependency
 import { NavigationContainerRef } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/routes';
 
@@ -94,7 +94,7 @@ class NotificationService {
     this.notifications.next([]);
   }
 
-  async registerForPushNotifications() {
+  async registerForPushNotifications(apiCall?: (url: string, data: Record<string, unknown>) => Promise<any>) {
     try {
       // Check if we're in Expo Go
       const isExpoGo = Constants.appOwnership === 'expo';
@@ -127,10 +127,12 @@ class NotificationService {
       console.log('📱 Push token obtained:', tokenData.data);
 
       // Register token with backend
-      await apiService.post('/api/notifications/register-token', {
-        token: tokenData.data,
-        platform: Platform.OS,
-      });
+      if (apiCall) {
+        await apiCall('/api/notifications/register-token', {
+          token: tokenData.data,
+          platform: Platform.OS,
+        });
+      }
 
       console.log('📱 Push token registered with backend');
     } catch (error) {
@@ -164,7 +166,7 @@ class NotificationService {
         }
       );
       this.responseListener = Notifications.addNotificationResponseReceivedListener(
-        (response: any) => {
+        (response: ApiResponse<unknown>) => {
           const data: NotificationData | undefined = response.notification?.request?.content?.data;
           
           if (data?.screen) {
@@ -283,9 +285,10 @@ class NotificationService {
     }
   }
 
-  async getNotificationPreferences() {
+  async getNotificationPreferences(apiCall?: (url: string) => Promise<any>) {
     try {
-      const response: ApiResponse<unknown> = await apiService.get('/api/notifications/preferences');
+      if (!apiCall) return {};
+      const response: ApiResponse<unknown> = await apiCall('/api/notifications/preferences');
       return response.preferences || {};
     } catch (error) {
       console.error('Error fetching notification preferences:', error);
@@ -293,9 +296,10 @@ class NotificationService {
     }
   }
 
-  async updateNotificationPreferences(preferences: Record<string, boolean>) {
+  async updateNotificationPreferences(preferences: Record<string, boolean>, apiCall?: (url: string, data: Record<string, unknown>) => Promise<any>) {
     try {
-      await apiService.put('/api/notifications/preferences', { preferences });
+      if (!apiCall) return false;
+      await apiCall('/api/notifications/preferences', { preferences });
       return true;
     } catch (error) {
       console.error('Error updating notification preferences:', error);

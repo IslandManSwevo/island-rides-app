@@ -10,6 +10,39 @@ import { MaintenanceFormModal } from './vehicle-condition/MaintenanceFormModal';
 import { DamageReportModal } from './vehicle-condition/DamageReportModal';
 import { styles } from './vehicle-condition/styles';
 import { VehicleMaintenance } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { loggingService } from '../services/LoggingService';
+
+// Custom hook for managing modal states
+const useModalState = () => {
+  const [isMaintenanceModalVisible, setMaintenanceModalVisible] = useState(false);
+  const [isDamageModalVisible, setDamageModalVisible] = useState(false);
+
+  const showMaintenanceModal = useCallback(() => {
+    setMaintenanceModalVisible(true);
+  }, []);
+
+  const hideMaintenanceModal = useCallback(() => {
+    setMaintenanceModalVisible(false);
+  }, []);
+
+  const showDamageModal = useCallback(() => {
+    setDamageModalVisible(true);
+  }, []);
+
+  const hideDamageModal = useCallback(() => {
+    setDamageModalVisible(false);
+  }, []);
+
+  return {
+    isMaintenanceModalVisible,
+    isDamageModalVisible,
+    showMaintenanceModal,
+    hideMaintenanceModal,
+    showDamageModal,
+    hideDamageModal,
+  };
+};
 
 // Form data interface for maintenance records (without auto-generated fields)
 interface MaintenanceFormData {
@@ -33,13 +66,21 @@ interface VehicleConditionTrackerProps {
 
 export const VehicleConditionTracker: React.FC<VehicleConditionTrackerProps> = React.memo(({ vehicleId }) => {
   const vehicleIdNumber = useMemo(() => parseInt(vehicleId), [vehicleId]);
+  const { currentUser } = useAuth();
   
   const { rating, isLoading: isRatingLoading, refresh: updateRating } = useConditionRating(vehicleId);
   const { records, addRecord, loading: isMaintenanceLoading } = useMaintenanceRecords(vehicleIdNumber);
   const { reports, addReport, loading: isDamageLoading } = useDamageReports(vehicleIdNumber);
 
-  const [isMaintenanceModalVisible, setMaintenanceModalVisible] = useState(false);
-  const [isDamageModalVisible, setDamageModalVisible] = useState(false);
+  // Use custom hook for modal state management
+  const {
+    isMaintenanceModalVisible,
+    isDamageModalVisible,
+    showMaintenanceModal,
+    hideMaintenanceModal,
+    showDamageModal,
+    hideDamageModal,
+  } = useModalState();
 
   const handleSaveMaintenance = useCallback((formData: MaintenanceFormData) => {
     // Transform form data to match the expected VehicleMaintenance structure
@@ -53,31 +94,21 @@ export const VehicleConditionTracker: React.FC<VehicleConditionTrackerProps> = R
   }, [vehicleIdNumber, addRecord]);
 
   const handleSaveDamage = useCallback((report: DamageReportFormData) => {
+    // Ensure user is authenticated before creating damage report
+    if (!currentUser?.id) {
+      loggingService.error('Cannot create damage report: User not authenticated', undefined, { vehicleId: vehicleIdNumber });
+      return;
+    }
+
     // Transform form data to match the expected VehicleDamageReport structure
     const damageReport = {
       ...report,
       vehicleId: vehicleIdNumber,
-      reportedBy: 1, // This should be the current user ID
+      reportedBy: currentUser.id,
       createdAt: new Date().toISOString()
     };
     addReport(damageReport);
-  }, [vehicleIdNumber, addReport]);
-
-  const handleShowMaintenanceModal = useCallback(() => {
-    setMaintenanceModalVisible(true);
-  }, []);
-
-  const handleHideMaintenanceModal = useCallback(() => {
-    setMaintenanceModalVisible(false);
-  }, []);
-
-  const handleShowDamageModal = useCallback(() => {
-    setDamageModalVisible(true);
-  }, []);
-
-  const handleHideDamageModal = useCallback(() => {
-    setDamageModalVisible(false);
-  }, []);
+  }, [vehicleIdNumber, addReport, currentUser]);
 
   if (isRatingLoading || isMaintenanceLoading || isDamageLoading) {
     return (
@@ -93,23 +124,23 @@ export const VehicleConditionTracker: React.FC<VehicleConditionTrackerProps> = R
         <ConditionRatingSection rating={rating ?? 0} onUpdateRating={updateRating} />
         <MaintenanceRecordsSection
           records={records}
-          onAddRecord={handleShowMaintenanceModal}
+          onAddRecord={showMaintenanceModal}
         />
         <DamageReportsSection
           reports={reports}
-          onAddReport={handleShowDamageModal}
+          onAddReport={showDamageModal}
         />
       </ScrollView>
 
       <MaintenanceFormModal
         visible={isMaintenanceModalVisible}
-        onClose={handleHideMaintenanceModal}
+        onClose={hideMaintenanceModal}
         onSave={handleSaveMaintenance}
       />
 
       <DamageReportModal
         visible={isDamageModalVisible}
-        onClose={handleHideDamageModal}
+        onClose={hideDamageModal}
         onSave={handleSaveDamage}
       />
     </View>

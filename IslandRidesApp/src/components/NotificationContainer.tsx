@@ -15,6 +15,7 @@ export const NotificationContainer: React.FC = () => {
       return () => subscription.unsubscribe();
     } catch (error) {
       console.error('Failed to subscribe to notification service:', error);
+      return () => {}; // Return empty cleanup function
     }
   }, []);
 

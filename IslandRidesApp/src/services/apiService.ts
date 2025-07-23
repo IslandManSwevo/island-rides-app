@@ -3,6 +3,7 @@ import { BaseService } from './base/BaseService';
 import { storageService } from './storageService';
 import { getEnvironmentConfig } from '../config/environment';
 import { ErrorHandlingService } from './errors/ErrorHandlingService';
+import { performanceMonitor } from './PerformanceMonitor';
 
 interface RetryableAxiosRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
@@ -22,7 +23,7 @@ export class ApiService extends BaseService {
     super();
   }
 
-  protected async onInit(): Promise<void> {
+  protected override async onInit(): Promise<void> {
     // Get environment config asynchronously
     const envConfig = await getEnvironmentConfig();
     
@@ -127,13 +128,19 @@ export class ApiService extends BaseService {
 
   async get<T>(endpoint: string, params?: object): Promise<T> {
     await this.waitForInitialization();
-    return ErrorHandlingService.withErrorHandling(
-      async () => {
-        const response = await this.axiosInstance.get(endpoint, { params });
-        return response.data;
-      },
-      `ApiService.get(${endpoint})`
-    );
+    const stopTimer = performanceMonitor.startTimer(`API_GET_${endpoint}`);
+    
+    try {
+      return await ErrorHandlingService.withErrorHandling(
+        async () => {
+          const response = await this.axiosInstance.get(endpoint, { params });
+          return response.data;
+        },
+        `ApiService.get(${endpoint})`
+      );
+    } finally {
+      stopTimer();
+    }
   }
 
   async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
@@ -148,13 +155,19 @@ export class ApiService extends BaseService {
 
   async post<T>(endpoint:string, data: object): Promise<T> {
     await this.waitForInitialization();
-    return ErrorHandlingService.withErrorHandling(
-      async () => {
-        const response = await this.axiosInstance.post(endpoint, data);
-        return response.data;
-      },
-      `ApiService.post(${endpoint})`
-    );
+    const stopTimer = performanceMonitor.startTimer(`API_POST_${endpoint}`);
+    
+    try {
+      return await ErrorHandlingService.withErrorHandling(
+        async () => {
+          const response = await this.axiosInstance.post(endpoint, data);
+          return response.data;
+        },
+        `ApiService.post(${endpoint})`
+      );
+    } finally {
+      stopTimer();
+    }
   }
 
   async postWithoutAuth<T>(endpoint: string, data: object): Promise<T> {
@@ -165,14 +178,26 @@ export class ApiService extends BaseService {
 
   async put<T>(endpoint: string, data: object): Promise<T> {
     await this.waitForInitialization();
-    const response = await this.axiosInstance.put(endpoint, data);
-    return response.data;
+    const stopTimer = performanceMonitor.startTimer(`API_PUT_${endpoint}`);
+    
+    try {
+      const response = await this.axiosInstance.put(endpoint, data);
+      return response.data;
+    } finally {
+      stopTimer();
+    }
   }
 
   async delete<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
     await this.waitForInitialization();
-    const response = await this.axiosInstance.delete(endpoint, config);
-    return response.data;
+    const stopTimer = performanceMonitor.startTimer(`API_DELETE_${endpoint}`);
+    
+    try {
+      const response = await this.axiosInstance.delete(endpoint, config);
+      return response.data;
+    } finally {
+      stopTimer();
+    }
   }
 
   // Token management methods

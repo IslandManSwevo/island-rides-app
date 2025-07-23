@@ -89,7 +89,7 @@ class EnvironmentService extends BaseService {
     super();
   }
 
-  protected async onInit(): Promise<void> {
+  protected override async onInit(): Promise<void> {
     this.config = this.initializeConfig();
   }
 

@@ -24,7 +24,14 @@
       "Bash(npm run type-check:*)",
       "Bash(npm start)",
       "Bash(npm run fix-any:check:*)",
-      "Bash(npm test)"
+      "Bash(npm test)",
+      "Bash(npm run clean:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm start:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(timeout 30 npm start)"
     ],
     "deny": []
   }

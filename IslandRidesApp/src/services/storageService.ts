@@ -83,7 +83,7 @@ export class StorageService extends BaseService {
     return this.get<T>('userPreferences');
   }
 
-  protected async onInit(): Promise<void> {
+  protected override async onInit(): Promise<void> {
     // StorageService doesn't need special initialization
     // AsyncStorage is ready to use immediately
   }

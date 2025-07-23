@@ -71,7 +71,7 @@ export const usePhotoUpload = ({
   const loadExistingPhotos = useCallback(async () => {
     try {
       const vehiclePhotos = await VehiclePhotoService.getVehiclePhotos(vehicleId);
-      const photos = vehiclePhotos ?? [];
+      const photos: VehiclePhoto[] = Array.isArray(vehiclePhotos) ? vehiclePhotos : [];
       setServerPhotos(photos);
       onPhotosUpdated?.(photos);
     } catch (error) {

@@ -1,12 +1,14 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, Animated } from 'react-native';
+import { useSharedValue, useAnimatedStyle, withSpring, withTiming, interpolate } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { colors, typography, spacing, borderRadius, vehicleCardStyles } from '../styles/theme';
 import { Vehicle } from '../types';
 import { FavoriteButton } from './FavoriteButton';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
 import { StandardCard } from './templates/StandardCard';
 import { GluestackCard } from './templates/GluestackCard';
+import { AnimatedButton } from './AnimatedButton';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -21,6 +23,50 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
   showAdvancedInfo = true,
   compact = false 
 }) => {
+  // Mock social proof data - in real app this would come from props or API
+  const socialProofData = useMemo(() => ({
+    rating: 4.8,
+    reviewCount: Math.floor(Math.random() * 200) + 50,
+    recentBookings: Math.floor(Math.random() * 30) + 5,
+    instantBooking: Math.random() > 0.3,
+    availabilityStatus: Math.random() > 0.2 ? 'available' : 'limited'
+  }), []);
+  
+  const urgencyIndicator = useMemo(() => {
+    const hoursAgo = Math.floor(Math.random() * 12) + 1;
+    return `Last booked ${hoursAgo}h ago`;
+  }, []);
+  
+  // Animation values
+  const cardScale = useSharedValue(1);
+  const cardElevation = useSharedValue(2);
+  const badgeScale = useSharedValue(0);
+  
+  // Animated styles
+  const animatedCardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+    shadowOpacity: interpolate(cardElevation.value, [2, 8], [0.1, 0.3]),
+    elevation: cardElevation.value,
+  }));
+  
+  const animatedBadgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
+  }));
+  
+  // Badge entrance animation
+  React.useEffect(() => {
+    badgeScale.value = withSpring(1, { damping: 15 });
+  }, [badgeScale]);
+  
+  const handleCardPressIn = useCallback(() => {
+    cardScale.value = withSpring(0.98, { damping: 15 });
+    cardElevation.value = withTiming(8, { duration: 150 });
+  }, []);
+  
+  const handleCardPressOut = useCallback(() => {
+    cardScale.value = withSpring(1, { damping: 15 });
+    cardElevation.value = withTiming(2, { duration: 150 });
+  }, []);
   const primaryPhoto = useMemo(() => 
     vehicle.photos?.find(p => p.isPrimary) || vehicle.photos?.[0], 
     [vehicle.photos]
@@ -53,7 +99,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <Text key={i} style={[styles.star, { color: i <= rating ? colors.star : colors.lightBorder }]}>
+        <Text key={i} style={[styles.star, { color: i <= rating ? colors.star : colors.lightGrey }]}>
           ★
         </Text>
       );
@@ -62,15 +108,19 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
   }, []);
 
   return (
-    <GluestackCard
-      variant="elevated"
-      padding="none"
-      margin="md"
+    <AnimatedButton
       onPress={onPress}
-      testID="vehicle-card"
-      accessibilityLabel={`Vehicle: ${vehicle.make} ${vehicle.model} ${vehicle.year}`}
-      accessibilityHint="Tap to view vehicle details"
+      hapticType="light"
+      style={[styles.cardContainer, animatedCardStyle]}
     >
+      <GluestackCard
+        variant="elevated"
+        padding="none"
+        margin="none"
+        testID="vehicle-card"
+        accessibilityLabel={`Vehicle: ${vehicle.make} ${vehicle.model} ${vehicle.year}`}
+        accessibilityHint="Tap to view vehicle details"
+      >
       {/* Vehicle Image */}
       {primaryPhoto && (
         <View style={styles.imageContainer}>
@@ -82,17 +132,33 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
           
           {/* Premium Badge */}
           {isPremium && (
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumBadgeText}>PREMIUM</Text>
+            <View style={vehicleCardStyles.premiumBadge}>
+              <Text style={vehicleCardStyles.premiumBadgeText}>PREMIUM</Text>
             </View>
           )}
 
           {/* Verification Status */}
           {vehicle.verificationStatus === 'verified' && (
-            <View style={styles.verifiedBadge}>
+            <View style={vehicleCardStyles.verifiedBadge}>
               <Ionicons name="checkmark-circle" size={16} color={colors.verified} />
-              <Text style={styles.verifiedText}>Verified</Text>
+              <Text style={vehicleCardStyles.verifiedText}>Verified</Text>
             </View>
+          )}
+          
+          {/* Availability Status */}
+          <Animated.View style={[styles.availabilityBadge, socialProofData.availabilityStatus === 'limited' && styles.limitedBadge, animatedBadgeStyle]}>
+            <View style={[styles.statusDot, socialProofData.availabilityStatus === 'limited' && styles.limitedDot]} />
+            <Text style={[styles.availabilityText, socialProofData.availabilityStatus === 'limited' && styles.limitedText]}>
+              {socialProofData.availabilityStatus === 'available' ? 'Available' : 'Limited'}
+            </Text>
+          </Animated.View>
+          
+          {/* Instant Booking Badge */}
+          {socialProofData.instantBooking && (
+            <Animated.View style={[styles.instantBadge, animatedBadgeStyle]}>
+              <Ionicons name="flash" size={12} color={colors.warning} />
+              <Text style={styles.instantText}>Instant</Text>
+            </Animated.View>
           )}
         </View>
       )}
@@ -127,10 +193,23 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
           <Text style={[styles.vehicleLocation, compact && styles.compactText]}>
             {vehicle.location}
           </Text>
+          
+          {/* Social Proof */}
+          <View style={styles.socialProof}>
+            <View style={styles.ratingSection}>
+              <Ionicons name="star" size={14} color={colors.warning} />
+              <Text style={styles.ratingText}>{socialProofData.rating}</Text>
+              <Text style={styles.reviewCount}>({socialProofData.reviewCount})</Text>
+            </View>
+            
+            <View style={styles.urgencyIndicator}>
+              <Text style={styles.urgencyText}>{urgencyIndicator}</Text>
+            </View>
+          </View>
 
           {/* Advanced Info Section */}
           {showAdvancedInfo && !compact && (
-            <View style={styles.advancedInfo}>
+            <View style={vehicleCardStyles.advancedInfo}>
               {/* Specs Row */}
               <View style={styles.specsRow}>
                 {vehicle.seatingCapacity && (
@@ -201,6 +280,14 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
             </View>
           )}
           
+          {/* Booking Activity */}
+          <View style={styles.bookingActivity}>
+            <View style={styles.activityItem}>
+              <Ionicons name="people" size={12} color={colors.primary} />
+              <Text style={styles.activityText}>🔥 {socialProofData.recentBookings} booked this week</Text>
+            </View>
+          </View>
+          
           {/* Pricing */}
           <View style={styles.priceContainer}>
             <View style={styles.priceRow}>
@@ -230,7 +317,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
             {vehicle.averageRating && vehicle.totalReviews && (
               <View style={styles.reviewsRow}>
                 <View style={styles.ratingContainer}>
-                  <Text style={styles.ratingText}>{vehicle.averageRating.toFixed(1)}</Text>
+                  <Text style={styles.reviewsRatingText}>{vehicle.averageRating.toFixed(1)}</Text>
                   <Ionicons name="star" size={14} color={colors.star} />
                 </View>
                 <Text style={styles.reviewsText}>({vehicle.totalReviews} reviews)</Text>
@@ -244,15 +331,126 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
         </View>
       </View>
     </GluestackCard>
+    </AnimatedButton>
   );
 });
 
 const styles = StyleSheet.create({
+  cardContainer: {
+    margin: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.white,
+    shadowColor: colors.darkGrey,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   // Removed card styles - now handled by StandardCard
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
+  },
+  availabilityBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.verified + '15',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+    gap: 4,
+  },
+  limitedBadge: {
+    backgroundColor: colors.warning + '15',
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.verified,
+  },
+  limitedDot: {
+    backgroundColor: colors.warning,
+  },
+  availabilityText: {
+    ...typography.caption,
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.verified,
+  },
+  limitedText: {
+    color: colors.warning,
+  },
+  instantBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.warning + '15',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+    gap: 2,
+  },
+  instantText: {
+    ...typography.caption,
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.warning,
+  },
+  socialProof: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  ratingSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
+    ...typography.body,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.darkGrey,
+  },
+  reviewCount: {
+    ...typography.caption,
+    color: colors.lightGrey,
+  },
+  urgencyIndicator: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  urgencyText: {
+    ...typography.caption,
+    fontSize: 11,
+    color: colors.lightGrey,
+    fontStyle: 'italic',
+  },
+  bookingActivity: {
+    marginBottom: spacing.sm,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  activityText: {
+    ...typography.caption,
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  star: {
+    fontSize: 14,
+    marginRight: 2,
   },
   vehicleInfo: {
     flex: 1,
@@ -461,7 +659,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  ratingText: {
+  reviewsRatingText: {
     fontSize: 18,
     fontWeight: '700',
     color: colors.primary,
@@ -483,9 +681,5 @@ const styles = StyleSheet.create({
   },
   compactPrice: {
     fontSize: 18,
-  },
-  star: {
-    fontSize: 14,
-    marginRight: 2,
   },
 });
