@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Clear caches and install dependencies
 RUN npm cache clean --force
+RUN yarn cache clean || true
 RUN npm install -g @expo/cli
 
 # Copy package files
@@ -32,4 +33,4 @@ ENV EXPO_NO_DOTENV=1
 EXPOSE 19006 19001 8081
 
 # Use correct Expo start options for Docker
-CMD ["sh", "-c", "rm -rf .expo && npx expo start --web --host lan --port 8081 --clear"]
+CMD ["sh", "-c", "rm -rf .expo && rm -rf node_modules/.cache && npx expo start --web --host lan --port 8081 --clear --reset-cache"]

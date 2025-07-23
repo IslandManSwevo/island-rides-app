@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../styles/theme';
 import { GluestackButton } from './templates/GluestackButton';
+import { SearchFilters } from '../types';
 
 interface PriceRangeFilterProps {
   /** The current price range as a tuple of [minimum, maximum] values */
   priceRange: [number, number];
   /** Callback function to update filter values with the specified key and new price range tuple */
-  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
+  onUpdateFilter: <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => void;
   /** The increment/decrement step value for price adjustments (default: 25) */
   step?: number;
   /** The minimum allowed price value (default: 25) */
@@ -17,13 +18,23 @@ interface PriceRangeFilterProps {
   maxValue?: number;
 }
 
-const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({ 
+const PriceRangeFilter: React.FC<PriceRangeFilterProps> = React.memo(({ 
   priceRange, 
   onUpdateFilter, 
   step = 25, 
   minValue = 25, 
   maxValue = 500 
 }) => {
+  const handleDecreaseMin = useCallback(() => {
+    const newMin = Math.max(priceRange[0] - step, minValue);
+    onUpdateFilter('priceRange', [newMin, priceRange[1]]);
+  }, [priceRange, step, minValue, onUpdateFilter]);
+
+  const handleIncreaseMax = useCallback(() => {
+    const newMax = Math.min(priceRange[1] + step, maxValue);
+    onUpdateFilter('priceRange', [priceRange[0], newMax]);
+  }, [priceRange, step, maxValue, onUpdateFilter]);
+
   return (
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>
@@ -34,10 +45,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
         <View style={styles.priceSliderContainer}>
           <GluestackButton
             title=""
-            onPress={() => {
-              const newMin = Math.max(priceRange[0] - step, minValue);
-              onUpdateFilter('priceRange', [newMin, priceRange[1]]);
-            }}
+            onPress={handleDecreaseMin}
             variant="outline"
             action="primary"
             icon="remove"
@@ -48,10 +56,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
           <View style={styles.priceBar} />
           <GluestackButton
             title=""
-            onPress={() => {
-              const newMax = Math.min(priceRange[1] + step, maxValue);
-              onUpdateFilter('priceRange', [priceRange[0], newMax]);
-            }}
+            onPress={handleIncreaseMax}
             variant="outline"
             action="primary"
             icon="add"
@@ -64,7 +69,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   filterSection: {

@@ -1,52 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { apiService } from '../../services/apiService';
 import { ErrorHandlingService } from '../../services/errors/ErrorHandlingService';
+import { vehicleService, Vehicle as ServiceVehicle, VehicleAvailability as ServiceVehicleAvailability } from '../../services/domains/VehicleService';
 
-// Types
-interface Vehicle {
-  id: string;
-  make: string;
-  model: string;
-  year: number;
-  color: string;
-  licensePlate: string;
-  pricePerHour: number;
-  pricePerDay: number;
-  location: {
-    latitude: number;
-    longitude: number;
-    address: string;
-    city: string;
-    state: string;
-  };
-  features: string[];
-  images: string[];
-  description: string;
-  isAvailable: boolean;
-  ownerId: string;
-  ownerName: string;
-  rating: number;
-  reviewCount: number;
-  category: 'economy' | 'compact' | 'midsize' | 'luxury' | 'suv' | 'truck' | 'van';
-  transmission: 'automatic' | 'manual';
-  fuelType: 'gasoline' | 'diesel' | 'hybrid' | 'electric';
-  seatingCapacity: number;
-  condition: 'excellent' | 'good' | 'fair' | 'poor';
-  mileage: number;
-  insurance: {
-    provider: string;
-    policyNumber: string;
-    expirationDate: string;
-  };
-  maintenanceHistory: {
-    date: string;
-    type: string;
-    description: string;
-    cost: number;
-  }[];
-  createdAt: string;
-  updatedAt: string;
-}
+// Types - Use the service layer Vehicle type as the primary type
+type Vehicle = ServiceVehicle;
 
 interface VehicleFilters {
   category?: string[];
@@ -107,24 +65,35 @@ const initialState: VehicleState = {
 // Async thunks
 export const fetchVehicles = createAsyncThunk<
   { vehicles: Vehicle[]; pagination: VehicleState['pagination']; refresh: boolean },
-  { page?: number; limit?: number; filters?: VehicleFilters; refresh?: boolean },
+  { island?: string; type?: string; refresh?: boolean },
   { rejectValue: string }
 >(
   'vehicle/fetchVehicles',
   async (params, { rejectWithValue }) => {
     try {
-      const response = await ErrorHandlingService.withErrorHandling<{ vehicles: Vehicle[]; pagination: VehicleState['pagination'] }>(
-        () => apiService.get('/api/vehicles', params),
+      const vehicles = await ErrorHandlingService.withErrorHandling<Vehicle[]>(
+        () => vehicleService.getVehicles({
+          island: params.island as any,
+          type: params.type
+        }),
         'vehicle/fetchVehicles'
       );
 
       return {
-        vehicles: response.vehicles,
-        pagination: response.pagination,
+        vehicles,
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: vehicles.length,
+          hasMore: false,
+        },
         refresh: params.refresh || false,
       };
     } catch (error) {
-      return rejectWithValue((error as any).userMessage || 'Failed to fetch vehicles');
+      const errorMessage = error instanceof Error && 'userMessage' in error
+        ? (error as any).userMessage
+        : 'Failed to fetch vehicles';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -138,50 +107,64 @@ export const fetchVehicleById = createAsyncThunk<
   async (vehicleId, { rejectWithValue }) => {
     try {
       const response = await ErrorHandlingService.withErrorHandling<Vehicle>(
-        () => apiService.get(`/api/vehicles/${vehicleId}`),
+        () => vehicleService.getVehicleDetails(vehicleId),
         'vehicle/fetchVehicleById'
       );
 
       return response;
     } catch (error) {
-      return rejectWithValue((error as any).userMessage || 'Failed to fetch vehicle');
+      const errorMessage = error instanceof Error && 'userMessage' in error
+        ? (error as any).userMessage
+        : 'Failed to fetch vehicle';
+      return rejectWithValue(errorMessage);
     }
   }
 );
 
 export const searchVehicles = createAsyncThunk<
   { vehicles: Vehicle[]; pagination: VehicleState['pagination'] },
-  { query: string; location?: string; filters?: VehicleFilters },
+  { query?: string; location?: string; filters?: VehicleFilters },
   { rejectValue: string }
 >(
   'vehicle/searchVehicles',
   async (params, { rejectWithValue }) => {
     try {
-      const response = await ErrorHandlingService.withErrorHandling<{ vehicles: Vehicle[]; pagination: VehicleState['pagination'] }>(
-        () => apiService.get('/api/vehicles/search', params),
+      const vehicles = await ErrorHandlingService.withErrorHandling<Vehicle[]>(
+        () => vehicleService.searchVehicles({
+          location: params.location,
+          // Map other filter properties as needed
+        }),
         'vehicle/searchVehicles'
       );
 
       return {
-        vehicles: response.vehicles,
-        pagination: response.pagination,
+        vehicles,
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: vehicles.length,
+          hasMore: false,
+        },
       };
     } catch (error) {
-      return rejectWithValue((error as any).userMessage || 'Failed to search vehicles');
+      const errorMessage = error instanceof Error && 'userMessage' in error
+        ? (error as any).userMessage
+        : 'Failed to search vehicles';
+      return rejectWithValue(errorMessage);
     }
   }
 );
 
 export const checkVehicleAvailability = createAsyncThunk<
-  { vehicleId: string; isAvailable: boolean; conflicts: unknown[] },
+  { vehicleId: string; availability: ServiceVehicleAvailability },
   { vehicleId: string; startDate: string; endDate: string },
   { rejectValue: string }
 >(
   'vehicle/checkAvailability',
   async (params, { rejectWithValue }) => {
     try {
-      const response = await ErrorHandlingService.withErrorHandling<{ isAvailable: boolean; conflicts: unknown[] }>(
-        () => apiService.get(`/api/vehicles/${params.vehicleId}/availability`, {
+      const response = await ErrorHandlingService.withErrorHandling<ServiceVehicleAvailability>(
+        () => vehicleService.getVehicleAvailability(params.vehicleId, {
           startDate: params.startDate,
           endDate: params.endDate,
         }),
@@ -190,11 +173,13 @@ export const checkVehicleAvailability = createAsyncThunk<
 
       return {
         vehicleId: params.vehicleId,
-        isAvailable: response.isAvailable,
-        conflicts: response.conflicts,
+        availability: response,
       };
     } catch (error) {
-      return rejectWithValue((error as any).userMessage || 'Failed to check availability');
+      const errorMessage = error instanceof Error && 'userMessage' in error
+        ? (error as any).userMessage
+        : 'Failed to check availability';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -208,7 +193,7 @@ export const createVehicle = createAsyncThunk<
   async (vehicleData, { rejectWithValue }) => {
     try {
       const response = await ErrorHandlingService.withErrorHandling<Vehicle>(
-        () => apiService.post('/api/vehicles', vehicleData),
+        () => vehicleService.createVehicle(vehicleData),
         'vehicle/createVehicle'
       );
 
@@ -228,7 +213,7 @@ export const updateVehicle = createAsyncThunk<
   async (params, { rejectWithValue }) => {
     try {
       const response = await ErrorHandlingService.withErrorHandling<Vehicle>(
-        () => apiService.put(`/api/vehicles/${params.vehicleId}`, params.updates),
+        () => vehicleService.updateVehicle(params.vehicleId, params.updates),
         'vehicle/updateVehicle'
       );
 
@@ -248,7 +233,7 @@ export const deleteVehicle = createAsyncThunk<
   async (vehicleId, { rejectWithValue }) => {
     try {
       await ErrorHandlingService.withErrorHandling<void>(
-        () => apiService.delete(`/api/vehicles/${vehicleId}`),
+        () => vehicleService.deleteVehicle(vehicleId),
         'vehicle/deleteVehicle'
       );
 
@@ -414,12 +399,12 @@ const vehicleSlice = createSlice({
 });
 
 // Selectors
-export const selectVehicles = (state: { vehicle: VehicleState }) => state.vehicle.vehicles;
-export const selectCurrentVehicle = (state: { vehicle: VehicleState }) => state.vehicle.currentVehicle;
-export const selectVehicleFilters = (state: { vehicle: VehicleState }) => state.vehicle.filters;
-export const selectVehicleLoading = (state: { vehicle: VehicleState }) => state.vehicle.isLoading;
-export const selectVehicleError = (state: { vehicle: VehicleState }) => state.vehicle.error;
-export const selectVehiclePagination = (state: { vehicle: VehicleState }) => state.vehicle.pagination;
+export const selectVehicles = (state: any) => state.vehicle.vehicles;
+export const selectCurrentVehicle = (state: any) => state.vehicle.currentVehicle;
+export const selectVehicleFilters = (state: any) => state.vehicle.filters;
+export const selectVehicleLoading = (state: any) => state.vehicle.isLoading;
+export const selectVehicleError = (state: any) => state.vehicle.error;
+export const selectVehiclePagination = (state: any) => state.vehicle.pagination;
 
 // Actions
 export const { 

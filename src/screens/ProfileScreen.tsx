@@ -17,9 +17,11 @@ import { reviewPromptService } from '../services/reviewPromptService';
 import { useAuth } from '../context/AuthContext';
 import { ProfileData, ProfileBooking } from '../types';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
+import { ProfileSkeleton } from '../components/skeletons/ProfileSkeleton';
 import { AppHeader } from '../components/AppHeader';
 import { ROUTES, RootStackParamList } from '../navigation/routes';
 import { createDevOnlyFunction } from '../utils/development';
+import { hapticService, HapticType } from '../services/hapticService';
 
 type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.PROFILE>;
 
@@ -110,6 +112,61 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }
   });
 
+  // Development-only function for testing haptic feedback
+  const testHapticFeedback = createDevOnlyFunction(async () => {
+    const hapticTypes: { type: HapticType; label: string }[] = [
+      { type: 'light', label: 'Light' },
+      { type: 'medium', label: 'Medium' },
+      { type: 'heavy', label: 'Heavy' },
+      { type: 'selection', label: 'Selection' },
+      { type: 'success', label: 'Success' },
+      { type: 'warning', label: 'Warning' },
+      { type: 'error', label: 'Error' },
+      { type: 'notification', label: 'Notification' },
+    ];
+
+    Alert.alert(
+      'Haptic Feedback Test',
+      'Choose a haptic type to test:',
+      [
+        ...hapticTypes.map(({ type, label }) => ({
+          text: label,
+          onPress: async () => {
+            try {
+              await hapticService.trigger(type);
+              console.log(`Triggered ${label} haptic feedback`);
+            } catch (error) {
+              console.error(`Failed to trigger ${label} haptic:`, error);
+            }
+          },
+        })),
+        {
+          text: 'Special: Booking Confirmed',
+          onPress: async () => {
+            try {
+              await hapticService.bookingConfirmed();
+              console.log('Triggered booking confirmed haptic pattern');
+            } catch (error) {
+              console.error('Failed to trigger booking confirmed haptic:', error);
+            }
+          },
+        },
+        {
+          text: 'Special: Payment Processing',
+          onPress: async () => {
+            try {
+              await hapticService.paymentProcessing();
+              console.log('Triggered payment processing haptic pattern');
+            } catch (error) {
+              console.error('Failed to trigger payment processing haptic:', error);
+            }
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  });
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -196,10 +253,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           showBackButton={false}
           showProfileButton={false}
         />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading profile...</Text>
-        </View>
+        <ProfileSkeleton />
       </SafeAreaView>
     );
   }
@@ -323,10 +377,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                   <Text style={styles.editButtonText}>Edit Profile</Text>
                 </TouchableOpacity>
                 
-                {/* Development-only test button */}
+                {/* Development-only test buttons */}
                 {__DEV__ && testReviewPrompts && (
                   <TouchableOpacity style={styles.testButton} onPress={testReviewPrompts}>
                     <Text style={styles.testButtonText}>Test Reviews</Text>
+                  </TouchableOpacity>
+                )}
+                
+                {__DEV__ && testHapticFeedback && (
+                  <TouchableOpacity style={styles.testButton} onPress={testHapticFeedback}>
+                    <Text style={styles.testButtonText}>Test Haptics</Text>
                   </TouchableOpacity>
                 )}
                 

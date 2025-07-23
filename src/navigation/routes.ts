@@ -4,22 +4,45 @@
  */
 
 import { ChatContext, SearchFilters, Vehicle, VehicleRecommendation } from '../types';
+import { Island } from '../contexts/IslandContext';
 
 export const ROUTES = {
   // Authentication routes
   LOGIN: 'Login',
   REGISTRATION: 'Registration',
-  
+  ONBOARDING: 'Onboarding',
+
+  // Onboarding routes
+  ONBOARDING_WELCOME: 'OnboardingWelcome',
+  ONBOARDING_ROLE_SELECTION: 'OnboardingRoleSelection',
+  ONBOARDING_ISLAND_SELECTION: 'OnboardingIslandSelection',
+  ONBOARDING_PERMISSIONS: 'OnboardingPermissions',
+  ONBOARDING_COMPLETE: 'OnboardingComplete',
+
   // Main app routes
   ISLAND_SELECTION: 'IslandSelection',
+  ROLE_BASED_DASHBOARD: 'RoleBasedDashboard',
   SEARCH_RESULTS: 'SearchResults',
   SEARCH: 'Search',
+  MAP: 'Map',
   VEHICLE_DETAIL: 'VehicleDetail',
   CHECKOUT: 'Checkout',
   BOOKING_CONFIRMED: 'BookingConfirmed',
   PAYMENT: 'Payment',
   PAYPAL_CONFIRMATION: 'PayPalConfirmation',
-  
+
+  // Customer Tab Routes
+  CUSTOMER_SEARCH_TAB: 'CustomerSearchTab',
+  CUSTOMER_BOOKINGS_TAB: 'CustomerBookingsTab',
+  CUSTOMER_FAVORITES_TAB: 'CustomerFavoritesTab',
+  CUSTOMER_PROFILE_TAB: 'CustomerProfileTab',
+
+  // Host Tab Routes
+  HOST_DASHBOARD_TAB: 'HostDashboardTab',
+  HOST_VEHICLES_TAB: 'HostVehiclesTab',
+  HOST_BOOKINGS_TAB: 'HostBookingsTab',
+  HOST_ANALYTICS_TAB: 'HostAnalyticsTab',
+
   // User routes
   PROFILE: 'Profile',
   PUBLIC_USER_PROFILE: 'PublicUserProfile',
@@ -75,12 +98,23 @@ export type RootStackParamList = {
   [ROUTES.LOGIN]: undefined;
   [ROUTES.REGISTRATION]: undefined;
   [ROUTES.ISLAND_SELECTION]: undefined;
+  [ROUTES.ROLE_BASED_DASHBOARD]: undefined;
   [ROUTES.SEARCH_RESULTS]: {
     island: string;
     vehicles: VehicleRecommendation[];
   };
   [ROUTES.SEARCH]: {
     filters?: SearchFilters; // SearchFilters type
+  } | undefined;
+  [ROUTES.MAP]: {
+    island?: Island;
+    vehicles?: VehicleRecommendation[];
+    initialRegion?: {
+      latitude: number;
+      longitude: number;
+      latitudeDelta: number;
+      longitudeDelta: number;
+    };
   } | undefined;
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;

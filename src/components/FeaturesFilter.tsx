@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { colors, spacing } from '../styles/theme';
 import { VehicleFeature, VehicleFeatureCategory } from '../types';
@@ -11,9 +11,54 @@ interface FeaturesFilterProps {
   onToggleFeature: (featureId: number) => void;
 }
 
-const FeaturesFilter: React.FC<FeaturesFilterProps> = ({ features, availableFeatures, featureCategories, loadingFeatures, onToggleFeature }) => {
+const FeaturesFilter: React.FC<FeaturesFilterProps> = React.memo(({ features, availableFeatures, featureCategories, loadingFeatures, onToggleFeature }) => {
   // Convert features array to Set for O(1) lookup performance
   const featuresSet = useMemo(() => new Set(features), [features]);
+
+  const renderFeatureChip = useCallback((feature: VehicleFeature) => {
+    const isSelected = featuresSet.has(feature.id);
+    const accessibilityLabel = `${feature.name}${feature.isPremium ? ', premium feature' : ''}${isSelected ? ', selected' : ', not selected'}`;
+    
+    return (
+      <TouchableOpacity
+        key={feature.id}
+        style={[
+          styles.featureChip,
+          isSelected && styles.featureChipSelected
+        ]}
+        onPress={() => onToggleFeature(feature.id)}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+      >
+        <Text style={[
+          styles.featureChipText,
+          featuresSet.has(feature.id) && styles.featureChipTextSelected
+        ]}>
+          {feature.name}
+        </Text>
+        {feature.isPremium && (
+          <View style={styles.premiumBadge}>
+            <Text style={styles.premiumBadgeText}>★</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  }, [featuresSet, onToggleFeature]);
+
+  const renderCategorySection = useCallback((category: VehicleFeatureCategory) => {
+    const categoryFeatures = availableFeatures.filter(f => f.categoryId === category.id);
+    if (categoryFeatures.length === 0) return null;
+    
+    return (
+      <View key={category.id} style={styles.featureCategorySection}>
+        <Text style={styles.featureCategoryTitle}>{category.name}</Text>
+        <View style={styles.featuresGrid}>
+          {categoryFeatures.map(renderFeatureChip)}
+        </View>
+      </View>
+    );
+  }, [availableFeatures, renderFeatureChip]);
 
   if (loadingFeatures || availableFeatures.length === 0) {
     return null;
@@ -29,55 +74,11 @@ const FeaturesFilter: React.FC<FeaturesFilterProps> = ({ features, availableFeat
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
       >
-        {featureCategories.map(category => {
-          const categoryFeatures = useMemo(
-            () => availableFeatures.filter(f => f.categoryId === category.id),
-            [availableFeatures, category.id]
-          );
-          if (categoryFeatures.length === 0) return null;
-          
-          return (
-            <View key={category.id} style={styles.featureCategorySection}>
-              <Text style={styles.featureCategoryTitle}>{category.name}</Text>
-              <View style={styles.featuresGrid}>
-                {categoryFeatures.map(feature => {
-                  const isSelected = featuresSet.has(feature.id);
-                  const accessibilityLabel = `${feature.name}${feature.isPremium ? ', premium feature' : ''}${isSelected ? ', selected' : ', not selected'}`;
-                  
-                  return (
-                    <TouchableOpacity
-                      key={feature.id}
-                      style={[
-                        styles.featureChip,
-                        isSelected && styles.featureChipSelected
-                      ]}
-                      onPress={() => onToggleFeature(feature.id)}
-                      accessible={true}
-                      accessibilityRole="button"
-                      accessibilityLabel={accessibilityLabel}
-                    >
-                    <Text style={[
-                      styles.featureChipText,
-                      featuresSet.has(feature.id) && styles.featureChipTextSelected
-                    ]}>
-                      {feature.name}
-                    </Text>
-                    {feature.isPremium && (
-                      <View style={styles.premiumBadge}>
-                        <Text style={styles.premiumBadgeText}>★</Text>
-                      </View>
-                    )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          );
-        })}
+        {featureCategories.map(renderCategorySection)}
       </ScrollView>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   filterSection: {

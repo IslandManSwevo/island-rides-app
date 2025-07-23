@@ -221,7 +221,7 @@ export class ErrorHandlingService {
 
         // If we have more retries, wait before retrying
         if (attempt < retryCount) {
-          await new Promise(resolve => setTimeout(resolve, retryDelay * (attempt + 1)));
+          await new Promise<void>(resolve => setTimeout(() => resolve(), retryDelay * (attempt + 1)));
           continue;
         }
       }

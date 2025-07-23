@@ -47,7 +47,7 @@ class NetworkService {
           duration: delay
         });
 
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise<void>(resolve => setTimeout(() => resolve(), delay));
         delay *= retryConfig.backoffFactor;
         attempt++;
       }

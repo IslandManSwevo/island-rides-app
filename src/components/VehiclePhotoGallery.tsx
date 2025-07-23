@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
   StyleProp,
   ViewStyle,
+  ActivityIndicator,
 } from 'react-native';
 import { VehiclePhoto } from '../types';
 import { colors } from '../styles/theme';
@@ -50,10 +51,56 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
+  const [loadingImages, setLoadingImages] = useState<Set<number>>(new Set());
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Get screen width dynamically within component
   const { width: screenWidth } = useWindowDimensions();
+
+  // Use photo type colors directly (no memoization needed for constants)
+
+  // Preload adjacent images for better UX
+  const preloadAdjacentImages = useCallback((index: number) => {
+    const indicesToPreload = [
+      Math.max(0, index - 1),
+      index,
+      Math.min(photos.length - 1, index + 1)
+    ];
+    
+    indicesToPreload.forEach(i => {
+      // Use functional updates to access current state without dependencies
+      setLoadingImages(prevLoading => {
+        setLoadedImages(prevLoaded => {
+          // Skip if already loaded or loading
+          if (prevLoaded.has(i) || prevLoading.has(i)) {
+            return prevLoaded;
+          }
+          
+          // Start prefetching
+          Image.prefetch(photos[i].photoUrl).then(() => {
+            setLoadedImages(prev => new Set(prev).add(i));
+            setLoadingImages(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(i);
+              return newSet;
+            });
+          }).catch(() => {
+            setLoadingImages(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(i);
+              return newSet;
+            });
+          });
+          
+          return prevLoaded; // No change to loaded images yet
+        });
+        
+        // Add to loading set if not already there
+        return prevLoading.has(i) ? prevLoading : new Set(prevLoading).add(i);
+      });
+    });
+  }, [photos]);
 
   if (!photos || photos.length === 0) {
     return (
@@ -65,11 +112,14 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
     );
   }
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffset = event.nativeEvent.contentOffset;
     const index = Math.round(contentOffset.x / screenWidth);
-    setCurrentIndex(index);
-  };
+    if (index !== currentIndex) {
+      setCurrentIndex(index);
+      preloadAdjacentImages(index);
+    }
+  }, [screenWidth, currentIndex, preloadAdjacentImages]);
 
   const openFullscreen = (index: number) => {
     if (enableFullscreen) {
@@ -112,46 +162,79 @@ export const VehiclePhotoGallery: React.FC<VehiclePhotoGalleryProps> = ({
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={handleScroll}
           style={styles.scrollView}
+          removeClippedSubviews={true}
+          scrollEventThrottle={16}
         >
-          {photos.map((photo, index) => (
-            <TouchableOpacity
-              key={photo.id}
-              style={[styles.photoContainer, { width: screenWidth }]}
-              onPress={() => openFullscreen(index)}
-              activeOpacity={0.9}
-            >
-              <Image
-                source={{ uri: photo.photoUrl }}
-                style={styles.photo}
-                resizeMode="cover"
-              />
-              
-              <View
-                style={[
-                  styles.typeBadge,
-                  { backgroundColor: getPhotoTypeColor(photo.photoType) }
-                ]}
+          {photos.map((photo, index) => {
+            const isVisible = Math.abs(index - currentIndex) <= 1;
+            const isLoaded = loadedImages.has(index);
+            const isLoading = loadingImages.has(index);
+            
+            return (
+              <TouchableOpacity
+                key={photo.id}
+                style={[styles.photoContainer, { width: screenWidth }]}
+                onPress={() => openFullscreen(index)}
+                activeOpacity={0.9}
               >
-                <Text style={styles.typeBadgeText}>
-                  {getPhotoTypeLabel(photo.photoType)}
-                </Text>
-              </View>
-
-              {photo.isPrimary && (
-                <View style={styles.primaryBadge}>
-                  <Text style={styles.primaryBadgeText}>★</Text>
-                </View>
-              )}
-
-              {photo.caption && (
-                <View style={styles.captionOverlay}>
-                  <Text style={styles.captionText} numberOfLines={2}>
-                    {photo.caption}
+                {isVisible && (
+                  <>
+                    <Image
+                      source={{ uri: photo.photoUrl }}
+                      style={styles.photo}
+                      resizeMode="cover"
+                      onLoad={() => {
+                        setLoadedImages(prev => new Set(prev).add(index));
+                        setLoadingImages(prev => {
+                          const newSet = new Set(prev);
+                          newSet.delete(index);
+                          return newSet;
+                        });
+                      }}
+                      onError={() => {
+                        setLoadingImages(prev => {
+                          const newSet = new Set(prev);
+                          newSet.delete(index);
+                          return newSet;
+                        });
+                      }}
+                    />
+                    
+                    {(isLoading || !isLoaded) && (
+                      <View style={styles.loadingOverlay}>
+                        <ActivityIndicator size="large" color={colors.primary} />
+                      </View>
+                    )}
+                  </>
+                )}
+                
+                <View
+                  style={[
+                    styles.typeBadge,
+                    { backgroundColor: getPhotoTypeColor(photo.photoType) }
+                  ]}
+                >
+                  <Text style={styles.typeBadgeText}>
+                    {getPhotoTypeLabel(photo.photoType)}
                   </Text>
                 </View>
-              )}
-            </TouchableOpacity>
-          ))}
+
+                {photo.isPrimary && (
+                  <View style={styles.primaryBadge}>
+                    <Text style={styles.primaryBadgeText}>★</Text>
+                  </View>
+                )}
+
+                {photo.caption && (
+                  <View style={styles.captionOverlay}>
+                    <Text style={styles.captionText} numberOfLines={2}>
+                      {photo.caption}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         {showIndicators && photos.length > 1 && (
@@ -276,5 +359,15 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 12,
     fontWeight: '600',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.sectionBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

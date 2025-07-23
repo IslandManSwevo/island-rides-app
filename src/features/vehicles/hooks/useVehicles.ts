@@ -35,27 +35,42 @@ export const useVehicles = () => {
     refresh?: boolean;
   } = {}) => {
     const result = await dispatch(fetchVehicles(params));
-    return result;
+    if (fetchVehicles.fulfilled.match(result)) {
+      return result.payload;
+    }
+    throw new Error(result.payload as string);
   }, [dispatch]);
 
   const loadVehicleById = useCallback(async (vehicleId: string) => {
     const result = await dispatch(fetchVehicleById(vehicleId));
-    return result;
+    if (fetchVehicleById.fulfilled.match(result)) {
+      return result.payload;
+    }
+    throw new Error(result.payload as string);
   }, [dispatch]);
 
   const addVehicle = useCallback(async (vehicleData: Omit<Vehicle, 'id' | 'createdAt' | 'updatedAt'>) => {
     const result = await dispatch(createVehicle(vehicleData));
-    return result;
+    if (createVehicle.fulfilled.match(result)) {
+      return result.payload;
+    }
+    throw new Error(result.payload as string);
   }, [dispatch]);
 
   const editVehicle = useCallback(async (vehicleId: string, updates: Partial<Vehicle>) => {
     const result = await dispatch(updateVehicle({ vehicleId, updates }));
-    return result;
+    if (updateVehicle.fulfilled.match(result)) {
+      return result.payload;
+    }
+    throw new Error(result.payload as string);
   }, [dispatch]);
 
   const removeVehicle = useCallback(async (vehicleId: string) => {
     const result = await dispatch(deleteVehicle(vehicleId));
-    return result;
+    if (deleteVehicle.fulfilled.match(result)) {
+      return result.payload;
+    }
+    throw new Error(result.payload as string);
   }, [dispatch]);
 
   const selectVehicle = useCallback((vehicle: Vehicle | null) => {
@@ -66,18 +81,19 @@ export const useVehicles = () => {
     dispatch(clearError());
   }, [dispatch]);
 
-  const refreshVehicles = useCallback(async (filters?: VehicleFilters) => {
+  const refreshVehicles = useCallback((filters?: VehicleFilters) => {
     return loadVehicles({ page: 1, refresh: true, filters });
   }, [loadVehicles]);
 
-  const loadMoreVehicles = useCallback(async (filters?: VehicleFilters) => {
+  const loadMoreVehicles = useCallback((filters?: VehicleFilters) => {
     if (pagination.hasMore && !isLoading) {
-      return loadVehicles({ 
-        page: pagination.page + 1, 
+      return loadVehicles({
+        page: pagination.page + 1,
         filters,
-        refresh: false 
+        refresh: false
       });
     }
+    return Promise.resolve(); // Return a resolved promise when conditions aren't met
   }, [loadVehicles, pagination, isLoading]);
 
   return {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -20,7 +20,7 @@ interface ReceiptModalProps {
   onClose: () => void;
 }
 
-export const ReceiptModal: React.FC<ReceiptModalProps> = ({
+export const ReceiptModal: React.FC<ReceiptModalProps> = React.memo(({
   visible,
   bookingId,
   onClose
@@ -29,13 +29,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (visible && bookingId) {
-      loadReceipt();
-    }
-  }, [visible, bookingId]);
-
-  const loadReceipt = async () => {
+  const loadReceipt = useCallback(async () => {
     setLoading(true);
     try {
       const receiptData = await receiptService.getReceipt(bookingId);
@@ -46,9 +40,15 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId, onClose]);
 
-  const handleShare = async () => {
+  useEffect(() => {
+    if (visible && bookingId) {
+      loadReceipt();
+    }
+  }, [visible, bookingId, loadReceipt]);
+
+  const handleShare = useCallback(async () => {
     if (!receipt) return;
     
     setActionLoading('share');
@@ -59,9 +59,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     } finally {
       setActionLoading(null);
     }
-  };
+  }, [receipt]);
 
-  const handleDownload = async () => {
+  const handleDownload = useCallback(async () => {
     if (!receipt) return;
     
     setActionLoading('download');
@@ -72,9 +72,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     } finally {
       setActionLoading(null);
     }
-  };
+  }, [receipt]);
 
-  const handlePrint = async () => {
+  const handlePrint = useCallback(async () => {
     if (!receipt) return;
     
     setActionLoading('print');
@@ -85,22 +85,27 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     } finally {
       setActionLoading(null);
     }
-  };
+  }, [receipt]);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
-  };
+  }, []);
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = useCallback((amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
-  };
+  }, []);
+
+  const subtotal = useMemo(() => {
+    if (!receipt) return 0;
+    return receipt.booking.duration * receipt.vehicle.dailyRate;
+  }, [receipt]);
 
   return (
     <Modal
@@ -210,7 +215,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                     Subtotal ({receipt.booking.duration} × {formatCurrency(receipt.vehicle.dailyRate)}):
                   </Text>
                   <Text style={styles.value}>
-                    {formatCurrency(receipt.booking.duration * receipt.vehicle.dailyRate)}
+                    {formatCurrency(subtotal)}
                   </Text>
                 </View>
                 <View style={styles.totalRow}>
@@ -273,7 +278,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
       </View>
     </Modal>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -444,4 +449,4 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
     fontWeight: '600',
   },
-}); 
+});

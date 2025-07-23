@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useRe
 import { apiService } from '../services/apiService';
 import { authService } from '../services/authService';
 import { User, LoginRequest, RegisterRequest, ProfileData } from '../types';
+import { loggingService } from '../services/LoggingService';
 
 interface AuthContextType {
   // State
@@ -9,13 +10,14 @@ interface AuthContextType {
   currentUser: User | null;
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, firstName: string, lastName: string, role?: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
   refreshUser: () => Promise<void>;
+  updateUserProfile: (profileData: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,6 +53,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Check authentication status on app start
   useEffect(() => {
+    console.log('🔍 AuthContext: Initializing authentication check on startup');
+    setError(null); // Explicitly clear any error state
+    
     checkAuthenticationStatus();
     
     // Cleanup function to prevent state updates after unmount
@@ -60,36 +65,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const checkAuthenticationStatus = async () => {
-    console.log('🔍 AuthContext: Checking authentication status...');
+    loggingService.info('AuthContext: Checking authentication status');
+    console.log('🔍 AuthContext: Starting authentication check...');
     
     try {
       startOperation();
       setError(null);
       
       const token = await apiService.getToken();
-      console.log('🔍 AuthContext: Token exists:', !!token);
+      loggingService.info('AuthContext: Token exists', { hasToken: !!token });
+      console.log('🔑 AuthContext: Token check result:', { hasToken: !!token, tokenLength: token?.length || 0 });
       
       if (token) {
         // Validate token by attempting to get current user
-        console.log('🔍 AuthContext: Validating token...');
+        loggingService.info('AuthContext: Validating token');
+        console.log('✅ AuthContext: Token found, validating...');
         try {
           const user = await authService.getCurrentUser();
+          console.log('👤 AuthContext: User data received:', { userExists: !!user, userEmail: user?.email });
           
           if (user && !isUnmountedRef.current) {
             // Token is valid and user data retrieved successfully
             setCurrentUser(user);
             setIsAuthenticated(true);
-            console.log('✅ AuthContext: Token validated successfully for user:', user.email);
+            loggingService.info('AuthContext: Token validated successfully', { userEmail: user.email });
+            console.log('🎉 AuthContext: Authentication successful!', { userEmail: user.email });
           } else {
             // Token exists but is invalid/expired
-            console.log('❌ AuthContext: Token validation failed - no user data');
+            loggingService.warn('AuthContext: Token validation failed - no user data');
+            console.log('❌ AuthContext: Token validation failed - clearing token');
             await apiService.clearToken();
             setIsAuthenticated(false);
             setCurrentUser(null);
           }
         } catch (tokenValidationError) {
           // Token validation failed - token is invalid or expired
-          console.log('❌ AuthContext: Token validation failed:', tokenValidationError);
+          loggingService.warn('AuthContext: Token validation failed', { error: tokenValidationError });
+          console.log('❌ AuthContext: Token validation error:', tokenValidationError);
           await apiService.clearToken();
           setIsAuthenticated(false);
           setCurrentUser(null);
@@ -98,10 +110,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // No token exists
         setIsAuthenticated(false);
         setCurrentUser(null);
-        console.log('ℹ️ AuthContext: No token found');
+        loggingService.info('AuthContext: No token found');
+        console.log('🚫 AuthContext: No token found - user not authenticated');
       }
     } catch (error) {
-      console.error('❌ AuthContext: Auth check error:', error);
+      loggingService.error('AuthContext: Auth check error', error instanceof Error ? error : undefined);
+      console.log('💥 AuthContext: Authentication check error:', error);
       if (!isUnmountedRef.current) {
         setError(error instanceof Error ? error.message : 'Authentication check failed');
         setIsAuthenticated(false);
@@ -109,12 +123,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } finally {
       endOperation();
-      console.log('🔍 AuthContext: Auth check complete');
+      loggingService.info('AuthContext: Auth check complete');
+      console.log('🏁 AuthContext: Authentication check complete');
     }
   };
 
   const login = async (email: string, password: string): Promise<void> => {
-    console.log('🔐 AuthContext: Login attempt for:', email);
+    loggingService.info('AuthContext: Login attempt', { email });
     
     try {
       startOperation();
@@ -125,10 +140,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!isUnmountedRef.current) {
         setCurrentUser(response.user);
         setIsAuthenticated(true);
-        console.log('✅ AuthContext: Login successful for:', response.user.email);
+        loggingService.info('AuthContext: Login successful', { userEmail: response.user.email });
       }
     } catch (error) {
-      console.error('❌ AuthContext: Login failed:', error);
+      loggingService.error('AuthContext: Login failed', error instanceof Error ? error : undefined);
       if (!isUnmountedRef.current) {
         setError(error instanceof Error ? error.message : 'Login failed');
         setIsAuthenticated(false);
@@ -147,7 +162,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     lastName: string, 
     role: string = 'customer'
   ): Promise<void> => {
-    console.log('📝 AuthContext: Registration attempt for:', email);
+    loggingService.info('AuthContext: Registration attempt', { email });
     
     try {
       startOperation();
@@ -158,10 +173,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!isUnmountedRef.current) {
         setCurrentUser(response.user);
         setIsAuthenticated(true);
-        console.log('✅ AuthContext: Registration successful for:', response.user.email);
+        loggingService.info('AuthContext: Registration successful', { userEmail: response.user.email });
       }
     } catch (error) {
-      console.error('❌ AuthContext: Registration failed:', error);
+      loggingService.error('AuthContext: Registration failed', error instanceof Error ? error : undefined);
       if (!isUnmountedRef.current) {
         setError(error instanceof Error ? error.message : 'Registration failed');
         setIsAuthenticated(false);
@@ -174,7 +189,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async (): Promise<void> => {
-    console.log('🚪 AuthContext: Logout initiated');
+    loggingService.info('AuthContext: Logout initiated');
     
     try {
       startOperation();
@@ -185,10 +200,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!isUnmountedRef.current) {
         setIsAuthenticated(false);
         setCurrentUser(null);
-        console.log('✅ AuthContext: Logout successful');
+        loggingService.info('AuthContext: Logout successful');
       }
     } catch (error) {
-      console.error('❌ AuthContext: Logout error:', error);
+      loggingService.error('AuthContext: Logout error', error instanceof Error ? error : undefined);
       // Even if logout fails on server, clear local state
       if (!isUnmountedRef.current) {
         setIsAuthenticated(false);
@@ -205,7 +220,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshUser = async (): Promise<void> => {
-    console.log('🔄 AuthContext: Refreshing user data...');
+    loggingService.info('AuthContext: Refreshing user data');
     
     try {
       startOperation();
@@ -219,13 +234,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (user && !isUnmountedRef.current) {
         setCurrentUser(user);
-        console.log('✅ AuthContext: User data refreshed');
+        loggingService.info('AuthContext: User data refreshed');
       } else {
         // User data fetch failed, session might be invalid
         throw new Error('Failed to fetch user data');
       }
     } catch (error) {
-      console.error('❌ AuthContext: Failed to refresh user:', error);
+      loggingService.error('AuthContext: Failed to refresh user', error instanceof Error ? error : undefined);
       // If refresh fails, might be due to expired token
       if (!isUnmountedRef.current) {
         setIsAuthenticated(false);
@@ -238,19 +253,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUserProfile = async (profileData: Partial<User>): Promise<void> => {
+    const startOperation = () => {
+      setIsLoading(true);
+      setError(null);
+    };
+
+    const endOperation = () => {
+      setIsLoading(false);
+    };
+
+    try {
+      startOperation();
+
+      if (!currentUser) {
+        throw new Error('No user logged in');
+      }
+
+      // Update user profile via API
+      const updatedUser = await apiService.put<User>(`/api/users/${currentUser.id}`, profileData);
+      setCurrentUser(updatedUser);
+
+      loggingService.info('User profile updated successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
+      setError(errorMessage);
+      loggingService.error('Profile update failed', error instanceof Error ? error : new Error(errorMessage));
+      throw error;
+    } finally {
+      endOperation();
+    }
+  };
+
   const value: AuthContextType = {
     // State
     isAuthenticated,
     currentUser,
     isLoading,
     error,
-    
+
     // Actions
     login,
     register,
     logout,
     clearError,
     refreshUser,
+    updateUserProfile,
   };
 
   return (

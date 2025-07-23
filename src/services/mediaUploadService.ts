@@ -15,7 +15,7 @@ class MediaUploadService {
       const type = match ? `${fileType}/${match[1]}` : fileType;
 
       const file: UploadableFile = { uri, name: filename, type };
-      formData.append('file', file);
+      formData.append('file', file as any); // React Native FormData accepts objects with uri, name, type
 
       const response = await apiService.uploadFile<{ url: string }>(endpoint, formData);
       return response.url;

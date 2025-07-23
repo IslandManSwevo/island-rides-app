@@ -145,11 +145,11 @@ function main() {
       
       // 2. Run strict TypeScript check
       log('\n📋 Step 2: Running strict TypeScript compilation', 'yellow');
-      runCommand('npx tsc --noEmit --project tsconfig.strict.json', 'Strict TypeScript check');
-      
+      runCommand('node_modules\\.bin\\tsc --noEmit --project tsconfig.strict.json', 'Strict TypeScript check');
+
       // 3. Run regular TypeScript check
       log('\n📋 Step 3: Running standard TypeScript compilation', 'yellow');
-      runCommand('npx tsc --noEmit', 'Standard TypeScript check');
+      runCommand('node_modules\\.bin\\tsc --noEmit', 'Standard TypeScript check');
       
       log('\n💡 To fix issues, run: npm run dev:fix', 'cyan');
       break;
@@ -164,7 +164,7 @@ function main() {
       if (fixResult.success) {
         // 2. Run TypeScript check after fixes
         log('\n📋 Step 2: Verifying fixes with TypeScript compilation', 'yellow');
-        runCommand('npx tsc --noEmit', 'Post-fix TypeScript check');
+        runCommand('node_modules\\.bin\\tsc --noEmit', 'Post-fix TypeScript check');
         
         log('\n✨ Fix process completed! Consider running tests next.', 'green');
         log('💡 Run: npm test', 'cyan');
@@ -175,7 +175,7 @@ function main() {
       log('🧪 Running test suite...', 'blue');
       
       // 1. TypeScript check
-      runCommand('npx tsc --noEmit', 'TypeScript compilation');
+      runCommand('node_modules\\.bin\\tsc --noEmit', 'TypeScript compilation');
       
       // 2. Run tests (if available)
       try {
@@ -189,7 +189,7 @@ function main() {
       log('🏃‍♂️ Starting development environment...', 'blue');
       
       // 1. Quick TypeScript check
-      const tsCheck = runCommand('npx tsc --noEmit', 'TypeScript compilation check');
+      const tsCheck = runCommand('node_modules\\.bin\\tsc --noEmit', 'TypeScript compilation check');
       
       if (tsCheck.success) {
         // 2. Start development server

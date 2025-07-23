@@ -8,6 +8,7 @@ import {
   SafeAreaView
 } from 'react-native';
 import { AppHeader } from '../components/AppHeader';
+import { OwnerDashboardSkeleton } from '../components/skeletons/OwnerDashboardSkeleton';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
 import { styles } from './OwnerDashboardScreen/styles';
@@ -128,8 +129,9 @@ export const OwnerDashboardScreen = ({ navigation }: OwnerDashboardScreenProps) 
 
   if (loading && !overview) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <Text>Loading dashboard...</Text>
+      <SafeAreaView style={styles.container}>
+        <AppHeader title="Owner Dashboard" navigation={navigation} />
+        <OwnerDashboardSkeleton />
       </SafeAreaView>
     );
   }

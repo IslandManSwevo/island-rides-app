@@ -1,6 +1,26 @@
 import { apiService } from './apiService';
-import { VehicleRecommendation, Island } from '../types';
+import { VehicleRecommendation, Island, Vehicle } from '../types';
 import { BusinessLogicError } from './errors/BusinessLogicError';
+
+// Enhanced search parameters for Epic 2 functionality
+export interface VehicleSearchParams {
+  island?: string;
+  category?: string;
+  priceRange?: {
+    min: number;
+    max: number;
+  };
+  sortBy?: 'price' | 'popularity' | 'distance' | 'rating';
+  limit?: number;
+  offset?: number;
+}
+
+export interface VehicleSearchResult {
+  vehicle: Vehicle;
+  distance?: number;
+  popularity?: number;
+  rating?: number;
+}
 
 // Interface for vehicle recommendations response
 interface VehicleRecommendationsResponse {
@@ -173,7 +193,7 @@ class VehicleService {
         vehicleType: vehicle.type,
         priceRange: [vehicle.pricePerDay * 0.8, vehicle.pricePerDay * 1.2] // 20% price range
       });
-      
+
       return similarVehicles.filter(v => v.id !== vehicleId);
     } catch (error) {
       throw new BusinessLogicError(
@@ -182,6 +202,84 @@ class VehicleService {
         { originalError: error, vehicleId }
       );
     }
+  }
+
+  /**
+   * Enhanced search functionality for Epic 2
+   * Provides advanced search with sorting and filtering for enhanced home screen
+   */
+  async enhancedSearchVehicles(params: VehicleSearchParams = {}): Promise<VehicleSearchResult[]> {
+    try {
+      // Convert enhanced params to existing API format
+      const searchParams: any = {};
+
+      if (params.island) searchParams.location = params.island;
+      if (params.category) searchParams.vehicleType = params.category;
+      if (params.priceRange) {
+        searchParams.minPrice = params.priceRange.min;
+        searchParams.maxPrice = params.priceRange.max;
+      }
+      if (params.sortBy) searchParams.sortBy = params.sortBy;
+      if (params.limit) searchParams.limit = params.limit;
+      if (params.offset) searchParams.page = Math.floor((params.offset || 0) / (params.limit || 10)) + 1;
+
+      const results = await this.searchVehicles(searchParams);
+
+      // Convert to enhanced search results format
+      return results.map(rec => ({
+        vehicle: rec.vehicle,
+        distance: Math.random() * 50, // Mock distance until location services are integrated
+        popularity: rec.scoreBreakdown?.vehiclePopularity || Math.random() * 100,
+        rating: rec.vehicle.averageRating || 4.0,
+      }));
+    } catch (error) {
+      console.error('Error in enhanced vehicle search:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get popular vehicles for enhanced home screen
+   */
+  async getPopularVehicles(limit: number = 6): Promise<VehicleSearchResult[]> {
+    return this.enhancedSearchVehicles({
+      sortBy: 'popularity',
+      limit,
+    });
+  }
+
+  /**
+   * Get vehicle recommendations based on user preferences
+   */
+  async getRecommendedVehicles(
+    userPreferences: {
+      preferredCategory?: string;
+      maxPrice?: number;
+      island?: string;
+    },
+    limit: number = 4
+  ): Promise<VehicleSearchResult[]> {
+    const searchParams: VehicleSearchParams = {
+      limit,
+      sortBy: 'rating',
+    };
+
+    if (userPreferences.preferredCategory) {
+      searchParams.category = userPreferences.preferredCategory;
+    }
+
+    if (userPreferences.maxPrice) {
+      searchParams.priceRange = {
+        min: 0,
+        max: userPreferences.maxPrice,
+      };
+    }
+
+    if (userPreferences.island) {
+      searchParams.island = userPreferences.island;
+    }
+
+    return this.enhancedSearchVehicles(searchParams);
   }
 }
 

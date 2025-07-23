@@ -1,105 +1,65 @@
-// Firebase configuration for KeyLo App
 import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth, GoogleAuthProvider, signInWithPopup, signOut, User, UserCredential } from 'firebase/auth';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
-// Firebase configuration interface
-interface FirebaseConfig {
-  apiKey: string;
-  authDomain: string;
-  projectId: string;
-  storageBucket: string;
-  messagingSenderId: string;
-  appId: string;
-}
-
-// Auth result interface
-interface AuthResult {
-  user: {
-    uid: string;
-    email: string | null;
-    displayName: string | null;
-    photoURL: string | null;
-  };
-  token: string;
-}
-
-// Firebase configuration from environment variables
-const firebaseConfig: FirebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || '',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || '',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || ''
+// Firebase configuration using environment variables
+const firebaseConfig = {
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Validate Firebase configuration
-const validateFirebaseConfig = (config: FirebaseConfig): void => {
-  const requiredFields = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
-  const missingFields = requiredFields.filter(field => !config[field as keyof FirebaseConfig]);
+// Validation helper
+const validateFirebaseConfig = () => {
+  const requiredFields = [
+    'apiKey',
+    'authDomain', 
+    'projectId',
+    'storageBucket',
+    'messagingSenderId',
+    'appId'
+  ];
+
+  const missingFields = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
   
   if (missingFields.length > 0) {
-    throw new Error(`Missing Firebase configuration: ${missingFields.join(', ')}. Please check your environment variables.`);
+    console.warn(`Firebase configuration missing fields: ${missingFields.join(', ')}`);
+    console.warn('Using demo configuration. Update .env file with real Firebase credentials for production.');
   }
 };
 
-// Check if we're in development and allow mock config
-const isDevelopment = process.env.NODE_ENV === 'development';
-
-// Validate configuration before initializing (skip in development with demo values)
-if (!isDevelopment || firebaseConfig.apiKey !== 'demo-api-key') {
-  validateFirebaseConfig(firebaseConfig);
-}
-
-// Initialize Firebase (use mock in development if demo values)
+// Initialize Firebase App
 let app: FirebaseApp;
-if (isDevelopment && firebaseConfig.apiKey === 'demo-api-key') {
-  console.warn('Using demo Firebase configuration - Authentication will not work');
-  // Create minimal mock config for development
-  app = initializeApp({
-    apiKey: 'demo-api-key',
-    authDomain: 'island-rides-demo.firebaseapp.com',
-    projectId: 'island-rides-demo',
-    storageBucket: 'island-rides-demo.appspot.com',
-    messagingSenderId: '123456789',
-    appId: '1:123456789:web:abcdef123456789'
-  });
-} else {
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
+
+try {
+  validateFirebaseConfig();
   app = initializeApp(firebaseConfig);
+  
+  // Initialize Firebase services
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  
+  console.log('Firebase initialized successfully');
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+  throw new Error('Failed to initialize Firebase. Check your configuration.');
 }
-export const auth: Auth = getAuth(app);
-export const googleProvider: GoogleAuthProvider = new GoogleAuthProvider();
 
-// Firebase auth functions
-export const signInWithGoogle = async (): Promise<AuthResult> => {
-  try {
-    const result: UserCredential = await signInWithPopup(auth, googleProvider);
-    const user: User = result.user;
-    const token: string = await user.getIdToken();
-    
-    return {
-      user: {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL
-      },
-      token
-    };
-  } catch (error) {
-    console.error('Google sign-in error:', error);
-    throw error;
-  }
-};
+// Export Firebase services
+export { app, auth, db, storage };
 
-export const signOutUser = async (): Promise<boolean> => {
-  try {
-    await signOut(auth);
-    return true;
-  } catch (error) {
-    console.error('Sign out error:', error);
-    throw error;
-  }
-};
+// Export individual service getters for flexibility
+export const getFirebaseAuth = () => auth;
+export const getFirebaseFirestore = () => db;
+export const getFirebaseStorage = () => storage;
+export const getFirebaseApp = () => app;
 
 export default app;

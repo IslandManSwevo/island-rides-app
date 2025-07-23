@@ -3,7 +3,7 @@ import { apiService } from './apiService';
 import { VehicleAvailability } from '../types';
 
 class VehicleAvailabilityService extends BaseService {
-  protected async onInit(): Promise<void> {
+  protected override async onInit(): Promise<void> {
     await apiService.waitForInitialization();
   }
 

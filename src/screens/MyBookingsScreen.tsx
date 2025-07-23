@@ -17,6 +17,7 @@ import { RootStackParamList } from '../navigation/routes';
 import { BookingService } from '../services/bookingService';
 import { BookingResponse } from '../types';
 import { notificationService } from '../services/notificationService';
+import { BookingsSkeleton } from '../components/skeletons/BookingsSkeleton';
 
 type MyBookingsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MyBookings'>;
 
@@ -238,10 +239,7 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
           </TouchableOpacity>
           <Text style={styles.headerTitle}>My Bookings</Text>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading your bookings...</Text>
-        </View>
+        <BookingsSkeleton itemCount={5} />
       </SafeAreaView>
     );
   }

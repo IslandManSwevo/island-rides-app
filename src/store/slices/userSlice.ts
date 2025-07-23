@@ -1,6 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { apiService } from '../../services/apiService';
 import { ErrorHandlingService } from '../../services/errors/ErrorHandlingService';
+import {
+  StandardErrorState,
+  createInitialErrorState,
+  createErrorStateReducers,
+  createAsyncThunkExtraReducers,
+  handleAsyncThunkError
+} from '../utils/errorStateUtils';
 
 // Types
 interface UserProfile {
@@ -37,23 +44,20 @@ interface UserProfile {
   };
 }
 
-interface UserState {
+interface UserState extends StandardErrorState {
   profile: UserProfile | null;
-  isLoading: boolean;
-  error: string | null;
   lastUpdated: number | null;
 }
 
 // Initial state
 const initialState: UserState = {
   profile: null,
-  isLoading: false,
-  error: null,
   lastUpdated: null,
+  ...createInitialErrorState(),
 };
 
 // Async thunks
-export const fetchUserProfile = createAsyncThunk<UserProfile, void, { rejectValue: string }>(
+export const fetchUserProfile = createAsyncThunk<UserProfile, void, { rejectValue: any }>(
   'user/fetchProfile',
   async (_, { rejectWithValue }) => {
     try {
@@ -64,7 +68,7 @@ export const fetchUserProfile = createAsyncThunk<UserProfile, void, { rejectValu
 
       return response;
     } catch (error) {
-      return rejectWithValue((error as any).userMessage || 'Failed to fetch profile');
+      return rejectWithValue(handleAsyncThunkError(error));
     }
   }
 );
@@ -177,9 +181,7 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    clearError: (state) => {
-      state.error = null;
-    },
+    ...createErrorStateReducers<UserState>(),
     updateLocalProfile: (state, action: PayloadAction<Partial<UserProfile>>) => {
       if (state.profile) {
         state.profile = { ...state.profile, ...action.payload };

@@ -9,7 +9,7 @@ class ErrorHandlerService {
     const handler = async () => {
       await apiService.clearToken();
       if (navigationRef.isReady()) {
-        navigationRef.navigate(ROUTES.LOGIN);
+        navigationRef.navigate(ROUTES.LOGIN as any);
       }
     };
     handler();

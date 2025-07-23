@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -28,7 +28,7 @@ interface SavedSearchComponentProps {
   currentFilters?: SearchFilters;
 }
 
-export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
+export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = React.memo(({
   visible,
   onClose,
   onLoadSearch,
@@ -45,13 +45,7 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
   const [activeTab, setActiveTab] = useState<'searches' | 'alerts'>('searches');
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
 
-  useEffect(() => {
-    if (visible) {
-      loadData();
-    }
-  }, [visible]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [searches, alerts, prefs] = await Promise.all([
@@ -68,9 +62,15 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleSaveCurrentSearch = async () => {
+  useEffect(() => {
+    if (visible) {
+      loadData();
+    }
+  }, [visible, loadData]);
+
+  const handleSaveCurrentSearch = useCallback(async () => {
     if (!currentFilters || !searchName.trim()) return;
 
     try {
@@ -95,9 +95,9 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentFilters, searchName, notificationEnabled, notificationFrequency, loadData]);
 
-  const handleDeleteSearch = async (searchId: string) => {
+  const handleDeleteSearch = useCallback(async (searchId: string) => {
     Alert.alert(
       'Delete Saved Search',
       'Are you sure you want to delete this saved search?',
@@ -118,18 +118,18 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
         }
       ]
     );
-  };
+  }, [loadData]);
 
-  const handleToggleActive = async (searchId: string) => {
+  const handleToggleActive = useCallback(async (searchId: string) => {
     try {
       await searchNotificationService.toggleSearchActive(searchId);
       await loadData();
     } catch (error) {
       console.error('Failed to toggle search active state:', error);
     }
-  };
+  }, [loadData]);
 
-  const handleShareSearch = async (searchId: string) => {
+  const handleShareSearch = useCallback(async (searchId: string) => {
     try {
       const shareUrl = await searchNotificationService.shareSavedSearch(searchId);
       // In a real app, this would use React Native's Share API
@@ -138,32 +138,32 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
       console.error('Failed to share search:', error);
       Alert.alert('Error', 'Failed to share search. Please try again.');
     }
-  };
+  }, []);
 
-  const handleLoadSearch = (search: SavedSearch) => {
+  const handleLoadSearch = useCallback((search: SavedSearch) => {
     onLoadSearch(search.filters);
     onClose();
-  };
+  }, [onLoadSearch, onClose]);
 
-  const handleMarkAlertAsRead = async (alertId: string) => {
+  const handleMarkAlertAsRead = useCallback(async (alertId: string) => {
     try {
       await searchNotificationService.markAlertAsRead(alertId);
       await loadData();
     } catch (error) {
       console.error('Failed to mark alert as read:', error);
     }
-  };
+  }, [loadData]);
 
-  const handleDeleteAlert = async (alertId: string) => {
+  const handleDeleteAlert = useCallback(async (alertId: string) => {
     try {
       await searchNotificationService.deleteAlert(alertId);
       await loadData();
     } catch (error) {
       console.error('Failed to delete alert:', error);
     }
-  };
+  }, [loadData]);
 
-  const updatePreferences = async (updates: Partial<NotificationPreferences>) => {
+  const updatePreferences = useCallback(async (updates: Partial<NotificationPreferences>) => {
     try {
       await searchNotificationService.updateNotificationPreferences(updates);
       const updatedPrefs = await searchNotificationService.getNotificationPreferences();
@@ -171,26 +171,26 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
     } catch (error) {
       console.error('Failed to update preferences:', error);
     }
-  };
+  }, []);
 
-  const formatDate = (date: Date) => {
+  const formatDate = useCallback((date: Date) => {
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
+  }, []);
 
-  const getFilterSummary = (filters: SearchFilters) => {
+  const getFilterSummary = useCallback((filters: SearchFilters) => {
     const parts = [];
     if (filters.island) parts.push(filters.island);
     if (filters.vehicleTypes.length > 0) parts.push(filters.vehicleTypes.join(', '));
     if (filters.priceRange) parts.push(`$${filters.priceRange[0]}-$${filters.priceRange[1]}`);
     return parts.join(' • ');
-  };
+  }, []);
 
-  const renderSavedSearchItem = ({ item }: { item: SavedSearch }) => (
+  const renderSavedSearchItem = useCallback(({ item }: { item: SavedSearch }) => (
     <View style={styles.searchItem}>
       <View style={styles.searchHeader}>
         <View style={styles.searchTitleContainer}>
@@ -246,9 +246,9 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
         <Text style={styles.loadButtonText}>Load Search</Text>
       </TouchableOpacity>
     </View>
-  );
+  ), [getFilterSummary, handleToggleActive, handleShareSearch, handleDeleteSearch, formatDate, handleLoadSearch]);
 
-  const renderAlertItem = ({ item }: { item: SearchAlert }) => (
+  const renderAlertItem = useCallback(({ item }: { item: SearchAlert }) => (
     <View style={[styles.alertItem, !item.isRead && styles.unreadAlert]}>
       <View style={styles.alertHeader}>
         <View style={styles.alertIcon}>
@@ -285,9 +285,9 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
         </View>
       </View>
     </View>
-  );
+  ), [formatDate, handleMarkAlertAsRead, handleDeleteAlert]);
 
-  const renderPreferencesModal = () => (
+  const renderPreferencesModal = useCallback(() => (
     <Modal
       visible={showPreferences}
       animationType="slide"
@@ -378,9 +378,9 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
         </ScrollView>
       </View>
     </Modal>
-  );
+  ), [showPreferences, preferences, updatePreferences]);
 
-  const renderSaveDialog = () => (
+  const renderSaveDialog = useCallback(() => (
     <Modal
       visible={showSaveDialog}
       transparent
@@ -406,14 +406,14 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
             <View style={styles.settingRow}>
               <Text style={styles.settingLabel}>Frequency</Text>
               <View style={styles.frequencySelector}>
-                {['immediate', 'daily', 'weekly'].map((freq) => (
+                {(['immediate', 'daily', 'weekly'] as const).map((freq) => (
                   <TouchableOpacity
                     key={freq}
                     style={[
                       styles.freqButton,
                       notificationFrequency === freq && styles.selectedFreq
                     ]}
-                    onPress={() => setNotificationFrequency(freq as any)}
+                    onPress={() => setNotificationFrequency(freq)}
                   >
                     <Text style={[
                       styles.freqButtonText,
@@ -434,9 +434,12 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.saveButton, (!searchName.trim() || loading) && styles.disabledButton]}
+              style={[
+                styles.saveButton,
+                (!searchName.trim() || !currentFilters) && styles.disabledButton
+              ]}
               onPress={handleSaveCurrentSearch}
-              disabled={!searchName.trim() || loading}
+              disabled={!searchName.trim() || !currentFilters || loading}
             >
               <Text style={styles.saveButtonText}>
                 {loading ? 'Saving...' : 'Save'}
@@ -446,7 +449,7 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
         </View>
       </View>
     </Modal>
-  );
+  ), [showSaveDialog, searchName, notificationEnabled, notificationFrequency, currentFilters, loading, handleSaveCurrentSearch]);
 
   const unreadAlertsCount = searchAlerts.filter(a => !a.isRead).length;
 
@@ -518,6 +521,17 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
               renderItem={renderSavedSearchItem}
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
+              // Performance optimizations
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={6}
+              updateCellsBatchingPeriod={50}
+              initialNumToRender={4}
+              windowSize={6}
+              getItemLayout={(data, index) => ({
+                length: 180, // Approximate saved search item height
+                offset: 180 * index,
+                index,
+              })}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
                   <Ionicons name="bookmark-outline" size={64} color={colors.lightGrey} />
@@ -536,6 +550,17 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
               renderItem={renderAlertItem}
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
+              // Performance optimizations
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={6}
+              updateCellsBatchingPeriod={50}
+              initialNumToRender={4}
+              windowSize={6}
+              getItemLayout={(data, index) => ({
+                length: 160, // Approximate alert item height
+                offset: 160 * index,
+                index,
+              })}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
                   <Ionicons name="notifications-outline" size={64} color={colors.lightGrey} />
@@ -554,7 +579,7 @@ export const SavedSearchComponent: React.FC<SavedSearchComponentProps> = ({
       </View>
     </Modal>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -947,3 +972,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 });
+
+export default SavedSearchComponent;

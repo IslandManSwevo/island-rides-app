@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -38,7 +38,7 @@ interface PhotoGridItem {
   data: PhotoUpload | VehiclePhoto | null;
 }
 
-export const PhotoGrid: React.FC<PhotoGridProps> = ({
+export const PhotoGrid: React.FC<PhotoGridProps> = React.memo(({
   photos,
   serverPhotos,
   maxPhotos,
@@ -84,7 +84,8 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
     
     return allItems;
   }, [serverPhotos, photos, maxPhotos]);
-  const renderPhotoItem = (
+
+  const renderPhotoItem = useCallback((
     photo: PhotoUpload | VehiclePhoto,
     config: {
       imageUri: string;
@@ -162,9 +163,9 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [getPhotoTypeColor, getPhotoTypeIcon]);
 
-  const renderItem = ({ item }: { item: PhotoGridItem }) => {
+  const renderItem = useCallback(({ item }: { item: PhotoGridItem }) => {
     // Handle add photo button
     if (item.id === 'add_photo_button') {
       return (
@@ -203,11 +204,11 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
         onRemove: (id) => onRemoveServerPhoto(id as number),
       });
     }
-  };
+  }, [onAddPhoto, renderPhotoItem, onSetPrimary, onRemovePhoto, onEditType, onEditCaption, onSetServerPrimary, onRemoveServerPhoto]);
 
-  const keyExtractor = (item: PhotoGridItem) => String(item.id);
+  const keyExtractor = useCallback((item: PhotoGridItem) => String(item.id), []);
 
-  const getItemLayout = (_: any, index: number) => {
+  const getItemLayout = useCallback((_: any, index: number) => {
     const itemWidth = '48%'; // This matches the photoContainer width
     const itemHeight = 120; // Approximate height based on aspect ratio 16:9
     const gap = 8; // spacing.sm
@@ -217,7 +218,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
       offset: Math.floor(index / 2) * (itemHeight + gap),
       index,
     };
-  };
+  }, []);
 
   return (
     <FlatList
@@ -234,7 +235,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
       windowSize={10}
     />
   );
-};
+});
 
 const styles = StyleSheet.create({
   photosContainer: {

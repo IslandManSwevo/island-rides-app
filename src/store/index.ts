@@ -6,7 +6,13 @@ import { persistStore, persistReducer } from 'redux-persist';
 import { combineReducers } from '@reduxjs/toolkit';
 
 // Conditional storage for web compatibility
-let storage: any;
+interface Storage {
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+  removeItem: (key: string) => Promise<void>;
+}
+
+let storage: Storage;
 try {
   const AsyncStorage = require('@react-native-async-storage/async-storage').default;
   storage = AsyncStorage;
@@ -20,29 +26,31 @@ try {
 }
 
 // Slice imports (will add as we create them)
-import authReducer from './slices/authSlice';
+// Note: authSlice removed - using AuthContext for authentication
 import userReducer from './slices/userSlice';
 import vehicleReducer from './slices/vehicleSlice';
 import bookingReducer from './slices/bookingSlice';
 import notificationReducer from './slices/notificationSlice';
 import searchReducer from './slices/searchSlice';
+import featureFlagsReducer from './slices/featureFlagsSlice';
 
 // Persist configuration
 const persistConfig = {
   key: 'root',
   storage: storage,
-  whitelist: ['auth', 'user'], // Only persist auth and user data
+  whitelist: ['user', 'featureFlags'], // Persist user data and feature flags
   blacklist: ['search', 'notification'], // Don't persist temporary data
 };
 
 // Root reducer
 const rootReducer = combineReducers({
-  auth: authReducer,
+  // Note: auth removed - using AuthContext for authentication
   user: userReducer,
   vehicle: vehicleReducer,
   booking: bookingReducer,
   notification: notificationReducer,
   search: searchReducer,
+  featureFlags: featureFlagsReducer,
 });
 
 // Persisted reducer

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ interface VehicleFeatureListProps {
   maxVisibleFeatures?: number;
 }
 
-export const VehicleFeatureList: React.FC<VehicleFeatureListProps> = ({
+export const VehicleFeatureList: React.FC<VehicleFeatureListProps> = React.memo(({
   features,
   style,
   showCategories = true,
@@ -38,6 +38,65 @@ export const VehicleFeatureList: React.FC<VehicleFeatureListProps> = ({
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [showAllFeatures, setShowAllFeatures] = useState(false);
 
+  // Memoize expensive calculations
+  const featuresByCategory = useMemo(() => {
+    if (!features || features.length === 0) return {};
+    return vehicleFeatureService.formatFeaturesByCategory(features);
+  }, [features]);
+
+  const categoryNames = useMemo(() => Object.keys(featuresByCategory), [featuresByCategory]);
+
+  const iconMap = useMemo(() => ({
+    'snowflake': '❄️',
+    'fire': '🔥',
+    'badge': '🏆',
+    'maximize': '⚡',
+    'sun': '☀️',
+    'bluetooth': '📶',
+    'navigation': '🧭',
+    'usb': '🔌',
+    'camera': '📷',
+    'smartphone': '📱',
+    'volume-2': '🔊',
+    'shield': '🛡️',
+    'disc': '🛞',
+    'settings': '⚙️',
+    'eye': '👁️',
+    'alert-triangle': '⚠️',
+    'zap': '⚡',
+    'truck': '🚛',
+    'gauge': '📊',
+    'key': '🔑',
+    'power': '🔋',
+    'lightbulb': '💡',
+    'circle': '⭕',
+    'package': '📦',
+    'square': '⬛',
+  }), []);
+
+  const toggleCategory = useCallback((categoryName: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryName]: !prev[categoryName],
+    }));
+  }, []);
+
+  const handleFeaturePress = useCallback((feature: VehicleFeature) => {
+    if (interactive && onFeaturePress) {
+      onFeaturePress(feature);
+    } else if (feature.description) {
+      Alert.alert(feature.name, feature.description);
+    }
+  }, [interactive, onFeaturePress]);
+
+  const getFeatureIcon = useCallback((iconName: string) => {
+    return (iconMap as Record<string, string>)[iconName] || '✨';
+  }, []);
+
+  const handleShowAllFeatures = useCallback(() => {
+    setShowAllFeatures(true);
+  }, []);
+
   if (!features || features.length === 0) {
     return (
       <View style={[styles.container, style]}>
@@ -46,57 +105,7 @@ export const VehicleFeatureList: React.FC<VehicleFeatureListProps> = ({
     );
   }
 
-  const featuresByCategory = vehicleFeatureService.formatFeaturesByCategory(features);
-  const categoryNames = Object.keys(featuresByCategory);
-
-  const toggleCategory = (categoryName: string) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [categoryName]: !prev[categoryName],
-    }));
-  };
-
-  const handleFeaturePress = (feature: VehicleFeature) => {
-    if (interactive && onFeaturePress) {
-      onFeaturePress(feature);
-    } else if (feature.description) {
-      Alert.alert(feature.name, feature.description);
-    }
-  };
-
-  const getFeatureIcon = (iconName: string) => {
-    // Map icon names to actual icons/emojis
-    const iconMap: Record<string, string> = {
-      'snowflake': '❄️',
-      'fire': '🔥',
-      'badge': '🏆',
-      'maximize': '⚡',
-      'sun': '☀️',
-      'bluetooth': '📶',
-      'navigation': '🧭',
-      'usb': '🔌',
-      'camera': '📷',
-      'smartphone': '📱',
-      'volume-2': '🔊',
-      'shield': '🛡️',
-      'disc': '🛞',
-      'settings': '⚙️',
-      'eye': '👁️',
-      'alert-triangle': '⚠️',
-      'zap': '⚡',
-      'truck': '🚛',
-      'gauge': '📊',
-      'key': '🔑',
-      'power': '🔋',
-      'lightbulb': '💡',
-      'circle': '⭕',
-      'package': '📦',
-      'square': '⬛',
-    };
-    return iconMap[iconName] || '✨';
-  };
-
-  const renderFeatureItem = (feature: VehicleFeature, index: number) => (
+  const renderFeatureItem = useCallback((feature: VehicleFeature, index: number) => (
     <TouchableOpacity
       key={feature.id}
       style={[
@@ -152,9 +161,9 @@ export const VehicleFeatureList: React.FC<VehicleFeatureListProps> = ({
         )}
       </View>
     </TouchableOpacity>
-  );
+  ), [compact, interactive, showPremiumBadges, showAdditionalCosts, handleFeaturePress, getFeatureIcon]);
 
-  const renderCategorySection = (categoryName: string, categoryFeatures: VehicleFeature[]) => {
+  const renderCategorySection = useCallback((categoryName: string, categoryFeatures: VehicleFeature[]) => {
     const isExpanded = expandedCategories[categoryName] !== false; // Default to expanded
     const displayFeatures = maxVisibleFeatures && !showAllFeatures 
       ? categoryFeatures.slice(0, maxVisibleFeatures)
@@ -186,7 +195,7 @@ export const VehicleFeatureList: React.FC<VehicleFeatureListProps> = ({
             {maxVisibleFeatures && !showAllFeatures && categoryFeatures.length > maxVisibleFeatures && (
               <TouchableOpacity
                 style={styles.showMoreButton}
-                onPress={() => setShowAllFeatures(true)}
+                onPress={handleShowAllFeatures}
               >
                 <Text style={styles.showMoreText}>
                   Show {categoryFeatures.length - maxVisibleFeatures} more features
@@ -197,50 +206,61 @@ export const VehicleFeatureList: React.FC<VehicleFeatureListProps> = ({
         )}
       </View>
     );
-  };
+  }, [expandedCategories, maxVisibleFeatures, showAllFeatures, showCategories, toggleCategory, renderFeatureItem, handleShowAllFeatures]);
 
-  const renderCompactList = () => {
-    const allFeatures = showAllFeatures || !maxVisibleFeatures 
-      ? features 
-      : features.slice(0, maxVisibleFeatures);
+  const renderCompactList = useCallback(() => {
+    const allFeatures = categoryNames.flatMap(categoryName => featuresByCategory[categoryName]);
+    const displayFeatures = maxVisibleFeatures && !showAllFeatures 
+      ? allFeatures.slice(0, maxVisibleFeatures)
+      : allFeatures;
 
     return (
-      <View style={[styles.container, style]}>
-        <View style={styles.compactGrid}>
-          {allFeatures.map((feature, index) => renderFeatureItem(feature, index))}
-        </View>
+      <View style={styles.compactContainer}>
+        {displayFeatures.map((feature, index) => renderFeatureItem(feature, index))}
         
-        {maxVisibleFeatures && !showAllFeatures && features.length > maxVisibleFeatures && (
+        {maxVisibleFeatures && !showAllFeatures && allFeatures.length > maxVisibleFeatures && (
           <TouchableOpacity
             style={styles.showMoreButton}
-            onPress={() => setShowAllFeatures(true)}
+            onPress={handleShowAllFeatures}
           >
             <Text style={styles.showMoreText}>
-              +{features.length - maxVisibleFeatures} more features
+              Show {allFeatures.length - maxVisibleFeatures} more features
             </Text>
           </TouchableOpacity>
         )}
       </View>
     );
-  };
-
-  if (compact) {
-    return renderCompactList();
-  }
+  }, [categoryNames, featuresByCategory, maxVisibleFeatures, showAllFeatures, renderFeatureItem, handleShowAllFeatures]);
 
   return (
     <View style={[styles.container, style]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {categoryNames.map(categoryName => 
-          renderCategorySection(categoryName, featuresByCategory[categoryName])
-        )}
-      </ScrollView>
+      {compact ? (
+        renderCompactList()
+      ) : (
+        <ScrollView 
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {categoryNames.map(categoryName => 
+            renderCategorySection(categoryName, featuresByCategory[categoryName])
+          )}
+        </ScrollView>
+      )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  compactContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    padding: 8,
+  },
+  scrollContainer: {
     flex: 1,
   },
   noFeaturesText: {

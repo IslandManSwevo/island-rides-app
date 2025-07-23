@@ -1,14 +1,41 @@
+/// <reference types="node" />
 import React from 'react';
 import { render, RenderOptions } from '@testing-library/react-native';
-import { ReactTestInstance } from 'react-test-renderer';
-import { ThemeProvider } from 'styled-components/native';
+import { ThemeProvider } from '../context/ThemeContext';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import theme from '../styles/theme';
+
+// Type declaration for global object in test environment
+declare global {
+  namespace NodeJS {
+    interface Global {
+      performance: Performance;
+    }
+  }
+}
+
+// Polyfill for performance API in test environment
+if (typeof performance === 'undefined') {
+  // Create a minimal performance object for testing
+  const mockPerformance = {
+    now: (): number => Date.now(),
+    mark: (): void => {},
+    measure: (): void => {},
+    clearMarks: (): void => {},
+    clearMeasures: (): void => {},
+    getEntries: (): PerformanceEntryList => [],
+    getEntriesByName: (): PerformanceEntryList => [],
+    getEntriesByType: (): PerformanceEntryList => [],
+    toJSON: (): any => ({}),
+  };
+
+  // Assign to global object with proper typing
+  (globalThis as any).performance = mockPerformance;
+}
 
 // Mock store for testing
-const createMockStore = (preloadedState = {}) => {
+export const createMockStore = (preloadedState = {}) => {
   return configureStore({
     reducer: {
       // Add your reducers here when implementing Redux
@@ -31,7 +58,7 @@ const AllTheProviders: React.FC<{
 }> = ({ children, store, navigationProps }) => {
   return (
     <Provider store={store || createMockStore()}>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider>
         <NavigationContainer {...navigationProps}>
           {children}
         </NavigationContainer>
@@ -45,9 +72,9 @@ export const customRender = (
   options: CustomRenderOptions = {}
 ) => {
   const { preloadedState, store, navigationProps, ...renderOptions } = options;
-  
+
   const mockStore = store || createMockStore(preloadedState);
-  
+
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <AllTheProviders store={mockStore} navigationProps={navigationProps}>
       {children}
@@ -125,7 +152,7 @@ export const createTestBooking = (overrides = {}) => ({
 });
 
 // Accessibility test helpers
-export const checkAccessibilityProps = (element: ReactTestInstance) => {
+export const checkAccessibilityProps = (element: any) => {
   const accessibilityProps = [
     'accessibilityLabel',
     'accessibilityHint',
@@ -133,11 +160,27 @@ export const checkAccessibilityProps = (element: ReactTestInstance) => {
     'accessibilityState',
     'testID',
   ];
-  
+
   return accessibilityProps.reduce((acc, prop) => {
-    acc[prop] = element.props[prop] || null;
+    acc[prop] = element.props?.[prop] || null;
     return acc;
   }, {} as Record<string, unknown>);
+};
+
+// Modern accessibility testing helper using queries
+export const getAccessibilityInfo = (testID: string, getByTestId: any) => {
+  try {
+    const element = getByTestId(testID);
+    return {
+      accessibilityLabel: element.props.accessibilityLabel,
+      accessibilityHint: element.props.accessibilityHint,
+      accessibilityRole: element.props.accessibilityRole,
+      accessibilityState: element.props.accessibilityState,
+      testID: element.props.testID,
+    };
+  } catch (error) {
+    return null;
+  }
 };
 
 // Performance test helpers

@@ -407,9 +407,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
           quickReplyStyle={styles.quickReply}
           renderUsernameOnMessage={false}
           dateFormat="MMM DD, YYYY"
-          timeFormat="HH:mm"
           showAvatarForEveryMessage={false}
-          renderAvatarOnTop={false}
           maxComposerHeight={100}
           minComposerHeight={40}
           bottomOffset={Platform.OS === 'ios' ? 34 : 0}

@@ -19,7 +19,9 @@ export const TRIP_PURPOSES = {
   BUSINESS: 'business',
   LEISURE: 'leisure',
   FAMILY: 'family',
-  ADVENTURE: 'adventure'
+  ADVENTURE: 'adventure',
+  LUXURY: 'luxury',
+  UNKNOWN: 'unknown'
 } as const;
 
 // User preferences interface based on searchIntelligenceService structure
@@ -177,7 +179,7 @@ class RecommendationEngine {
 
       // Weekend vs weekday boosting
       if (context.dayOfWeek === 'weekend') {
-        if ([TRIP_PURPOSES.LEISURE, TRIP_PURPOSES.FAMILY, TRIP_PURPOSES.ADVENTURE].includes(context.tripPurpose.type)) {
+        if ([TRIP_PURPOSES.LEISURE, TRIP_PURPOSES.FAMILY, TRIP_PURPOSES.ADVENTURE].includes(context.tripPurpose.type as any)) {
           boost += 0.15;
           newReasons.push('Perfect for weekend activities');
         }

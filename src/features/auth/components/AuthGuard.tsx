@@ -3,12 +3,13 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { View, ActivityIndicator } from 'react-native';
 import { colors } from '../../../styles/theme';
+import { UserRole } from '../../../types';
 
 interface AuthGuardProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   requireVerification?: boolean;
-  allowedRoles?: ('user' | 'owner' | 'admin')[];
+  allowedRoles?: UserRole[];
   fallbackScreen?: string;
   loadingComponent?: React.ComponentType;
 }
@@ -17,12 +18,12 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   children,
   requireAuth = true,
   requireVerification = false,
-  allowedRoles = ['user', 'owner', 'admin'],
+  allowedRoles = ['user', 'host', 'owner', 'admin'],
   fallbackScreen = 'LoginScreen',
   loadingComponent: LoadingComponent,
 }) => {
   const navigation = useNavigation();
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, currentUser, isLoading } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
@@ -34,20 +35,20 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     }
 
     // Check verification requirement
-    if (requireVerification && user && !user.isVerified) {
+    if (requireVerification && currentUser && !currentUser.isVerified) {
       navigation.navigate('EmailVerificationScreen' as never);
       return;
     }
 
     // Check role requirement
-    if (user && !allowedRoles.includes(user.role)) {
+    if (currentUser && !allowedRoles.includes(currentUser.role)) {
       navigation.navigate('UnauthorizedScreen' as never);
       return;
     }
   }, [
     isLoading,
     isAuthenticated,
-    user,
+    currentUser,
     requireAuth,
     requireVerification,
     allowedRoles,
@@ -71,8 +72,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   // Show children if all checks pass
   if (
     (!requireAuth || isAuthenticated) &&
-    (!requireVerification || (user && user.isVerified)) &&
-    (!user || allowedRoles.includes(user.role))
+    (!requireVerification || (currentUser && currentUser.isVerified)) &&
+    (!currentUser || allowedRoles.includes(currentUser.role))
   ) {
     return <>{children}</>;
   }

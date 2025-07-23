@@ -9,7 +9,7 @@ interface LoadingSpinnerProps {
   style?: ViewStyle;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = React.memo(({
   size = 'large',
   color = Theme.colors.primary,
   text,
@@ -21,7 +21,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       {text && <Text style={styles.text}>{text}</Text>}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

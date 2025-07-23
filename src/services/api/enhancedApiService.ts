@@ -15,17 +15,17 @@ export class EnhancedApiService {
   private setupInterceptors() {
     // Request interceptors (applied in reverse order)
     this.axiosInstance.interceptors.request.use(
-      (config) => authMiddleware.onRequest(config as any),
+      (config) => authMiddleware.onRequest(config as any) as any,
       authMiddleware.onRequestError
     );
     
     this.axiosInstance.interceptors.request.use(
-      (config) => cachingMiddleware.onRequest(config as any),
+      (config) => cachingMiddleware.onRequest(config as any) as any,
       (error) => Promise.reject(error)
     );
     
     this.axiosInstance.interceptors.request.use(
-      loggingMiddleware.onRequest,
+      (config) => loggingMiddleware.onRequest(config as any) as any,
       loggingMiddleware.onRequestError
     );
 

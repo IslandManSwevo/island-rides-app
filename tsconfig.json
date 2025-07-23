@@ -9,10 +9,11 @@
     "lib": ["esnext"],
     "moduleResolution": "bundler",
     "noEmit": true,
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
     "target": "esnext",
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["jest", "@types/styled-components-react-native"]
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   }
 }

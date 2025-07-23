@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
 import Theme from '../styles/theme';
 
@@ -9,23 +9,27 @@ interface ErrorMessageProps {
   retryText?: string;
 }
 
-export const ErrorMessage: React.FC<ErrorMessageProps> = ({
+export const ErrorMessage: React.FC<ErrorMessageProps> = React.memo(({
   message,
   onRetry,
   style,
   retryText = 'Try Again',
 }) => {
+  const handleRetry = useCallback(() => {
+    onRetry?.();
+  }, [onRetry]);
+
   return (
     <View style={[styles.container, style]}>
       <Text style={styles.errorText}>{message}</Text>
       {onRetry && (
-        <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+        <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
           <Text style={styles.retryText}>{retryText}</Text>
         </TouchableOpacity>
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

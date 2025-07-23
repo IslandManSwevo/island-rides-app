@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +16,7 @@ interface AppHeaderProps {
   rightComponent?: React.ReactNode;
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({
+export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
   title,
   navigation,
   showBackButton = false,
@@ -26,7 +26,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const { logout } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -51,7 +51,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         },
       ]
     );
-  };
+  }, [logout]);
 
   return (
     <View style={styles.header}>
@@ -99,7 +99,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   header: {

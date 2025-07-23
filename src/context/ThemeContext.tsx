@@ -2,6 +2,7 @@ import React, { createContext, useContext, ReactNode, useState, useEffect } from
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors as lightColors, typography, spacing, borderRadius, shadows, elevationStyles } from '../styles/theme';
+import { loggingService } from '../services/LoggingService';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
 type ColorScheme = 'light' | 'dark';
@@ -9,7 +10,7 @@ type ColorScheme = 'light' | 'dark';
 interface ThemeContextType {
   mode: ThemeMode;
   theme: ColorScheme;
-  colors: typeof lightColors;
+  colors: typeof lightColors | typeof darkColors;
   typography: typeof typography;
   spacing: typeof spacing;
   borderRadius: typeof borderRadius;
@@ -60,7 +61,7 @@ const darkColors = {
     secondary: ['#7B7AF7', '#AF52DE'],
     accent: ['#FF9F0A', '#FF453A']
   }
-};
+} as const;
 
 const THEME_STORAGE_KEY = '@keylo_theme_mode';
 
@@ -83,7 +84,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           setModeState(savedMode as ThemeMode);
         }
       } catch (error) {
-        console.warn('Failed to load theme mode from storage:', String(error));
+        loggingService.warn('Failed to load theme mode from storage', { error: String(error) });
       }
     };
     loadThemeMode();
@@ -102,7 +103,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newMode);
       setModeState(newMode);
     } catch (error) {
-      console.warn('Failed to save theme mode to storage:', String(error));
+      loggingService.warn('Failed to save theme mode to storage', { error: String(error) });
       setModeState(newMode); // Still update state even if storage fails
     }
   };

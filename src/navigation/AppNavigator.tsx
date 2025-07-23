@@ -1,41 +1,63 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
-import { BookingConfirmedScreen } from '../screens/BookingConfirmedScreen';
-import ChatConversationScreen from '../screens/ChatConversationScreen';
-import { CheckoutScreen } from '../screens/CheckoutScreen';
-import { FavoritesScreen } from '../screens/FavoritesScreen';
-import { FinancialReportsScreen } from '../screens/FinancialReportsScreen';
-import { FleetManagementScreen } from '../screens/FleetManagementScreen';
-import IslandSelectionScreen from '../screens/IslandSelectionScreen';
-import { LoginScreen } from '../screens/LoginScreen';
-import { MyBookingsScreen } from '../screens/MyBookingsScreen';
-import { NotificationPreferencesScreen } from '../screens/NotificationPreferencesScreen';
-import { OwnerDashboardScreen } from '../screens/OwnerDashboardScreen';
-import { HostDashboardScreen } from '../screens/HostDashboardScreen';
-import { HostStorefrontScreen } from '../screens/HostStorefrontScreen';
-import { PaymentHistoryScreen } from '../screens/PaymentHistoryScreen';
-import { PaymentScreen } from '../screens/PaymentScreen';
-import { PayPalConfirmationScreen } from '../screens/PayPalConfirmationScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
-import { RegistrationScreen } from '../screens/RegistrationScreen';
-import { SearchResultsScreen } from '../screens/SearchResultsScreen';
-import { SearchScreen } from '../screens/SearchScreen';
-import { VehicleDetailScreen } from '../screens/VehicleDetailScreen';
-import { VehiclePerformanceScreen } from '../screens/VehiclePerformanceScreen';
-import { VehicleDocumentManagementScreen } from '../screens/VehicleDocumentManagementScreen';
-import { WriteReviewScreen } from '../screens/WriteReviewScreen';
-import { ROUTES, RootStackParamList } from './routes';
 import { useAuth } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { colors, typography, spacing } from '../styles/theme';
+import { IslandProvider } from '../contexts/IslandContext';
+import { colors, spacing } from '../styles/theme';
+
+// Import navigators
+import { AuthNavigator } from './AuthNavigator';
+import { CustomerTabNavigator } from './CustomerTabNavigator';
+import { HostTabNavigator } from './HostTabNavigator';
+
+// Import shared modal screens
+import { VehicleDetailScreen } from '../screens/VehicleDetailScreen';
+import { CheckoutScreen } from '../screens/CheckoutScreen';
+import { BookingConfirmedScreen } from '../screens/BookingConfirmedScreen';
+import { PaymentScreen } from '../screens/PaymentScreen';
+import { PayPalConfirmationScreen } from '../screens/PayPalConfirmationScreen';
+
+// Import types and routes
+import { RootStackParamList } from './types';
+import { ROUTES } from './routes';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
+const defaultScreenOptions = {
+  headerShown: false,
+  gestureEnabled: true,
+  animationEnabled: true,
+};
+
+const modalScreenOptions = {
+  ...defaultScreenOptions,
+  presentation: 'modal' as const,
+  headerShown: true,
+  headerStyle: {
+    backgroundColor: colors.surface,
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
+  },
+  headerTintColor: colors.text,
+  headerTitleStyle: {
+    fontWeight: '600' as const,
+    fontSize: 18,
+  },
+};
+
 const AppNavigator: React.FC = () => {
-  const { isAuthenticated, isLoading, error } = useAuth();
+  const { isAuthenticated, isLoading, error, currentUser } = useAuth();
+
+  console.log('🧭 AppNavigator: Render state:', {
+    isAuthenticated,
+    isLoading,
+    hasError: !!error,
+    userRole: currentUser?.role
+  });
 
   if (isLoading) {
+    console.log('⏳ AppNavigator: Showing loading screen');
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -45,6 +67,7 @@ const AppNavigator: React.FC = () => {
   }
 
   if (error) {
+    console.log('❌ AppNavigator: Showing error screen');
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorTitle}>Connection Error</Text>
@@ -53,68 +76,89 @@ const AppNavigator: React.FC = () => {
     );
   }
 
+  const getUserNavigator = () => {
+    if (!isAuthenticated) {
+      return 'Auth';
+    }
+    
+    const userRole = currentUser?.role;
+    if (userRole === 'host' || userRole === 'owner') {
+      return 'HostApp';
+    }
+    
+    return 'CustomerApp';
+  };
+
   return (
-    <ErrorBoundary
-      onError={(error, errorInfo) => {
-        console.error('🚨 Navigation Error:', error);
-        console.error('Error Info:', errorInfo);
-      }}
-    >
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false, // Let individual screens control their headers
-          gestureEnabled: true,
-          cardStyleInterpolator: ({ current, layouts }) => {
-            return {
-              cardStyle: {
-                transform: [
-                  {
-                    translateX: current.progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [layouts.screen.width, 0],
-                    }),
-                  },
-                ],
-              },
-            };
-          },
+    <IslandProvider>
+      <ErrorBoundary
+        onError={(error, errorInfo) => {
+          console.error('Navigation Error:', error, errorInfo);
         }}
       >
-        {/* Public routes available to all users */}
-        <Stack.Screen name={ROUTES.HOST_STOREFRONT} component={HostStorefrontScreen} options={{ title: 'Host Profile' }} />
-        
-        {isAuthenticated ? (
-          <>
-            <Stack.Screen name={ROUTES.ISLAND_SELECTION} component={IslandSelectionScreen} options={{ title: 'Select an Island' }} />
-            <Stack.Screen name={ROUTES.SEARCH} component={SearchScreen} options={{ title: 'Search Vehicles' }} />
-            <Stack.Screen name={ROUTES.SEARCH_RESULTS} component={SearchResultsScreen} options={{ title: 'Available Vehicles' }} />
-            <Stack.Screen name={ROUTES.VEHICLE_DETAIL} component={VehicleDetailScreen} options={{ title: 'Vehicle Details' }} />
-            <Stack.Screen name={ROUTES.CHECKOUT} component={CheckoutScreen} options={{ title: 'Checkout' }} />
-            <Stack.Screen name={ROUTES.BOOKING_CONFIRMED} component={BookingConfirmedScreen} options={{ title: 'Booking Confirmed' }} />
-            <Stack.Screen name={ROUTES.PROFILE} component={ProfileScreen} options={{ title: 'Profile' }} />
-            <Stack.Screen name={ROUTES.MY_BOOKINGS} component={MyBookingsScreen} options={{ title: 'My Bookings' }} />
-            <Stack.Screen name={ROUTES.PAYMENT_HISTORY} component={PaymentHistoryScreen} options={{ title: 'Payment History' }} />
-            <Stack.Screen name={ROUTES.CHAT} component={ChatConversationScreen} options={{ title: 'Chat' }} />
-            <Stack.Screen name={ROUTES.PAYMENT} component={PaymentScreen} options={{ title: 'Payment' }} />
-            <Stack.Screen name={ROUTES.PAYPAL_CONFIRMATION} component={PayPalConfirmationScreen} options={{ title: 'Payment Confirmation' }} />
-            <Stack.Screen name={ROUTES.FAVORITES} component={FavoritesScreen} options={{ title: 'Favorites' }} />
-            <Stack.Screen name={ROUTES.NOTIFICATION_PREFERENCES} component={NotificationPreferencesScreen} options={{ title: 'Notification Preferences' }} />
-            <Stack.Screen name={ROUTES.WRITE_REVIEW} component={WriteReviewScreen} options={{ title: 'Write Review' }} />
-            <Stack.Screen name={ROUTES.OWNER_DASHBOARD} component={OwnerDashboardScreen} options={{ title: 'Owner Dashboard' }} />
-            <Stack.Screen name={ROUTES.HOST_DASHBOARD} component={HostDashboardScreen} options={{ title: 'Host Dashboard' }} />
-            <Stack.Screen name={ROUTES.VEHICLE_PERFORMANCE} component={VehiclePerformanceScreen} options={{ title: 'Vehicle Performance' }} />
-            <Stack.Screen name={ROUTES.FINANCIAL_REPORTS} component={FinancialReportsScreen} options={{ title: 'Financial Reports' }} />
-            <Stack.Screen name={ROUTES.FLEET_MANAGEMENT} component={FleetManagementScreen} options={{ title: 'Fleet Management' }} />
-            <Stack.Screen name={ROUTES.VEHICLE_DOCUMENT_MANAGEMENT} component={VehicleDocumentManagementScreen} options={{ title: 'Vehicle Documents' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name={ROUTES.LOGIN} component={LoginScreen} options={{ title: 'Login' }} />
-            <Stack.Screen name={ROUTES.REGISTRATION} component={RegistrationScreen} options={{ title: 'Register' }} />
-          </>
-        )}
-      </Stack.Navigator>
-    </ErrorBoundary>
+        <Stack.Navigator
+          screenOptions={defaultScreenOptions}
+          initialRouteName={getUserNavigator()}
+        >
+          {/* Authentication Flow */}
+          <Stack.Screen 
+            name="Auth" 
+            component={AuthNavigator}
+            options={{ headerShown: false }}
+          />
+          
+          {/* Customer App Flow */}
+          <Stack.Screen 
+            name="CustomerApp" 
+            component={CustomerTabNavigator}
+            options={{ headerShown: false }}
+          />
+          
+          {/* Host App Flow */}
+          <Stack.Screen 
+            name="HostApp" 
+            component={HostTabNavigator}
+            options={{ headerShown: false }}
+          />
+          
+          {/* Shared Modal Screens */}
+          <Stack.Group screenOptions={modalScreenOptions}>
+            <Stack.Screen
+              name={ROUTES.VEHICLE_DETAIL}
+              component={VehicleDetailScreen}
+              options={({ route }) => ({
+                title: route.params?.vehicle?.make 
+                  ? `${route.params.vehicle.make} ${route.params.vehicle.model}`
+                  : 'Vehicle Details',
+              })}
+            />
+            <Stack.Screen
+              name={ROUTES.CHECKOUT}
+              component={CheckoutScreen}
+              options={{ title: 'Checkout' }}
+            />
+            <Stack.Screen
+              name={ROUTES.BOOKING_CONFIRMED}
+              options={{ title: 'Booking Confirmed' }}
+            >
+              {(props) => <BookingConfirmedScreen {...(props as any)} />}
+            </Stack.Screen>
+            <Stack.Screen
+              name={ROUTES.PAYMENT}
+              options={{ title: 'Payment' }}
+            >
+              {(props) => <PaymentScreen {...(props as any)} />}
+            </Stack.Screen>
+            <Stack.Screen
+              name={ROUTES.PAYPAL_CONFIRMATION}
+              options={{ title: 'Payment Confirmation' }}
+            >
+              {(props) => <PayPalConfirmationScreen {...(props as any)} />}
+            </Stack.Screen>
+          </Stack.Group>
+        </Stack.Navigator>
+      </ErrorBoundary>
+    </IslandProvider>
   );
 };
 
@@ -124,33 +168,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
-    paddingHorizontal: spacing.lg,
   },
   loadingText: {
-    ...typography.body,
-    color: colors.textSecondary,
     marginTop: spacing.md,
-    textAlign: 'center',
+    fontSize: 16,
+    color: colors.text,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
-    paddingHorizontal: spacing.lg,
+    padding: spacing.lg,
   },
   errorTitle: {
-    ...typography.heading3,
+    fontSize: 20,
+    fontWeight: '600',
     color: colors.error,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   errorMessage: {
-    ...typography.body,
+    fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
   },
 });
 
+export { AppNavigator };
 export default AppNavigator;

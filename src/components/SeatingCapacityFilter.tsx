@@ -1,14 +1,23 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../styles/theme';
+import { SearchFilters } from '../types';
 
 interface SeatingCapacityFilterProps {
   minSeatingCapacity: number;
-  onUpdateFilter: <K extends keyof any>(key: K, value: any) => void;
+  onUpdateFilter: <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => void;
 }
 
-const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = ({ minSeatingCapacity, onUpdateFilter }) => {
+const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = React.memo(({ minSeatingCapacity, onUpdateFilter }) => {
+  const handleDecrease = useCallback(() => {
+    onUpdateFilter('minSeatingCapacity', Math.max(1, minSeatingCapacity - 1));
+  }, [minSeatingCapacity, onUpdateFilter]);
+
+  const handleIncrease = useCallback(() => {
+    onUpdateFilter('minSeatingCapacity', Math.min(8, minSeatingCapacity + 1));
+  }, [minSeatingCapacity, onUpdateFilter]);
+
   return (
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>
@@ -17,7 +26,7 @@ const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = ({ minSeatin
       <View style={styles.sliderContainer}>
         <TouchableOpacity
           style={styles.sliderButton}
-          onPress={() => onUpdateFilter('minSeatingCapacity', Math.max(1, minSeatingCapacity - 1))}
+          onPress={handleDecrease}
           accessibilityRole="button"
           accessibilityLabel="Decrease seating capacity"
         >
@@ -30,7 +39,7 @@ const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = ({ minSeatin
         </View>
         <TouchableOpacity
           style={styles.sliderButton}
-          onPress={() => onUpdateFilter('minSeatingCapacity', Math.min(8, minSeatingCapacity + 1))}
+          onPress={handleIncrease}
           accessibilityRole="button"
           accessibilityLabel="Increase seating capacity"
         >
@@ -39,7 +48,7 @@ const SeatingCapacityFilter: React.FC<SeatingCapacityFilterProps> = ({ minSeatin
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   filterSection: {

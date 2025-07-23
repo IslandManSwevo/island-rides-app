@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -125,7 +125,7 @@ const FILTER_PRESETS: FilterPreset[] = [
   }
 ];
 
-export const IntelligentFilterComponent: React.FC<IntelligentFilterComponentProps> = ({
+export const IntelligentFilterComponent: React.FC<IntelligentFilterComponentProps> = React.memo(({
   filters,
   onFiltersChange,
   searchHistory = [],
@@ -135,11 +135,19 @@ export const IntelligentFilterComponent: React.FC<IntelligentFilterComponentProp
   const [showPresets, setShowPresets] = useState(false);
   const [appliedSuggestions, setAppliedSuggestions] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    generateSmartSuggestions();
-  }, [filters, searchHistory, userPreferences]);
+  // Memoize expensive calculations
+  const isShortTripDuration = useCallback((): boolean => {
+    if (!filters.startDate || !filters.endDate) return false;
+    const diffTime = filters.endDate.getTime() - filters.startDate.getTime();
+    const diffDays = diffTime / (1000 * 3600 * 24);
+    return diffDays <= 2;
+  }, [filters.startDate, filters.endDate]);
 
-  const generateSmartSuggestions = () => {
+  const getPresetsByPopularity = useMemo(() => {
+    return FILTER_PRESETS.sort((a, b) => b.popularity - a.popularity);
+  }, []);
+
+  const generateSmartSuggestions = useCallback(() => {
     const newSuggestions: FilterSuggestion[] = [];
 
     // Suggest instant booking for quick trips
@@ -208,16 +216,9 @@ export const IntelligentFilterComponent: React.FC<IntelligentFilterComponentProp
     );
 
     setSuggestions(filteredSuggestions.slice(0, 3)); // Limit to 3 suggestions
-  };
+  }, [filters, userPreferences, appliedSuggestions, isShortTripDuration]);
 
-  const isShortTripDuration = (): boolean => {
-    if (!filters.startDate || !filters.endDate) return false;
-    const diffTime = filters.endDate.getTime() - filters.startDate.getTime();
-    const diffDays = diffTime / (1000 * 3600 * 24);
-    return diffDays <= 2;
-  };
-
-  const applySuggestion = (suggestion: FilterSuggestion) => {
+  const applySuggestion = useCallback((suggestion: FilterSuggestion) => {
     let updatedFilters = { ...filters };
 
     switch (suggestion.type) {
@@ -241,94 +242,106 @@ export const IntelligentFilterComponent: React.FC<IntelligentFilterComponentProp
 
     onFiltersChange(updatedFilters);
     setAppliedSuggestions(prev => new Set([...prev, suggestion.id]));
-  };
+  }, [filters, onFiltersChange]);
 
-  const applyPreset = (preset: FilterPreset) => {
+  const applyPreset = useCallback((preset: FilterPreset) => {
     const updatedFilters = { ...filters, ...preset.filters };
     onFiltersChange(updatedFilters);
     setShowPresets(false);
-  };
+  }, [filters, onFiltersChange]);
 
-  const getPresetsByPopularity = () => {
-    return FILTER_PRESETS.sort((a, b) => b.popularity - a.popularity);
-  };
+  const handleShowPresets = useCallback(() => {
+    setShowPresets(true);
+  }, []);
+
+  const handleHidePresets = useCallback(() => {
+    setShowPresets(false);
+  }, []);
+
+  useEffect(() => {
+    generateSmartSuggestions();
+  }, [generateSmartSuggestions]);
+
+  const renderSuggestionCard = useCallback((suggestion: FilterSuggestion) => (
+    <TouchableOpacity
+      key={suggestion.id}
+      style={styles.suggestionCard}
+      onPress={() => applySuggestion(suggestion)}
+    >
+      <Text style={styles.suggestionLabel}>{suggestion.label}</Text>
+      <Text style={styles.suggestionReason}>{suggestion.reason}</Text>
+      <View style={styles.confidenceIndicator}>
+        <View 
+          style={[
+            styles.confidenceBar,
+            { width: `${suggestion.confidence * 100}%` }
+          ]} 
+        />
+      </View>
+    </TouchableOpacity>
+  ), [applySuggestion]);
+
+  const renderPresetCard = useCallback((preset: FilterPreset) => (
+    <TouchableOpacity
+      key={preset.id}
+      style={styles.presetCard}
+      onPress={() => applyPreset(preset)}
+    >
+      <View style={styles.presetIcon}>
+        <Ionicons name={preset.icon as any} size={24} color={colors.primary} />
+      </View>
+      <View style={styles.presetInfo}>
+        <Text style={styles.presetName}>{preset.name}</Text>
+        <Text style={styles.presetDescription}>{preset.description}</Text>
+        <View style={styles.popularityIndicator}>
+          <Ionicons name="trending-up" size={12} color={colors.success} />
+          <Text style={styles.popularityText}>{preset.popularity}% popular</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  ), [applyPreset]);
 
   return (
-    <View style={styles.container}>
-      {/* Filter Presets */}
-      <View style={styles.presetsSection}>
-        <TouchableOpacity
-          style={styles.presetsButton}
-          onPress={() => setShowPresets(true)}
-        >
-          <Ionicons name="options" size={20} color={colors.primary} />
-          <Text style={styles.presetsButtonText}>Quick Filters</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Smart Suggestions */}
-      {suggestions.length > 0 && (
-        <View style={styles.suggestionsSection}>
-          <Text style={styles.sectionTitle}>💡 Smart Suggestions</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {suggestions.map((suggestion) => (
-              <TouchableOpacity
-                key={suggestion.id}
-                style={styles.suggestionCard}
-                onPress={() => applySuggestion(suggestion)}
-              >
-                <Text style={styles.suggestionLabel}>{suggestion.label}</Text>
-                <Text style={styles.suggestionReason}>{suggestion.reason}</Text>
-                <View style={styles.confidenceIndicator}>
-                  <View 
-                    style={[
-                      styles.confidenceBar,
-                      { width: `${suggestion.confidence * 100}%` }
-                    ]} 
-                  />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+      <View style={styles.container}>
+        {/* Filter Presets */}
+        <View style={styles.presetsSection}>
+          <TouchableOpacity
+            style={styles.presetsButton}
+            onPress={handleShowPresets}
+          >
+            <Ionicons name="options" size={20} color={colors.primary} />
+            <Text style={styles.presetsButtonText}>Quick Filters</Text>
+          </TouchableOpacity>
         </View>
-      )}
 
-      {/* Presets Modal */}
-      <Modal visible={showPresets} animationType="slide" presentationStyle="pageSheet">
-        <View style={styles.modal}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Quick Filter Presets</Text>
-            <TouchableOpacity onPress={() => setShowPresets(false)}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
+        {/* Smart Suggestions */}
+        {suggestions.length > 0 && (
+          <View style={styles.suggestionsSection}>
+            <Text style={styles.sectionTitle}>💡 Smart Suggestions</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {suggestions.map(renderSuggestionCard)}
+            </ScrollView>
           </View>
-          
-          <ScrollView style={styles.presetsList}>
-            {getPresetsByPopularity().map((preset) => (
-              <TouchableOpacity
-                key={preset.id}
-                style={styles.presetCard}
-                onPress={() => applyPreset(preset)}
-              >
-                <View style={styles.presetIcon}>
-                  <Ionicons name={preset.icon as any} size={24} color={colors.primary} />
-                </View>
-                <View style={styles.presetInfo}>
-                  <Text style={styles.presetName}>{preset.name}</Text>
-                  <Text style={styles.presetDescription}>{preset.description}</Text>
-                  <View style={styles.popularityIndicator}>
-                    <Ionicons name="trending-up" size={12} color={colors.success} />
-                    <Text style={styles.popularityText}>{preset.popularity}% popular</Text>
-                  </View>
-                </View>
+        )}
+
+        {/* Presets Modal */}
+        <Modal visible={showPresets} animationType="slide" presentationStyle="pageSheet">
+          <View style={styles.modal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Quick Filter Presets</Text>
+              <TouchableOpacity onPress={handleHidePresets}>
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </Modal>
-    </View>
-  );
-};
+            </View>
+            
+            <ScrollView style={styles.presetsList}>
+              {getPresetsByPopularity.map(renderPresetCard)}
+            </ScrollView>
+          </View>
+        </Modal>
+      </View>
+    );
+  });
 
 const styles = StyleSheet.create({
   container: {

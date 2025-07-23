@@ -16,11 +16,12 @@ import { colors, typography, spacing, borderRadius } from '../../styles/theme';
 import { StandardCard } from '../templates/StandardCard';
 import { StandardButton } from '../templates/StandardButton';
 import { StandardInput } from '../templates/StandardInput';
+import { loggingService } from '../../services/LoggingService';
 
 interface DocumentUploadProps {
   documentType: 'vehicle' | 'host';
   vehicleId?: number;
-  onUploadComplete?: (document: any) => void;
+  onUploadComplete?: (document: DocumentForm & { id: number; file_path: string }) => void;
   onCancel?: () => void;
   requiredDocuments?: DocumentTemplate[];
 }
@@ -145,7 +146,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error selecting file:', error);
+      loggingService.error('Error selecting file', error instanceof Error ? error : undefined);
       Alert.alert('Error', 'Failed to select file');
     }
   };
@@ -187,7 +188,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error selecting image:', error);
+      loggingService.error('Error selecting image', error instanceof Error ? error : undefined);
       Alert.alert('Error', 'Failed to select image');
     }
   };
@@ -248,14 +249,14 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         Alert.alert('Error', result.message || 'Failed to upload document');
       }
     } catch (error) {
-      console.error('Error uploading document:', error);
+      loggingService.error('Error uploading document', error instanceof Error ? error : undefined);
       Alert.alert('Error', 'Failed to upload document');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const updateFormField = (field: keyof DocumentForm, value: any) => {
+  const updateFormField = (field: keyof DocumentForm, value: string | boolean) => {
     setDocumentForm({
       ...documentForm,
       [field]: value

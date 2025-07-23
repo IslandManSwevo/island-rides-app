@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,55 +8,60 @@ import {
   Animated,
   ViewStyle,
   TextStyle,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { borderRadius, spacing, shadows, colors } from '../styles/theme';
 import { Vehicle } from '../types';
 
+// Helper function moved outside component for better performance
+const formatPrice = (price: number): string => {
+  return `$${price}/day`;
+};
+
 interface ModernVehicleCardProps {
   vehicle: Vehicle;
   onPress?: () => void;
-  style?: ViewStyle | TextStyle;
+  style?: ViewStyle;
 }
 
-const ModernVehicleCard: React.FC<ModernVehicleCardProps> = ({
+const ModernVehicleCard: React.FC<ModernVehicleCardProps> = React.memo(({
   vehicle,
   onPress,
   style,
 }) => {
   const [scaleAnim] = useState(new Animated.Value(1));
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
-  const handlePressIn = () => {
+  const handlePressIn = useCallback(() => {
     Animated.spring(scaleAnim, {
       toValue: 0.98,
       useNativeDriver: true,
       tension: 300,
       friction: 10,
     }).start();
-  };
+  }, [scaleAnim]);
 
-  const handlePressOut = () => {
+  const handlePressOut = useCallback(() => {
     Animated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: true,
       tension: 300,
       friction: 10,
     }).start();
-  };
+  }, [scaleAnim]);
 
-  const formatPrice = (price: number) => {
-    return `$${price}/day`;
-  };
 
-  const getPrimaryPhoto = () => {
+  const getPrimaryPhoto = useMemo(() => {
     if (vehicle.photos && vehicle.photos.length > 0) {
       const primaryPhoto = vehicle.photos.find(photo => photo.isPrimary);
       return primaryPhoto?.photoUrl || vehicle.photos[0].photoUrl;
     }
     return 'https://via.placeholder.com/300x200';
-  };
+  }, [vehicle.photos]);
 
-  const getConditionText = () => {
+  const getConditionText = useMemo(() => {
     if (vehicle.conditionRating) {
       if (vehicle.conditionRating >= 4.5) return 'Excellent';
       if (vehicle.conditionRating >= 3.5) return 'Good';
@@ -64,7 +69,17 @@ const ModernVehicleCard: React.FC<ModernVehicleCardProps> = ({
       return 'Needs Work';
     }
     return 'Good';
-  };
+  }, [vehicle.conditionRating]);
+
+  const handleImageLoad = useCallback(() => {
+    setImageLoading(false);
+    setImageError(false);
+  }, []);
+
+  const handleImageError = useCallback(() => {
+    setImageLoading(false);
+    setImageError(true);
+  }, []);
 
   return (
     <Animated.View
@@ -87,17 +102,34 @@ const ModernVehicleCard: React.FC<ModernVehicleCardProps> = ({
           {/* Hero Image */}
           <View style={styles.imageContainer}>
             <Image
-              source={{ uri: getPrimaryPhoto() }}
+              source={{ uri: getPrimaryPhoto }}
               style={styles.image}
               resizeMode="cover"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              accessible={true}
+              accessibilityLabel={`${vehicle.make} ${vehicle.model} vehicle image`}
             />
+            
+            {imageLoading && (
+              <View style={styles.imageLoadingOverlay}>
+                <ActivityIndicator size="large" color={colors.primary} />
+              </View>
+            )}
+            
+            {imageError && (
+              <View style={styles.imageErrorOverlay}>
+                <Text style={styles.imageErrorText}>Image not available</Text>
+              </View>
+            )}
+            
             <LinearGradient
               colors={['transparent', 'rgba(0, 0, 0, 0.3)']}
               style={styles.imageOverlay}
             />
             <View style={styles.badgeContainer}>
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{getConditionText()}</Text>
+                <Text style={styles.badgeText}>{getConditionText}</Text>
               </View>
             </View>
           </View>
@@ -112,7 +144,7 @@ const ModernVehicleCard: React.FC<ModernVehicleCardProps> = ({
             </View>
 
             <Text style={styles.description} numberOfLines={2}>
-              {vehicle.description || 'Premium vehicle with excellent features'}
+              {vehicle.description || 'Vehicle details not available'}
             </Text>
 
             <View style={styles.features}>
@@ -135,7 +167,9 @@ const ModernVehicleCard: React.FC<ModernVehicleCardProps> = ({
                 </Text>
               </View>
               <View style={styles.locationContainer}>
-                <Text style={styles.location}>📍 {vehicle.location}</Text>
+                <Text style={styles.location}>
+                  📍 {vehicle.location || 'Location unavailable'}
+                </Text>
               </View>
             </View>
           </View>
@@ -143,7 +177,7 @@ const ModernVehicleCard: React.FC<ModernVehicleCardProps> = ({
       </TouchableOpacity>
     </Animated.View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -248,6 +282,31 @@ const styles = StyleSheet.create({
   location: {
     fontSize: 12,
     color: colors.textSecondary,
+  },
+  imageLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.sectionBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageErrorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.lightBorder,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageErrorText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
 });
 
