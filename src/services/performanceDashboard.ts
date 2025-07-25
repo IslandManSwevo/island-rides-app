@@ -30,7 +30,7 @@ export interface PerformanceDashboardData {
     initialLoadTime: number;
     chunkLoadTimes: Record<string, number>;
     treeshakingEfficiency: number;
-    codeSpittingRatio: number;
+    codeSplittingRatio: number;
   };
   imageMetrics: {
     totalImages: number;
@@ -84,6 +84,29 @@ class PerformanceDashboard {
   private performanceObserver: any = null;
   private isMonitoring = false;
 
+  // Interval references for proper cleanup
+  private memoryMonitorInterval: NodeJS.Timeout | null = null;
+  private renderMonitorInterval: NodeJS.Timeout | null = null;
+  private errorMonitorInterval: NodeJS.Timeout | null = null;
+
+  // Image metrics tracking
+  private imageMetricsCache = {
+    totalImagesLoaded: 0,
+    webpImagesLoaded: 0,
+    totalImageSize: 0,
+    compressedImageSize: 0,
+    lastUpdated: 0,
+  };
+
+  // Virtualization metrics tracking
+  private virtualizationMetrics = {
+    totalListItems: 0,
+    renderedItems: 0,
+    memoryUsage: 0,
+    scrollPerformance: 0,
+    lastUpdated: 0,
+  };
+
   /**
    * Initialize performance monitoring
    */
@@ -126,7 +149,7 @@ class PerformanceDashboard {
           initialLoadTime: bundleMetrics.initialBundleSize,
           chunkLoadTimes: bundleMetrics.chunkLoadTimes,
           treeshakingEfficiency: this.calculateTreeshakingEfficiency(dependencyAnalysis),
-          codeSpittingRatio: this.calculateCodeSplittingRatio(bundleMetrics),
+          codeSplittingRatio: this.calculateCodeSplittingRatio(bundleMetrics),
         },
         imageMetrics: {
           totalImages: imageStats.totalEntries,
@@ -213,7 +236,7 @@ class PerformanceDashboard {
     // Setup performance monitoring for React Native
     if (typeof performance !== 'undefined') {
       // Monitor memory usage
-      setInterval(() => {
+      this.memoryMonitorInterval = setInterval(() => {
         const memoryUsage = this.getCurrentMemoryUsage();
         if (memoryUsage > this.alertThresholds.memoryUsage) {
           this.createAlert('memory', 'warning', 'High memory usage detected', {
@@ -227,7 +250,7 @@ class PerformanceDashboard {
 
   private startContinuousMonitoring(): void {
     // Monitor render performance
-    setInterval(() => {
+    this.renderMonitorInterval = setInterval(() => {
       const renderTime = this.getAverageRenderTime();
       if (renderTime > this.alertThresholds.renderTime) {
         this.createAlert('performance', 'warning', 'Slow rendering detected', {
@@ -238,7 +261,7 @@ class PerformanceDashboard {
     }, 5000); // Every 5 seconds
 
     // Monitor error rates
-    setInterval(() => {
+    this.errorMonitorInterval = setInterval(() => {
       const errorRate = this.getErrorRate();
       if (errorRate > this.alertThresholds.errorRate) {
         this.createAlert('performance', 'critical', 'High error rate detected', {
@@ -317,48 +340,90 @@ class PerformanceDashboard {
 
   // Metric calculation methods
   private getAppStartTime(): number {
-    return performanceMonitor.getMetric('app_start_time') || 0;
+    return performanceMonitor.getAverageTime('app_start') || 0;
   }
 
   private getCurrentMemoryUsage(): number {
-    if (typeof performance !== 'undefined' && 'memory' in performance) {
-      return (performance as any).memory?.usedJSHeapSize || 0;
+    // React Native memory usage detection
+    try {
+      // Try to use React Native specific memory APIs
+      if (typeof global !== 'undefined' && global.__DEV__) {
+        // In development, we can estimate memory usage
+        const estimatedMemory = this.estimateMemoryUsage();
+        return estimatedMemory;
+      }
+
+      // For web/browser environments
+      if (typeof performance !== 'undefined' && 'memory' in performance) {
+        return (performance as any).memory?.usedJSHeapSize || 0;
+      }
+
+      // Fallback: estimate based on tracked metrics
+      return this.estimateMemoryUsage();
+    } catch (error) {
+      // Fallback to estimation if APIs are unavailable
+      return this.estimateMemoryUsage();
     }
-    return 0;
+  }
+
+  /**
+   * Estimate memory usage based on tracked components and data
+   */
+  private estimateMemoryUsage(): number {
+    const baseMemory = 50 * 1024 * 1024; // 50MB base
+    const componentMemory = this.getActiveComponentCount() * 1024; // 1KB per component
+    const imageMemory = this.imageMetricsCache.totalImagesLoaded * 50 * 1024; // 50KB per image
+    const listMemory = this.virtualizationMetrics.totalListItems * 512; // 512B per list item
+
+    return baseMemory + componentMemory + imageMemory + listMemory;
   }
 
   private getActiveComponentCount(): number {
-    return performanceMonitor.getMetric('active_components') || 0;
+    // Estimate based on component render metrics
+    const componentStats = performanceMonitor.getStats('component_render');
+    return componentStats.count || 0;
   }
 
   private getNetworkRequestCount(): number {
-    return performanceMonitor.getMetric('network_requests') || 0;
+    const networkStats = performanceMonitor.getStats('network_request');
+    return networkStats.count || 0;
   }
 
   private getErrorRate(): number {
-    const errors = performanceMonitor.getMetric('errors') || 0;
-    const total = performanceMonitor.getMetric('total_operations') || 1;
+    const errorStats = performanceMonitor.getStats('error_occurred');
+    const totalStats = performanceMonitor.getStats('total_operations');
+    const errors = errorStats.count || 0;
+    const total = totalStats.count || 1;
     return (errors / total) * 100;
   }
 
   private getCurrentFPS(): number {
-    return performanceMonitor.getMetric('current_fps') || 60;
+    const fpsStats = performanceMonitor.getStats('frame_render');
+    // Estimate FPS based on frame render times
+    const avgFrameTime = fpsStats.average || 16.67; // 60 FPS = 16.67ms per frame
+    return avgFrameTime > 0 ? 1000 / avgFrameTime : 60;
   }
 
   private getAverageRenderTime(): number {
-    return performanceMonitor.getMetric('average_render_time') || 0;
+    return performanceMonitor.getAverageTime('component_render') || 0;
   }
 
   private getJSThreadUsage(): number {
-    return performanceMonitor.getMetric('js_thread_usage') || 0;
+    // Estimate JS thread usage based on operation times
+    const jsStats = performanceMonitor.getStats('js_operation');
+    return Math.min(jsStats.average / 16.67 * 100, 100) || 0; // Percentage of 60fps budget
   }
 
   private getUIThreadUsage(): number {
-    return performanceMonitor.getMetric('ui_thread_usage') || 0;
+    // Estimate UI thread usage based on render times
+    const renderStats = performanceMonitor.getStats('ui_render');
+    return Math.min(renderStats.average / 16.67 * 100, 100) || 0; // Percentage of 60fps budget
   }
 
   private getBridgeUtilization(): number {
-    return performanceMonitor.getMetric('bridge_utilization') || 0;
+    // Estimate bridge utilization based on bridge operations
+    const bridgeStats = performanceMonitor.getStats('bridge_operation');
+    return Math.min(bridgeStats.count / 100 * 100, 100) || 0; // Percentage based on operation count
   }
 
   private calculateTreeshakingEfficiency(analysis: any): number {
@@ -372,47 +437,105 @@ class PerformanceDashboard {
   }
 
   private getAverageImageLoadTime(): number {
-    return performanceMonitor.getMetric('average_image_load_time') || 0;
+    return performanceMonitor.getAverageTime('image_load') || 0;
   }
 
   private getImageCompressionRatio(): number {
-    return 75; // Estimated compression ratio
+    // Calculate real compression ratio based on tracked image data
+    if (this.imageMetricsCache.totalImageSize > 0 && this.imageMetricsCache.compressedImageSize > 0) {
+      const ratio = (1 - this.imageMetricsCache.compressedImageSize / this.imageMetricsCache.totalImageSize) * 100;
+      return Math.max(0, Math.min(100, ratio));
+    }
+
+    // Fallback: estimate based on WebP usage
+    const webpUsage = this.getWebPUsagePercentage();
+    return 50 + (webpUsage * 0.3); // Base 50% + WebP bonus
   }
 
   private getWebPUsagePercentage(): number {
-    return 60; // Estimated WebP usage
+    // Calculate real WebP usage percentage
+    if (this.imageMetricsCache.totalImagesLoaded > 0) {
+      return (this.imageMetricsCache.webpImagesLoaded / this.imageMetricsCache.totalImagesLoaded) * 100;
+    }
+
+    // Fallback: check image optimization service if available
+    try {
+      const { imageOptimizationService } = require('./imageOptimizationService');
+      const config = imageOptimizationService.getConfig();
+      return config.enableWebP ? 75 : 25; // Estimate based on WebP support
+    } catch {
+      return 60; // Default estimate
+    }
   }
 
   private getAverageScrollFPS(): number {
-    return performanceMonitor.getMetric('scroll_fps') || 60;
+    const scrollStats = performanceMonitor.getStats('scroll_performance');
+    // Convert scroll performance time to FPS
+    const avgScrollTime = scrollStats.average || 16.67;
+    return avgScrollTime > 0 ? Math.min(60, 1000 / avgScrollTime) : 60;
   }
 
   private getAverageItemRenderTime(): number {
-    return performanceMonitor.getMetric('item_render_time') || 0;
+    return performanceMonitor.getAverageTime('list_item_render') || 0;
   }
 
   private getVirtualizationEfficiency(): number {
-    return 85; // Estimated virtualization efficiency
+    // Calculate real virtualization efficiency
+    if (this.virtualizationMetrics.totalListItems > 0 && this.virtualizationMetrics.renderedItems > 0) {
+      const efficiency = (1 - this.virtualizationMetrics.renderedItems / this.virtualizationMetrics.totalListItems) * 100;
+      return Math.max(0, Math.min(100, efficiency));
+    }
+
+    // Estimate based on list performance metrics
+    const listStats = performanceMonitor.getStats('list_render');
+    if (listStats.count > 0) {
+      // Better performance = higher efficiency
+      const performanceScore = Math.max(0, 100 - (listStats.average / 16.67 * 100));
+      return Math.min(100, performanceScore);
+    }
+
+    return 85; // Default estimate
   }
 
   private getMemoryPerListItem(): number {
-    return performanceMonitor.getMetric('memory_per_item') || 0;
+    // Calculate memory per item based on virtualization metrics
+    if (this.virtualizationMetrics.totalListItems > 0 && this.virtualizationMetrics.memoryUsage > 0) {
+      return this.virtualizationMetrics.memoryUsage / this.virtualizationMetrics.totalListItems;
+    }
+
+    // Estimate based on component render performance
+    const renderStats = performanceMonitor.getStats('list_item_render');
+    return renderStats.count > 0 ? renderStats.average * 10 : 0; // Rough estimate: 10 bytes per ms
   }
 
   private getAverageNetworkTime(): number {
-    return performanceMonitor.getMetric('network_time') || 0;
+    return performanceMonitor.getAverageTime('network_request') || 0;
   }
 
   private getNetworkCacheHitRate(): number {
-    return performanceMonitor.getMetric('cache_hit_rate') || 0;
+    const cacheStats = performanceMonitor.getStats('cache_hit');
+    const totalStats = performanceMonitor.getStats('network_request');
+
+    if (totalStats.count > 0) {
+      return (cacheStats.count / totalStats.count) * 100;
+    }
+    return 0;
   }
 
   private getNetworkFailureRate(): number {
-    return performanceMonitor.getMetric('network_failure_rate') || 0;
+    const failureStats = performanceMonitor.getStats('network_failure');
+    const totalStats = performanceMonitor.getStats('network_request');
+
+    if (totalStats.count > 0) {
+      return (failureStats.count / totalStats.count) * 100;
+    }
+    return 0;
   }
 
   private getDataUsage(): number {
-    return performanceMonitor.getMetric('data_usage') || 0;
+    // Estimate data usage based on network requests
+    const networkStats = performanceMonitor.getStats('network_request');
+    return networkStats.count * 1024; // Rough estimate: 1KB per request
   }
 
   private generateRecommendations(): PerformanceDashboardData['recommendations'] {
@@ -479,13 +602,72 @@ class PerformanceDashboard {
   }
 
   /**
-   * Stop monitoring
+   * Update image metrics for real-time calculation
+   */
+  updateImageMetrics(_imageUrl: string, originalSize: number, compressedSize: number, isWebP: boolean): void {
+    this.imageMetricsCache.totalImagesLoaded++;
+    this.imageMetricsCache.totalImageSize += originalSize;
+    this.imageMetricsCache.compressedImageSize += compressedSize;
+
+    if (isWebP) {
+      this.imageMetricsCache.webpImagesLoaded++;
+    }
+
+    this.imageMetricsCache.lastUpdated = Date.now();
+  }
+
+  /**
+   * Update virtualization metrics for real-time calculation
+   */
+  updateVirtualizationMetrics(totalItems: number, renderedItems: number, memoryUsage: number, scrollPerformance: number): void {
+    this.virtualizationMetrics.totalListItems = totalItems;
+    this.virtualizationMetrics.renderedItems = renderedItems;
+    this.virtualizationMetrics.memoryUsage = memoryUsage;
+    this.virtualizationMetrics.scrollPerformance = scrollPerformance;
+    this.virtualizationMetrics.lastUpdated = Date.now();
+  }
+
+  /**
+   * Get image metrics cache for external access
+   */
+  getImageMetricsCache() {
+    return { ...this.imageMetricsCache };
+  }
+
+  /**
+   * Get virtualization metrics for external access
+   */
+  getVirtualizationMetrics() {
+    return { ...this.virtualizationMetrics };
+  }
+
+  /**
+   * Stop monitoring and cleanup intervals
    */
   stop(): void {
     this.isMonitoring = false;
+
+    // Clear all monitoring intervals
+    if (this.memoryMonitorInterval) {
+      clearInterval(this.memoryMonitorInterval);
+      this.memoryMonitorInterval = null;
+    }
+
+    if (this.renderMonitorInterval) {
+      clearInterval(this.renderMonitorInterval);
+      this.renderMonitorInterval = null;
+    }
+
+    if (this.errorMonitorInterval) {
+      clearInterval(this.errorMonitorInterval);
+      this.errorMonitorInterval = null;
+    }
+
     if (this.performanceObserver) {
       this.performanceObserver.disconnect();
     }
+
+    loggingService.info('Performance dashboard monitoring stopped and cleaned up');
   }
 }
 
