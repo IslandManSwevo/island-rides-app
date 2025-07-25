@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
   SafeAreaView,
   TouchableOpacity,
@@ -42,16 +41,13 @@ import { performanceDashboard } from '../services/performanceDashboard';
 
 type SearchResultsScreenProps = StackScreenProps<RootStackParamList, typeof ROUTES.SEARCH_RESULTS>;
 
-type ViewMode = 'list' | 'grid' | 'map';
-type SortOption = 'price_low' | 'price_high' | 'distance' | 'rating' | 'availability' | 'newest';
+type ViewMode = 'list' | 'map';
+type SortOption = 'price_low' | 'price_high' | 'rating' | 'availability';
 
 interface FilterState {
   priceRange: [number, number];
   vehicleTypes: string[];
-  features: string[];
   hostRating: number;
-  instantBooking: boolean;
-  deliveryAvailable: boolean;
 }
 
 export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = React.memo(({ navigation, route }) => {
@@ -76,10 +72,7 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = React.mem
   const [filters, setFilters] = useState<FilterState>({
     priceRange: [0, 500],
     vehicleTypes: [],
-    features: [],
     hostRating: 0,
-    instantBooking: false,
-    deliveryAvailable: false,
   });
 
   const { island, vehicles: navigationVehicles } = route.params;
@@ -97,27 +90,9 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = React.mem
         return false;
       }
 
-      // Features filter (simplified for VehicleRecommendation type)
-      if (filters.features.length > 0) {
-        // For now, skip feature filtering as VehicleRecommendation may not have detailed features
-        // This would be enhanced when the backend provides feature data
-      }
-
       // Host rating filter (use vehicle rating from scoreBreakdown)
       if (filters.hostRating > 0 && (vehicle.scoreBreakdown?.vehicleRating || 0) < filters.hostRating) {
         return false;
-      }
-
-      // Instant booking filter (simplified)
-      if (filters.instantBooking) {
-        // For now, assume all vehicles support instant booking
-        // This would be enhanced when the backend provides this data
-      }
-
-      // Delivery available filter (simplified)
-      if (filters.deliveryAvailable) {
-        // For now, assume delivery is available for all vehicles
-        // This would be enhanced when the backend provides this data
       }
 
       return true;
@@ -130,16 +105,10 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = React.mem
           return a.pricePerDay - b.pricePerDay;
         case 'price_high':
           return b.pricePerDay - a.pricePerDay;
-        case 'distance':
-          // Use recommendation score as proxy for distance (higher score = closer/better)
-          return a.recommendationScore - b.recommendationScore;
         case 'rating':
           return (b.scoreBreakdown?.vehicleRating || 0) - (a.scoreBreakdown?.vehicleRating || 0);
         case 'availability':
           return b.recommendationScore - a.recommendationScore;
-        case 'newest':
-          // Use vehicle ID as proxy for newest (higher ID = newer)
-          return parseInt(b.id) - parseInt(a.id);
         default:
           return b.recommendationScore - a.recommendationScore;
       }
@@ -269,10 +238,7 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = React.mem
     setFilters({
       priceRange: [0, 500],
       vehicleTypes: [],
-      features: [],
       hostRating: 0,
-      instantBooking: false,
-      deliveryAvailable: false,
     });
   }, []);
 
@@ -339,7 +305,12 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = React.mem
       
       console.log('🚗 Fetching vehicles for island:', island);
 
-      // Prepare search filters
+      // Validate and prepare search filters
+      const validIslands: Island[] = ['Nassau', 'Freeport', 'Exuma'];
+      if (!validIslands.includes(island as Island)) {
+        throw new Error(`Invalid island value: ${island}. Must be one of: ${validIslands.join(', ')}`);
+      }
+
       const searchFilters: SearchFilters = {
         island: island as Island,
       };
@@ -427,11 +398,42 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = React.mem
           <Text style={styles.title}>🚗 Available in {island}</Text>
           <Text style={styles.subtitle}>Finding vehicles...</Text>
         </View>
-        <SearchResultsSkeleton 
+        <SearchResultsSkeleton
           itemCount={6}
           showHeader={false}
           compact={false}
         />
+      </SafeAreaView>
+    );
+  }
+
+  // Error state rendering
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerInfo}>
+            <Text style={styles.title}>Search Results</Text>
+            <Text style={styles.subtitle}>Error loading vehicles</Text>
+          </View>
+        </View>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={48} color={colors.error} />
+          <Text style={styles.errorTitle}>Unable to Load Vehicles</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              setError(null);
+              fetchVehicles();
+            }}
+          >
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
@@ -464,17 +466,6 @@ export const SearchResultsScreen: React.FC<SearchResultsScreenProps> = React.mem
                 name="list"
                 size={18}
                 color={viewMode === 'list' ? colors.white : colors.darkGrey}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.toggleButton, viewMode === 'grid' && styles.activeToggle]}
-              onPress={() => toggleViewMode('grid')}
-            >
-              <Ionicons
-                name="grid"
-                size={18}
-                color={viewMode === 'grid' ? colors.white : colors.darkGrey}
               />
             </TouchableOpacity>
 
@@ -736,5 +727,38 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+  },
+  // Error state styles
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: colors.darkGrey,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    lineHeight: 24,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
