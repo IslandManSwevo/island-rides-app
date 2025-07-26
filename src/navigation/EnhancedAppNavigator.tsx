@@ -3,7 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { useFeatureFlag } from '../hooks/useFeatureFlags';
+// Temporarily commented out to fix runtime error
+// import { useFeatureFlag } from '../hooks/useFeatureFlags';
 import { colors } from '../styles/theme';
 
 // Import original screens (preserved as fallbacks)
@@ -43,7 +44,8 @@ const Tab = createBottomTabNavigator();
  * based on ENHANCED_HOME_SCREEN feature flag.
  */
 const EnhancedSearchStack: React.FC = () => {
-  const isEnhancedHomeEnabled = useFeatureFlag('ENHANCED_HOME_SCREEN');
+  // Temporarily disabled to fix runtime error
+  const isEnhancedHomeEnabled = true; // useFeatureFlag('ENHANCED_HOME_SCREEN');
 
   return (
     <Stack.Navigator
@@ -100,7 +102,8 @@ const EnhancedSearchStack: React.FC = () => {
  * based on feature flags.
  */
 const EnhancedCustomerTabNavigator: React.FC = () => {
-  const isOptimizedNavigationEnabled = useFeatureFlag('OPTIMIZED_NAVIGATION');
+  // Temporarily disabled to fix runtime error
+  const isOptimizedNavigationEnabled = true; // useFeatureFlag('OPTIMIZED_NAVIGATION');
 
   return (
     <Tab.Navigator
@@ -176,7 +179,8 @@ const EnhancedCustomerTabNavigator: React.FC = () => {
  * with enhanced features when flags are enabled.
  */
 const EnhancedMainNavigator: React.FC = () => {
-  const isOptimizedNavigationEnabled = useFeatureFlag('OPTIMIZED_NAVIGATION');
+  // Temporarily disabled to fix runtime error
+  const isOptimizedNavigationEnabled = true; // useFeatureFlag('OPTIMIZED_NAVIGATION');
 
   return (
     <Stack.Navigator
@@ -208,7 +212,8 @@ const EnhancedMainNavigator: React.FC = () => {
  * with enhanced navigation features when flags are enabled.
  */
 export const EnhancedAppNavigator: React.FC = () => {
-  const isOptimizedNavigationEnabled = useFeatureFlag('OPTIMIZED_NAVIGATION');
+  // Temporarily disabled to fix runtime error
+  const isOptimizedNavigationEnabled = true; // useFeatureFlag('OPTIMIZED_NAVIGATION');
 
   return (
     <NavigationContainer

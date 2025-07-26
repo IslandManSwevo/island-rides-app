@@ -4,6 +4,7 @@ import { storageService } from './storageService';
 import { getEnvironmentConfig } from '../config/environment';
 import { ErrorHandlingService } from './errors/ErrorHandlingService';
 import { performanceMonitor } from './PerformanceMonitor';
+import { sanitizeRequestData, SANITIZATION_PRESETS } from '../middleware/inputSanitization';
 
 interface RetryableAxiosRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
@@ -46,6 +47,16 @@ export class ApiService extends BaseService {
     // Request interceptor for authenticated requests
     this.axiosInstance.interceptors.request.use(
       async (config) => {
+        // Sanitize request data
+        if (config.data) {
+          config.data = sanitizeRequestData(config.data, SANITIZATION_PRESETS.userInput);
+        }
+
+        // Sanitize URL parameters
+        if (config.params) {
+          config.params = sanitizeRequestData(config.params, SANITIZATION_PRESETS.searchQuery);
+        }
+
         const token = await this.getToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -87,6 +98,27 @@ export class ApiService extends BaseService {
         }
 
         return Promise.reject(ErrorHandlingService.handleApiError(error));
+      }
+    );
+
+    // Request interceptor for non-authenticated requests
+    this.axiosInstanceWithoutAuth.interceptors.request.use(
+      (config) => {
+        // Sanitize request data
+        if (config.data) {
+          config.data = sanitizeRequestData(config.data, SANITIZATION_PRESETS.userInput);
+        }
+
+        // Sanitize URL parameters
+        if (config.params) {
+          config.params = sanitizeRequestData(config.params, SANITIZATION_PRESETS.searchQuery);
+        }
+
+        return config;
+      },
+      (error) => {
+        console.error('Request interceptor error:', error);
+        return Promise.reject(error);
       }
     );
 

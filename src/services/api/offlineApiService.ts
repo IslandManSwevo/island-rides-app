@@ -191,7 +191,7 @@ class OfflineApiService {
    */
   async post<T>(
     endpoint: string,
-    data: any,
+    data: Record<string, unknown>,
     options?: {
       queueIfOffline?: boolean;
       priority?: 'high' | 'normal' | 'low';
@@ -211,7 +211,7 @@ class OfflineApiService {
    */
   async put<T>(
     endpoint: string,
-    data: any,
+    data: Record<string, unknown>,
     options?: {
       queueIfOffline?: boolean;
       priority?: 'high' | 'normal' | 'low';
@@ -367,7 +367,7 @@ class OfflineApiService {
   private async setCachedData(
     endpoint: string,
     params: object | undefined,
-    data: any,
+    data: Record<string, unknown>,
     ttl: number
   ): Promise<void> {
     const cacheKey = this.getCacheKey(endpoint, params);

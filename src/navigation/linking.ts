@@ -30,7 +30,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
             screens: {
               [ROUTES.SEARCH]: 'search',
               [ROUTES.SEARCH_RESULTS]: 'search/results',
-              [ROUTES.VEHICLE_DETAIL]: 'vehicle/:vehicleId',
+              [ROUTES.VEHICLE_DETAIL]: 'search/vehicle/:vehicleId',
             },
           },
           [ROUTES.CUSTOMER_BOOKINGS_TAB]: {
@@ -95,7 +95,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
       },
 
       // Shared Modal Screens
-      [ROUTES.VEHICLE_DETAIL]: 'vehicle/:vehicleId',
+      [ROUTES.VEHICLE_DETAIL]: 'modal/vehicle/:vehicleId',
       [ROUTES.CHECKOUT]: 'checkout',
       [ROUTES.BOOKING_CONFIRMED]: 'booking/confirmed/:bookingId',
       [ROUTES.PAYMENT]: 'payment/:bookingId',
@@ -106,18 +106,26 @@ export const linking: LinkingOptions<RootStackParamList> = {
   // Custom URL parsing for complex parameters
   getInitialURL: async () => {
     // Handle custom URL schemes and universal links
-    const url = await import('expo-linking').then(Linking => Linking.getInitialURL());
+    const { getInitialURL } = await import('expo-linking');
+    const url = await getInitialURL();
     return url;
   },
-  
+
   subscribe: (listener) => {
     // Listen for URL changes
-    const linkingSubscription = import('expo-linking').then(Linking =>
-      Linking.addEventListener('url', ({ url }: { url: string }) => listener(url))
-    );
-    
+    let subscription: any;
+
+    const setupSubscription = async () => {
+      const { addEventListener } = await import('expo-linking');
+      subscription = addEventListener('url', ({ url }: { url: string }) => listener(url));
+    };
+
+    setupSubscription();
+
     return () => {
-      linkingSubscription.then(subscription => subscription?.remove());
+      if (subscription?.remove) {
+        subscription.remove();
+      }
     };
   },
 };
@@ -132,7 +140,7 @@ export const generateDeepLink = {
   vehicle: (vehicleId: number) => `keylo://vehicle/${vehicleId}`,
   
   // Search
-  search: (filters?: Record<string, any>) => {
+  search: (filters?: Record<string, unknown>) => {
     const params = filters ? `?${new URLSearchParams(filters).toString()}` : '';
     return `keylo://search${params}`;
   },
@@ -164,10 +172,10 @@ export const validateDeepLink = (url: string): boolean => {
   }
 };
 
-export const parseDeepLinkParams = (url: string): Record<string, any> => {
+export const parseDeepLinkParams = (url: string): Record<string, unknown> => {
   try {
     const parsedUrl = new URL(url);
-    const params: Record<string, any> = {};
+    const params: Record<string, unknown> = {};
     
     // Extract path parameters
     const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);

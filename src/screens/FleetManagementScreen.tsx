@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -37,7 +37,7 @@ interface BulkAction {
 interface FleetManagementScreenProps {
   navigation: StackNavigationProp<RootStackParamList, 'FleetManagement'>;}
 
-export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ navigation }) => {
+export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = React.memo(({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [vehicles, setVehicles] = useState<FleetVehicle[]>([]);
@@ -77,7 +77,9 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
       
       if (response.success) {
         // Transform Vehicle[] to FleetVehicle[] by adding missing properties
-        const fleetVehicles: FleetVehicle[] = (response.data || []).map(vehicle => ({
+        // Ensure response.data is an array before calling map
+        const safeData = Array.isArray(response.data) ? response.data : [];
+        const fleetVehicles: FleetVehicle[] = safeData.map(vehicle => ({
           ...vehicle,
           licensePlate: vehicle.licensePlate || '',
           verificationStatus: vehicle.verificationStatus || 'pending',
@@ -120,7 +122,9 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
 
   const selectAllVehicles = () => {
     const filteredVehicles = getFilteredVehicles();
-    const allIds = new Set(filteredVehicles.map(v => v.id));
+    // Ensure filteredVehicles is an array before calling map
+    const safeFilteredVehicles = Array.isArray(filteredVehicles) ? filteredVehicles : [];
+    const allIds = new Set(safeFilteredVehicles.map(v => v.id));
     setSelectedVehicles(allIds);
   };
 
@@ -211,7 +215,9 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
   };
 
   const getFilteredVehicles = (): FleetVehicle[] => {
-    return vehicles.filter(vehicle => {
+    // Ensure vehicles is an array before calling filter
+    const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
+    return safeVehicles.filter(vehicle => {
       switch (filterStatus) {
         case 'available':
           return vehicle.available;
@@ -449,7 +455,8 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
           </View>
         ) : (
           <View style={styles.vehiclesList}>
-            {filteredVehicles.map(renderVehicleCard)}
+            {/* Ensure filteredVehicles is an array before calling map */}
+            {Array.isArray(filteredVehicles) ? filteredVehicles.map(renderVehicleCard) : null}
           </View>
         )}
       </ScrollView>
@@ -458,7 +465,7 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
       {renderMaintenanceModal()}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

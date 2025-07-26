@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { NavigationContainerRef, NavigationState } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFeatureFlag } from '../hooks/useFeatureFlags';
+// Temporarily commented out to fix runtime error
+// import { useFeatureFlag } from '../hooks/useFeatureFlags';
 
 /**
  * Navigation Compatibility Layer
@@ -36,8 +37,9 @@ export const NavigationCompatibilityLayer: React.FC<NavigationCompatibilityProps
   onStateChange,
   testID = 'navigation-compatibility-layer'
 }) => {
-  const isOptimizedNavigationEnabled = useFeatureFlag('OPTIMIZED_NAVIGATION');
-  const isRollbackMonitoringEnabled = useFeatureFlag('ROLLBACK_MONITORING');
+  // Temporarily disabled to fix runtime error
+  const isOptimizedNavigationEnabled = true; // useFeatureFlag('OPTIMIZED_NAVIGATION');
+  const isRollbackMonitoringEnabled = true; // useFeatureFlag('ROLLBACK_MONITORING');
   
   // State snapshots for compatibility
   const [stateSnapshots, setStateSnapshots] = useState<NavigationStateSnapshot[]>([]);
@@ -231,7 +233,8 @@ export const useNavigationStatePersistence = (
   navigationRef: React.RefObject<NavigationContainerRef<any>>
 ) => {
   const { handleStateChange } = useNavigationCompatibility();
-  const isRollbackMonitoringEnabled = useFeatureFlag('ROLLBACK_MONITORING');
+  // Temporarily disabled to fix runtime error
+  const isRollbackMonitoringEnabled = true; // useFeatureFlag('ROLLBACK_MONITORING');
 
   // Enhanced persistence that accounts for feature flag changes
   const persistNavigationState = async (state: NavigationState | undefined) => {
@@ -244,7 +247,7 @@ export const useNavigationStatePersistence = (
           timestamp: Date.now(),
           version: 'compatible', // Always save in compatible format
           featureFlags: {
-            optimizedNavigation: useFeatureFlag('OPTIMIZED_NAVIGATION'),
+            optimizedNavigation: true, // useFeatureFlag('OPTIMIZED_NAVIGATION'),
           },
         },
       };

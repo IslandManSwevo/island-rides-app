@@ -144,7 +144,7 @@ class ConsistentApiClient {
    */
   async post<T>(
     endpoint: string,
-    data: any,
+    data: Record<string, unknown>,
     options: ApiRequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const requestId = this.generateRequestId();
@@ -214,7 +214,7 @@ class ConsistentApiClient {
    */
   async put<T>(
     endpoint: string,
-    data: any,
+    data: Record<string, unknown>,
     options: ApiRequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const requestId = this.generateRequestId();

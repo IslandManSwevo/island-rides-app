@@ -84,7 +84,7 @@ export const createErrorStateReducers = <T extends StandardErrorState>() => ({
 /**
  * Standardized async thunk error handling
  */
-export const handleAsyncThunkError = (error: any): ErrorState => {
+export const handleAsyncThunkError = (error: Error | unknown): ErrorState => {
   // Handle different error types
   if (error?.response) {
     // API error with response

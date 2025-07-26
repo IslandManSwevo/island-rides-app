@@ -43,7 +43,9 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
       const response = await BookingService.getBookings();
       
       // Add cancellation eligibility to each booking
-      const bookingsWithCancelInfo = response.map(booking => {
+      // Ensure response is an array before calling map
+      const safeResponse = Array.isArray(response) ? response : [];
+      const bookingsWithCancelInfo = safeResponse.map(booking => {
         const startDate = new Date(booking.booking.startDate);
         const now = new Date();
         const hoursUntilStart = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -278,7 +280,8 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
           </View>
         ) : (
           <View style={styles.bookingsList}>
-            {bookings.map(renderBookingCard)}
+            {/* Ensure bookings is an array before calling map */}
+            {Array.isArray(bookings) ? bookings.map(renderBookingCard) : null}
           </View>
         )}
       </ScrollView>

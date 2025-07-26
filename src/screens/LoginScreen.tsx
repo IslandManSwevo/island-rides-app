@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import * as yup from 'yup';
 import { notificationService } from '../services/notificationService';
-import { StandardButton } from '../components/templates/StandardButton';
-import { StandardInput } from '../components/templates/StandardInput';
 import { GluestackButton, GluestackInput } from '../components/templates';
-import { useAuth } from '../context/AuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 import { colors, typography, spacing } from '../styles/theme';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
+import { validateLoginCredentials, sanitizeFormData } from '../utils/validation';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.LOGIN>;
 
@@ -17,46 +15,43 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, isLoading } = useUnifiedAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formErrors, setFormErrors] = useState<{ email?: string; password?: string }>({});
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  const loginSchema = yup.object().shape({
-    email: yup.string().email('Please enter a valid email').required('Email is required'),
-    password: yup.string().required('Password is required'),
-  });
+  const validateForm = () => {
+    // Sanitize form data before validation
+    const sanitizedData = sanitizeFormData({ email, password });
 
-  const validateForm = async () => {
-    try {
-      await loginSchema.validate({ email, password }, { abortEarly: false });
-      setFormErrors({});
-      return true;
-    } catch (err) {
-      if (err instanceof yup.ValidationError) {
-        const errors = err.inner.reduce((acc, current) => {
-          return { ...acc, [current.path!]: current.message };
-        }, {});
-        setFormErrors(errors);
-      }
-      return false;
-    }
+    // Use the shared validation utility
+    const validation = validateLoginCredentials({
+      email: sanitizedData.email,
+      password: sanitizedData.password,
+    });
+
+    setFormErrors(validation.errors);
+    return validation.isValid;
   };
 
   const handleLogin = async () => {
     Keyboard.dismiss();
-    const isValid = await validateForm();
+    const isValid = validateForm();
     if (!isValid) return;
 
     // Clear any previous errors
-    clearError();
+    setAuthError(null);
 
     try {
-      await login(email.trim(), password);
+      await login({ email: email.trim(), password });
       notificationService.success('Login successful!', { duration: 3000 });
-      // AuthContext will automatically handle navigation via App.tsx
+      // UnifiedAuthContext will automatically handle navigation via App.tsx
     } catch (error) {
-      notificationService.error(error instanceof Error ? error.message : 'An error occurred', { duration: 5000 });
+      console.error('Login error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
+      setAuthError(errorMessage);
+      notificationService.error(errorMessage, { duration: 5000 });
     }
   };
 
@@ -69,9 +64,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         <Text style={styles.title}>🏝️ Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to your account</Text>
         
-        {error && (
+        {authError && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorText}>{authError}</Text>
           </View>
         )}
         

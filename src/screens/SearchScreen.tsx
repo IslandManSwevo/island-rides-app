@@ -293,7 +293,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = React.memo(({ navigatio
     setShowAllIslands(false);
   }, [island]);
 
-  const handleDateChange = useCallback((event: DateTimePickerEvent, selectedDate: Date | undefined, type: 'start' | 'end') => {
+  const handleDateChange = useCallback((_event: DateTimePickerEvent, selectedDate: Date | undefined, type: 'start' | 'end') => {
     setShowDatePicker(null);
     if (selectedDate) {
       updateFilter(type === 'start' ? 'startDate' : 'endDate', selectedDate);
@@ -501,9 +501,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = React.memo(({ navigatio
         </View>
       </View>
     </Modal>
-  ), [filters, updateFilter, hasSearched, performSearch]);
+  ), [showIslandSelector, filters.island, islands, updateFilter, hasSearched, performSearch]);
 
-  const renderSortModal = () => (
+  const renderSortModal = useCallback(() => (
     <Modal
       visible={showSortModal}
       transparent
@@ -551,7 +551,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = React.memo(({ navigatio
         </View>
       </View>
     </Modal>
-  );
+  ), [showSortModal, filters.sortBy, updateFilter, hasSearched, performSearch]);
 
   return (
     <View style={styles.container}>
@@ -672,7 +672,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = React.memo(({ navigatio
       {renderSortModal()}
     </View>
   );
-})
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -1190,5 +1190,3 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
 });
-
-export default SearchScreen;

@@ -1,5 +1,8 @@
 import { createMockApiService, createMockAsyncStorage } from './test-utils';
 
+// Jest globals are available through @types/jest
+/// <reference types="jest" />
+
 // Template for service tests
 // Copy this template and adapt it for your services
 

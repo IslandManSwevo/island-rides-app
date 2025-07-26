@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } fr
 import { StandardButton } from '../components/templates/StandardButton';
 import { notificationService } from '../services/notificationService';
 import { StandardInput } from '../components/templates/StandardInput';
-import { useAuth } from '../context/AuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 import { colors, typography, spacing } from '../styles/theme';
+import { validateRegistrationData, sanitizeFormData } from '../utils/validation';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
@@ -16,7 +17,7 @@ interface RegistrationScreenProps {
 }
 
 export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigation, defaultRole = 'customer' }) => {
-  const { register, isLoading, error, clearError } = useAuth();
+  const { register, isLoading } = useUnifiedAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -31,61 +32,49 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
     password?: string;
     confirmPassword?: string;
   }>({});
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const validateForm = () => {
-    const newErrors: typeof formErrors = {};
-    
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-    
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-    
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    
-    setFormErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // Sanitize form data before validation
+    const sanitizedData = sanitizeFormData(formData);
+
+    // Use the shared validation utility
+    const validation = validateRegistrationData({
+      firstName: sanitizedData.firstName,
+      lastName: sanitizedData.lastName,
+      email: sanitizedData.email,
+      password: sanitizedData.password,
+      confirmPassword: sanitizedData.confirmPassword,
+    });
+
+    setFormErrors(validation.errors);
+    return validation.isValid;
   };
 
   const handleRegister = async () => {
     if (!validateForm()) return;
 
     // Clear any previous errors
-    clearError();
+    setAuthError(null);
 
     try {
-      await register(
-        formData.email.trim(),
-        formData.password,
-        formData.firstName.trim(),
-        formData.lastName.trim(),
-        defaultRole
-      );
+      await register({
+        email: formData.email.trim(),
+        password: formData.password,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        role: defaultRole
+      });
       notificationService.success('Welcome to KeyLo!', {
         title: 'Registration Successful',
         duration: 3000
       });
-      // AuthContext will automatically handle navigation via App.tsx
+      // UnifiedAuthContext will automatically handle navigation via App.tsx
     } catch (error) {
-      notificationService.error(error instanceof Error ? error.message : 'An error occurred', {
+      console.error('Registration error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed. Please try again.';
+      setAuthError(errorMessage);
+      notificationService.error(errorMessage, {
         title: 'Registration Failed',
         duration: 5000
       });
@@ -110,9 +99,9 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ navigati
           <Text style={styles.title}>🔑 Join KeyLo</Text>
           <Text style={styles.subtitle}>Create your account to get started</Text>
           
-          {error && (
+          {authError && (
             <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
+              <Text style={styles.errorText}>{authError}</Text>
             </View>
           )}
           

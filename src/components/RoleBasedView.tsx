@@ -42,7 +42,7 @@ export const RoleBasedView: React.FC<RoleBasedViewProps> = ({
   showRoleIndicator = false,
   requireAuth = true
 }) => {
-  const { isAuthenticated, currentUser: user, isLoading } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const { userRole } = usePermissions();
 
   // Show loading state
@@ -120,11 +120,11 @@ export const ConditionalRender: React.FC<ConditionalRenderProps> = ({
 };
 
 interface RoleSpecificButtonProps {
-  customer?: { text: string; onPress: () => void; style?: any };
-  host?: { text: string; onPress: () => void; style?: any };
-  owner?: { text: string; onPress: () => void; style?: any };
-  admin?: { text: string; onPress: () => void; style?: any };
-  fallback?: { text: string; onPress: () => void; style?: any };
+  customer?: { text: string; onPress: () => void; style?: ViewStyle | TextStyle };
+  host?: { text: string; onPress: () => void; style?: ViewStyle | TextStyle };
+  owner?: { text: string; onPress: () => void; style?: ViewStyle | TextStyle };
+  admin?: { text: string; onPress: () => void; style?: ViewStyle | TextStyle };
+  fallback?: { text: string; onPress: () => void; style?: ViewStyle | TextStyle };
 }
 
 /**

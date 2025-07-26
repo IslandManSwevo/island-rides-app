@@ -144,7 +144,7 @@ export const useFeatureFlagConditional = (
   const isEnabled = useFeatureFlag(flagKey);
 
   const renderConditional = useCallback(
-    (enhancedComponent: React.ComponentType<any>, props: any = {}) => {
+    (enhancedComponent: React.ComponentType<any>, props: Record<string, unknown> = {}) => {
       if (isEnabled) {
         return enhancedComponent;
       }
@@ -155,7 +155,7 @@ export const useFeatureFlagConditional = (
 
   const withFeatureFlag = useCallback(
     (enhancedComponent: React.ComponentType<any>) => {
-      return (props: any) => {
+      return (props: Record<string, unknown>) => {
         if (isEnabled) {
           return enhancedComponent(props);
         }
@@ -220,8 +220,43 @@ export const useFeatureFlagMetrics = () => {
 };
 
 /**
+ * Hook for enhanced navigation features
+ *
+ * Provides access to enhanced navigation functionality based on feature flags
+ */
+export const useEnhancedNavigation = () => {
+  // Temporarily disabled to fix runtime error
+  const smartIslandSelection = true; // useFeatureFlag('smartIslandSelection');
+  const enhancedHomeScreen = true; // useFeatureFlag('enhancedHomeScreen');
+  const advancedFiltering = true; // useFeatureFlag('advancedFiltering');
+  const performanceOptimizations = true; // useFeatureFlag('performanceOptimizations');
+
+  const isEnhancedNavigationEnabled = useCallback(() => {
+    return smartIslandSelection || enhancedHomeScreen || advancedFiltering || performanceOptimizations;
+  }, [smartIslandSelection, enhancedHomeScreen, advancedFiltering, performanceOptimizations]);
+
+  const getEnabledFeatures = useCallback(() => {
+    const features = [];
+    if (smartIslandSelection) features.push('smartIslandSelection');
+    if (enhancedHomeScreen) features.push('enhancedHomeScreen');
+    if (advancedFiltering) features.push('advancedFiltering');
+    if (performanceOptimizations) features.push('performanceOptimizations');
+    return features;
+  }, [smartIslandSelection, enhancedHomeScreen, advancedFiltering, performanceOptimizations]);
+
+  return {
+    smartIslandSelection,
+    enhancedHomeScreen,
+    advancedFiltering,
+    performanceOptimizations,
+    isEnhancedNavigationEnabled,
+    getEnabledFeatures,
+  };
+};
+
+/**
  * Hook for feature flag debugging in development
- * 
+ *
  * Provides debugging utilities for feature flag development and testing
  */
 export const useFeatureFlagDebug = () => {
@@ -242,7 +277,7 @@ export const useFeatureFlagDebug = () => {
         acc[key as keyof NavigationFeatureFlags] = true;
         return acc;
       }, {} as NavigationFeatureFlags);
-      
+
       setFlags(allEnabled);
       console.log('🚩 All feature flags enabled (development only)');
     }

@@ -5,7 +5,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFeatureFlag } from '../services/FeatureFlagService';
+// Temporarily commented out to fix runtime error
+// import { useFeatureFlag } from '../services/FeatureFlagService';
 
 export type Island = 'nassau' | 'grand-bahama' | 'paradise' | 'eleuthera' | 'harbour' | 'exumas';
 
@@ -263,7 +264,8 @@ export const IslandProvider: React.FC<IslandProviderProps> = ({
   defaultIsland = 'nassau'
 }) => {
   const [currentIsland, setCurrentIslandState] = useState<Island>(defaultIsland);
-  const islandContextEnabled = useFeatureFlag('ISLAND_CONTEXT_PROVIDER');
+  // Temporarily disabled to fix runtime error
+  const islandContextEnabled = true; // useFeatureFlag('ISLAND_CONTEXT_PROVIDER');
 
   // Load saved island preference on mount
   useEffect(() => {

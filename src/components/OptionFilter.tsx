@@ -16,7 +16,9 @@ const OptionFilter: React.FC<OptionFilterProps> = ({ title, options, selectedOpt
       <Text style={styles.filterTitle}>{title}</Text>
       <View style={styles.optionsGrid}>
         {options.map(option => {
-          const isSelected = selectedOptions.includes(option);
+          // Ensure selectedOptions is always an array before calling includes
+          const safeSelectedOptions = Array.isArray(selectedOptions) ? selectedOptions : [];
+          const isSelected = safeSelectedOptions.includes(option);
           return (
             <GluestackButton
               key={option}

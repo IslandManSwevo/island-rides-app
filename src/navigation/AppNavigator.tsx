@@ -1,7 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
-import { useAuth } from '../context/AuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { IslandProvider } from '../contexts/IslandContext';
 import { colors, spacing } from '../styles/theme';
@@ -47,13 +47,12 @@ const modalScreenOptions = {
 };
 
 const AppNavigator: React.FC = () => {
-  const { isAuthenticated, isLoading, error, currentUser } = useAuth();
+  const { isAuthenticated, isLoading, user } = useUnifiedAuth();
 
   console.log('🧭 AppNavigator: Render state:', {
     isAuthenticated,
     isLoading,
-    hasError: !!error,
-    userRole: currentUser?.role
+    userRole: user?.role
   });
 
   if (isLoading) {
@@ -66,26 +65,16 @@ const AppNavigator: React.FC = () => {
     );
   }
 
-  if (error) {
-    console.log('❌ AppNavigator: Showing error screen');
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Connection Error</Text>
-        <Text style={styles.errorMessage}>{String(error)}</Text>
-      </View>
-    );
-  }
-
   const getUserNavigator = () => {
     if (!isAuthenticated) {
       return 'Auth';
     }
-    
-    const userRole = currentUser?.role;
+
+    const userRole = user?.role;
     if (userRole === 'host' || userRole === 'owner') {
       return 'HostApp';
     }
-    
+
     return 'CustomerApp';
   };
 

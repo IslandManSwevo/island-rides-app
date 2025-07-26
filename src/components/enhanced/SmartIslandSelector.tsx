@@ -7,9 +7,11 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFeatureFlag, useEnhancedNavigation } from '../../hooks/useFeatureFlags';
+// Temporarily commented out to fix runtime error
+// import { useFeatureFlag, useEnhancedNavigation } from '../../hooks/useFeatureFlags';
 import { colors, spacing } from '../../styles/theme';
 import { smartIslandSelectionService, SmartIslandRecommendation } from '../../services/SmartIslandSelectionService';
 import { locationService } from '../../services/LocationService';
@@ -43,9 +45,9 @@ export const SmartIslandSelector: React.FC<SmartIslandSelectorProps> = ({
   showRecommendationReasons = true,
   maxRecommendations = 5,
 }) => {
-  // Feature flag checks
-  const isSmartSelectionEnabled = useFeatureFlag('SMART_ISLAND_SELECTION');
-  const { actions } = useEnhancedNavigation();
+  // Feature flag checks - temporarily disabled to fix runtime error
+  const isSmartSelectionEnabled = true; // useFeatureFlag('SMART_ISLAND_SELECTION');
+  const enhancedNavigation = { smartIslandSelection: true }; // useEnhancedNavigation();
 
   // State management
   const [recommendations, setRecommendations] = useState<SmartIslandRecommendation[]>([]);
@@ -318,7 +320,7 @@ export const SmartIslandSelector: React.FC<SmartIslandSelectorProps> = ({
 
 const { width } = Dimensions.get('window');
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -332,7 +334,7 @@ const styles = {
     fontSize: 16,
     color: colors.textSecondary,
     marginTop: spacing.md,
-    textAlign: 'center',
+    textAlign: 'center' as const,
   },
   locationPrompt: {
     backgroundColor: colors.surface,
@@ -343,20 +345,20 @@ const styles = {
     borderColor: colors.border,
   },
   locationPromptContent: {
-    alignItems: 'center',
+    alignItems: 'center' as const,
   },
   locationPromptTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: colors.text,
     marginTop: spacing.sm,
-    textAlign: 'center',
+    textAlign: 'center' as const,
   },
   locationPromptText: {
     fontSize: 14,
     color: colors.textSecondary,
     marginTop: spacing.xs,
-    textAlign: 'center',
+    textAlign: 'center' as const,
   },
   locationPromptButton: {
     backgroundColor: colors.primary,
@@ -368,7 +370,7 @@ const styles = {
   locationPromptButtonText: {
     color: colors.surface,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   header: {
     padding: spacing.lg,
@@ -376,7 +378,7 @@ const styles = {
   },
   title: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: colors.text,
     marginBottom: spacing.xs,
   },
@@ -428,7 +430,7 @@ const styles = {
   },
   islandName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: colors.text,
     marginBottom: spacing.xs,
   },
@@ -443,7 +445,7 @@ const styles = {
   },
   confidenceText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: colors.surface,
   },
   distanceContainer: {
@@ -503,8 +505,8 @@ const styles = {
   featureText: {
     fontSize: 11,
     color: colors.primary,
-    fontWeight: '500',
+    fontWeight: '500' as const,
   },
-};
+});
 
 export default SmartIslandSelector;

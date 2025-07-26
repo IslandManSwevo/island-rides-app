@@ -192,7 +192,7 @@ export type HostAnalyticsStackParamList = {
 
 // Navigation Props Helper Types
 export type NavigationProps<T extends keyof RootStackParamList> = {
-  navigation: any;
+  navigation: NavigationProp<any>;
   route: {
     params: RootStackParamList[T];
   };

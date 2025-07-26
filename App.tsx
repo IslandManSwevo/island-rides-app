@@ -3,14 +3,14 @@ import { Platform, Alert, DevSettings, View, TouchableOpacity, Text, ActivityInd
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ReduxProvider } from './src/store/provider';
-import { AuthProvider } from './src/context/AuthContext';
+import { UnifiedAuthProvider } from './src/context/UnifiedAuthContext';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { linking } from './src/navigation/linking';
 import { navigationPersistence } from './src/navigation/navigationPersistence';
 import { onNavigationStateChange } from './src/navigation/navigationAccessibility';
 import { apiService } from './src/services/apiService';
-import { useAuth } from './src/context/AuthContext';
+import { useUnifiedAuth } from './src/context/UnifiedAuthContext';
 import NotificationContainer from './src/components/NotificationContainer';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { notificationService } from './src/services/notificationService';
@@ -19,18 +19,18 @@ import Constants from 'expo-constants';
 import { GluestackUIProvider } from '@gluestack-ui/themed';
 import { gluestackUIConfig } from './src/config/gluestackTheme';
 
-// Debug component that has access to AuthContext
+// Debug component that has access to UnifiedAuthContext
 const DebugClearButton = () => {
-  const { logout } = useAuth();
+  const { logout } = useUnifiedAuth();
 
   const handleClearAuth = async () => {
     try {
       console.log('🧹 DEBUG: Clear Auth button clicked!');
       console.log('🧹 Clearing authentication tokens and state...');
       
-      // Clear AuthContext state first
+      // Clear UnifiedAuthContext state first
       await logout();
-      console.log('🧹 AuthContext state cleared');
+      console.log('🧹 UnifiedAuthContext state cleared');
       
       // Clear API service tokens
       await apiService.clearToken();
@@ -216,11 +216,11 @@ const App: React.FC = () => {
                   onNavigationStateChange(state);
                 }}
               >
-                <AuthProvider>
+                <UnifiedAuthProvider>
                   <NotificationContainer />
                   <DebugClearButton />
                   <AppNavigator />
-                </AuthProvider>
+                </UnifiedAuthProvider>
               </NavigationContainer>
             )}
           </ErrorBoundary>

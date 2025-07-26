@@ -4,13 +4,13 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StandardButton } from '../../components/templates/StandardButton';
-import { useAuth } from '../../context/AuthContext';
+import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
 import { colors, spacing } from '../../styles/theme';
 
 export const OnboardingCompleteScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { updateUserProfile } = useAuth();
+  const { user } = useUnifiedAuth();
   
   const { selectedRole, selectedIsland, permissions } = route.params as any;
 

@@ -1,7 +1,15 @@
+/**
+ * @deprecated This Firebase authentication system is deprecated and will be removed.
+ * Use UnifiedAuthContext instead.
+ *
+ * This file is kept temporarily for migration purposes only.
+ * All new code should use UnifiedAuthContext from './UnifiedAuthContext'
+ */
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
-  getAuth, 
-  onAuthStateChanged, 
+import {
+  getAuth,
+  onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -59,7 +67,7 @@ export const FirebaseAuthProvider: React.FC<FirebaseAuthProviderProps> = ({ chil
       const user = userCredential.user;
       console.log('User created via Firebase context:', user.uid, user.email);
       return userCredential;
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       const errorCode = error.code;
       const errorMessage = error.message;
       console.error('Firebase sign up error:', errorCode, errorMessage);
@@ -75,7 +83,7 @@ export const FirebaseAuthProvider: React.FC<FirebaseAuthProviderProps> = ({ chil
       const user = userCredential.user;
       console.log('User signed in via Firebase context:', user.uid, user.email);
       return userCredential;
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       const errorCode = error.code;
       const errorMessage = error.message;
       console.error('Firebase sign in error:', errorCode, errorMessage);
@@ -88,7 +96,7 @@ export const FirebaseAuthProvider: React.FC<FirebaseAuthProviderProps> = ({ chil
     try {
       await signOut(auth);
       console.log('User signed out via Firebase context');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Firebase sign out error:', error);
       throw error;
     }

@@ -33,8 +33,8 @@ export interface HostDashboardData {
   monthlyRevenue: number;
   averageRating: number;
   responseRate: number;
-  recentBookings: any[];
-  pendingActions: any[];
+  recentBookings: unknown[];
+  pendingActions: unknown[];
 }
 
 export interface HostVerificationData {
@@ -75,7 +75,7 @@ export class HostService {
    * Get host's vehicles
    */
   async getHostVehicles(): Promise<any[]> {
-    const response = await apiService.get<{ vehicles: any[] }>('/api/host/vehicles');
+    const response = await apiService.get<{ vehicles: unknown[] }>('/api/host/vehicles');
     return response.vehicles;
   }
 
@@ -84,7 +84,7 @@ export class HostService {
    */
   async getHostBookings(status?: string): Promise<any[]> {
     const params = status ? { status } : undefined;
-    const response = await apiService.get<{ bookings: any[] }>('/api/host/bookings', params);
+    const response = await apiService.get<{ bookings: unknown[] }>('/api/host/bookings', params);
     return response.bookings;
   }
 
@@ -95,7 +95,7 @@ export class HostService {
     totalRevenue: number;
     pendingPayouts: number;
     completedPayouts: number;
-    transactions: any[];
+    transactions: unknown[];
   }> {
     const params = period ? { period } : undefined;
     return await apiService.get('/api/host/financials', params);
@@ -106,7 +106,7 @@ export class HostService {
    */
   async getEarningsHistory(startDate?: string, endDate?: string): Promise<any[]> {
     const params = { startDate, endDate };
-    const response = await apiService.get<{ earnings: any[] }>('/api/host/earnings', params);
+    const response = await apiService.get<{ earnings: unknown[] }>('/api/host/earnings', params);
     return response.earnings;
   }
 
@@ -140,7 +140,7 @@ export class HostService {
    * Get host reviews
    */
   async getHostReviews(): Promise<any[]> {
-    const response = await apiService.get<{ reviews: any[] }>('/api/host/reviews');
+    const response = await apiService.get<{ reviews: unknown[] }>('/api/host/reviews');
     return response.reviews;
   }
 
@@ -160,7 +160,7 @@ export class HostService {
     revenue: number;
     occupancyRate: number;
     averageBookingValue: number;
-    topPerformingVehicles: any[];
+    topPerformingVehicles: unknown[];
   }> {
     return await apiService.get('/api/host/analytics', { period });
   }
@@ -181,7 +181,7 @@ export class HostService {
    * Get host's messaging conversations
    */
   async getConversations(): Promise<any[]> {
-    const response = await apiService.get<{ conversations: any[] }>('/api/host/messages');
+    const response = await apiService.get<{ conversations: unknown[] }>('/api/host/messages');
     return response.conversations;
   }
 

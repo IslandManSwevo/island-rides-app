@@ -42,7 +42,7 @@ const FirebaseExample: React.FC = () => {
       });
       
       Alert.alert('Success', 'Account created successfully!');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Sign up error:', error);
       Alert.alert('Error', error.message);
     } finally {
@@ -61,7 +61,7 @@ const FirebaseExample: React.FC = () => {
       const userCredential = await FirebaseService.auth.signIn(email, password);
       console.log('User signed in:', userCredential.user.email);
       Alert.alert('Success', 'Signed in successfully!');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Sign in error:', error);
       Alert.alert('Error', error.message);
     } finally {
@@ -74,7 +74,7 @@ const FirebaseExample: React.FC = () => {
     try {
       await FirebaseService.auth.signOut();
       Alert.alert('Success', 'Signed out successfully!');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Sign out error:', error);
       Alert.alert('Error', error.message);
     } finally {
@@ -103,7 +103,7 @@ const FirebaseExample: React.FC = () => {
       const vehicleId = await FirebaseService.firestore.createDocument('vehicles', vehicleData);
       console.log('Vehicle created with ID:', vehicleId);
       Alert.alert('Success', `Vehicle created with ID: ${vehicleId}`);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Create vehicle error:', error);
       Alert.alert('Error', error.message);
     } finally {
@@ -122,7 +122,7 @@ const FirebaseExample: React.FC = () => {
       const vehicles = await FirebaseService.examples.getUserVehicles(user.uid);
       console.log('User vehicles:', vehicles);
       Alert.alert('Vehicles', `Found ${vehicles.length} vehicles for user`);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Get vehicles error:', error);
       Alert.alert('Error', error.message);
     } finally {

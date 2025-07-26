@@ -126,7 +126,7 @@ export class FirebaseFirestoreService {
   /**
    * Create a document
    */
-  static async createDocument(collectionName: string, data: any, docId?: string): Promise<string> {
+  static async createDocument(collectionName: string, data: Record<string, unknown>, docId?: string): Promise<string> {
     try {
       if (docId) {
         await setDoc(doc(db, collectionName, docId), {
@@ -171,7 +171,7 @@ export class FirebaseFirestoreService {
   /**
    * Update a document
    */
-  static async updateDocument(collectionName: string, docId: string, data: any): Promise<void> {
+  static async updateDocument(collectionName: string, docId: string, data: Record<string, unknown>): Promise<void> {
     try {
       const docRef = doc(db, collectionName, docId);
       await updateDoc(docRef, {

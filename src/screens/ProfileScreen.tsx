@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ProfileService } from '../services/profileService';
 import { reviewPromptService } from '../services/reviewPromptService';
-import { useAuth } from '../context/AuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 import { ProfileData, ProfileBooking } from '../types';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { ProfileSkeleton } from '../components/skeletons/ProfileSkeleton';
@@ -30,7 +30,7 @@ interface ProfileScreenProps {
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
-  const { logout } = useAuth();
+  const { logout, user } = useUnifiedAuth();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

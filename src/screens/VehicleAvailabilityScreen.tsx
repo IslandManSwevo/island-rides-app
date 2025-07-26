@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../styles/theme';
 
 interface VehicleAvailabilityScreenProps {
-  navigation: any;
+  navigation: NavigationProp<any>;
   route: {
     params: {
       vehicleId: number;

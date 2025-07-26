@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -35,7 +35,7 @@ interface FavoritesScreenProps {
   navigation: FavoritesScreenNavigationProp;
 }
 
-export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
+export const FavoritesScreen: React.FC<FavoritesScreenProps> = React.memo(({ navigation }) => {
   const services = useServices();
   const [favorites, setFavorites] = useState<FavoriteVehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +47,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
     fetchFavorites();
   }, []);
 
-  const fetchFavorites = async () => {
+  const fetchFavorites = useCallback(async () => {
     try {
       const response = await services.user.getFavorites();
       setFavorites((response as any).favorites || []);
@@ -66,30 +66,33 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [services.user]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchFavorites();
     setRefreshing(false);
-  };
+  }, [fetchFavorites]);
 
-  const toggleCompareMode = () => {
+  const toggleCompareMode = useCallback(() => {
     setCompareMode(!compareMode);
     setSelectedVehicles([]);
-  };
+  }, [compareMode]);
 
-  const toggleVehicleSelection = (vehicleId: number) => {
-    if (selectedVehicles.includes(vehicleId)) {
-      setSelectedVehicles(selectedVehicles.filter(id => id !== vehicleId));
-    } else if (selectedVehicles.length < 3) {
-      setSelectedVehicles([...selectedVehicles, vehicleId]);
+  const toggleVehicleSelection = useCallback((vehicleId: number) => {
+    // Ensure selectedVehicles is always an array
+    const safeSelectedVehicles = Array.isArray(selectedVehicles) ? selectedVehicles : [];
+
+    if (safeSelectedVehicles.includes(vehicleId)) {
+      setSelectedVehicles(safeSelectedVehicles.filter(id => id !== vehicleId));
+    } else if (safeSelectedVehicles.length < 3) {
+      setSelectedVehicles([...safeSelectedVehicles, vehicleId]);
     } else {
       notificationService.warning('You can compare up to 3 vehicles only', {
         duration: 3000
       });
     }
-  };
+  }, [selectedVehicles]);
 
   const compareVehicles = () => {
     if (selectedVehicles.length < 2) {
@@ -113,43 +116,49 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
 
 
 
-  const renderVehicleItem = ({ item }: { item: FavoriteVehicle }) => (
-    <View style={styles.vehicleContainer}>
-      {item.priceDropped && (
-        <View style={styles.priceDropBanner}>
-          <Ionicons name="trending-down" size={16} color={colors.white} />
-          <Text style={styles.priceDropText}>
-            Price dropped from ${item.previousPrice} to ${item.dailyRate}!
-          </Text>
-        </View>
-      )}
-      <TouchableOpacity
-        onPress={() => handleVehiclePress(item)}
-        style={[
-          styles.vehicleCardContainer,
-          selectedVehicles.includes(item.id) && styles.selectedVehicle
-        ]}
-        activeOpacity={0.7}
-      >
-        <VehicleCard
-          vehicle={item}
-          onPress={() => handleVehiclePress(item)}
-        />
-        {compareMode && (
-          <View style={styles.selectionIndicator}>
-            <View style={[
-              styles.checkbox,
-              selectedVehicles.includes(item.id) && styles.checkedBox
-            ]}>
-              {selectedVehicles.includes(item.id) && (
-                <Ionicons name="checkmark" size={16} color={colors.white} />
-              )}
-            </View>
+  const renderVehicleItem = ({ item }: { item: FavoriteVehicle }) => {
+    // Ensure selectedVehicles is always an array
+    const safeSelectedVehicles = Array.isArray(selectedVehicles) ? selectedVehicles : [];
+    const isSelected = safeSelectedVehicles.includes(item.id);
+
+    return (
+      <View style={styles.vehicleContainer}>
+        {item.priceDropped && (
+          <View style={styles.priceDropBanner}>
+            <Ionicons name="trending-down" size={16} color={colors.white} />
+            <Text style={styles.priceDropText}>
+              Price dropped from ${item.previousPrice} to ${item.dailyRate}!
+            </Text>
           </View>
         )}
-      </TouchableOpacity>
-    </View>
-  );
+        <TouchableOpacity
+          onPress={() => handleVehiclePress(item)}
+          style={[
+            styles.vehicleCardContainer,
+            isSelected && styles.selectedVehicle
+          ]}
+          activeOpacity={0.7}
+        >
+          <VehicleCard
+            vehicle={item}
+            onPress={() => handleVehiclePress(item)}
+          />
+          {compareMode && (
+            <View style={styles.selectionIndicator}>
+              <View style={[
+                styles.checkbox,
+                isSelected && styles.checkedBox
+              ]}>
+                {isSelected && (
+                  <Ionicons name="checkmark" size={16} color={colors.white} />
+                )}
+              </View>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -277,7 +286,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) 
       />
     </SafeAreaView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

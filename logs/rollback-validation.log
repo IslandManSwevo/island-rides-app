@@ -1,0 +1,546 @@
+[2025-07-23T19:15:02.355Z] [INFO] ============================================================
+[2025-07-23T19:15:02.363Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:15:02.365Z] [INFO] ============================================================
+[2025-07-23T19:15:02.368Z] [INFO] Environment: development
+[2025-07-23T19:15:02.372Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:15:02.376Z] [INFO] Validating feature flag states...
+[2025-07-23T19:15:02.377Z] [INFO] Found rollback data from: 2025-07-23T19:15:02.334Z
+[2025-07-23T19:15:02.379Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:15:02.381Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:15:02.385Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:15:02.386Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:15:07.461Z] [INFO] Navigation tests passed
+[2025-07-23T19:15:07.461Z] [INFO] Validating performance metrics...
+[2025-07-23T19:15:07.462Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:15:07.463Z] [INFO] Validating system health...
+[2025-07-23T19:15:07.463Z] [INFO] Checking project build...
+[2025-07-23T19:15:08.022Z] [INFO] Project build successful
+[2025-07-23T19:15:08.023Z] [INFO] ============================================================
+[2025-07-23T19:15:08.025Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:15:08.026Z] [INFO] ============================================================
+[2025-07-23T19:15:08.028Z] [INFO] Overall Status: PASS
+[2025-07-23T19:15:08.029Z] [INFO] Total Checks: 10
+[2025-07-23T19:15:08.035Z] [INFO] Passed: 10
+[2025-07-23T19:15:08.036Z] [INFO] Failed: 0
+[2025-07-23T19:15:08.037Z] [INFO] Validation Time: 5.67 seconds
+[2025-07-23T19:15:08.049Z] [INFO] ============================================================
+[2025-07-23T19:15:08.051Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:15:08.053Z] [INFO] ============================================================
+[2025-07-23T19:15:08.055Z] [INFO] Environment: development
+[2025-07-23T19:15:08.057Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:15:08.059Z] [INFO] Validating feature flag states...
+[2025-07-23T19:15:08.059Z] [INFO] Found rollback data from: 2025-07-23T19:15:08.043Z
+[2025-07-23T19:15:08.060Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:15:08.060Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:15:08.063Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:15:08.063Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:15:13.030Z] [INFO] Navigation tests passed
+[2025-07-23T19:15:13.031Z] [INFO] Validating performance metrics...
+[2025-07-23T19:15:13.032Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:15:13.032Z] [INFO] Validating system health...
+[2025-07-23T19:15:13.033Z] [INFO] Checking project build...
+[2025-07-23T19:15:13.913Z] [INFO] Project build successful
+[2025-07-23T19:15:13.914Z] [INFO] ============================================================
+[2025-07-23T19:15:13.916Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:15:13.917Z] [INFO] ============================================================
+[2025-07-23T19:15:13.918Z] [INFO] Overall Status: PASS
+[2025-07-23T19:15:13.919Z] [INFO] Total Checks: 10
+[2025-07-23T19:15:13.921Z] [INFO] Passed: 10
+[2025-07-23T19:15:13.923Z] [INFO] Failed: 0
+[2025-07-23T19:15:13.924Z] [INFO] Validation Time: 5.87 seconds
+[2025-07-23T19:15:13.941Z] [INFO] ============================================================
+[2025-07-23T19:15:13.944Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:15:13.947Z] [INFO] ============================================================
+[2025-07-23T19:15:13.949Z] [INFO] Environment: development
+[2025-07-23T19:15:13.951Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:15:13.953Z] [INFO] Validating feature flag states...
+[2025-07-23T19:15:13.953Z] [INFO] Found rollback data from: 2025-07-23T19:15:13.933Z
+[2025-07-23T19:15:13.954Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:15:13.954Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:15:13.957Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:15:13.958Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:15:18.930Z] [INFO] Navigation tests passed
+[2025-07-23T19:15:18.930Z] [INFO] Validating performance metrics...
+[2025-07-23T19:15:18.931Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:15:18.932Z] [INFO] Validating system health...
+[2025-07-23T19:15:18.932Z] [INFO] Checking project build...
+[2025-07-23T19:15:19.680Z] [INFO] Project build successful
+[2025-07-23T19:15:19.681Z] [INFO] ============================================================
+[2025-07-23T19:15:19.686Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:15:19.690Z] [INFO] ============================================================
+[2025-07-23T19:15:19.693Z] [INFO] Overall Status: PASS
+[2025-07-23T19:15:19.696Z] [INFO] Total Checks: 10
+[2025-07-23T19:15:19.700Z] [INFO] Passed: 10
+[2025-07-23T19:15:19.702Z] [INFO] Failed: 0
+[2025-07-23T19:15:19.706Z] [INFO] Validation Time: 5.74 seconds
+[2025-07-23T19:21:25.765Z] [INFO] ============================================================
+[2025-07-23T19:21:25.770Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:21:25.772Z] [INFO] ============================================================
+[2025-07-23T19:21:25.774Z] [INFO] Environment: development
+[2025-07-23T19:21:25.776Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:21:25.778Z] [INFO] Validating feature flag states...
+[2025-07-23T19:21:25.779Z] [INFO] Found rollback data from: 2025-07-23T19:21:25.759Z
+[2025-07-23T19:21:25.779Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:21:25.780Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:21:25.782Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:21:25.783Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:21:30.388Z] [INFO] Navigation tests passed
+[2025-07-23T19:21:30.390Z] [INFO] Validating performance metrics...
+[2025-07-23T19:21:30.391Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:21:30.392Z] [INFO] Validating system health...
+[2025-07-23T19:21:30.392Z] [INFO] Checking project build...
+[2025-07-23T19:21:31.352Z] [INFO] Project build successful
+[2025-07-23T19:21:31.353Z] [INFO] ============================================================
+[2025-07-23T19:21:31.355Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:21:31.356Z] [INFO] ============================================================
+[2025-07-23T19:21:31.357Z] [INFO] Overall Status: PASS
+[2025-07-23T19:21:31.358Z] [INFO] Total Checks: 10
+[2025-07-23T19:21:31.359Z] [INFO] Passed: 10
+[2025-07-23T19:21:31.360Z] [INFO] Failed: 0
+[2025-07-23T19:21:31.362Z] [INFO] Validation Time: 5.59 seconds
+[2025-07-23T19:21:31.373Z] [INFO] ============================================================
+[2025-07-23T19:21:31.375Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:21:31.377Z] [INFO] ============================================================
+[2025-07-23T19:21:31.379Z] [INFO] Environment: development
+[2025-07-23T19:21:31.381Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:21:31.383Z] [INFO] Validating feature flag states...
+[2025-07-23T19:21:31.383Z] [INFO] Found rollback data from: 2025-07-23T19:21:31.367Z
+[2025-07-23T19:21:31.384Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:21:31.384Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:21:31.386Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:21:31.387Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:21:36.859Z] [INFO] Navigation tests passed
+[2025-07-23T19:21:36.859Z] [INFO] Validating performance metrics...
+[2025-07-23T19:21:36.860Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:21:36.861Z] [INFO] Validating system health...
+[2025-07-23T19:21:36.861Z] [INFO] Checking project build...
+[2025-07-23T19:21:37.733Z] [INFO] Project build successful
+[2025-07-23T19:21:37.734Z] [INFO] ============================================================
+[2025-07-23T19:21:37.736Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:21:37.738Z] [INFO] ============================================================
+[2025-07-23T19:21:37.739Z] [INFO] Overall Status: PASS
+[2025-07-23T19:21:37.740Z] [INFO] Total Checks: 10
+[2025-07-23T19:21:37.742Z] [INFO] Passed: 10
+[2025-07-23T19:21:37.743Z] [INFO] Failed: 0
+[2025-07-23T19:21:37.744Z] [INFO] Validation Time: 6.36 seconds
+[2025-07-23T19:21:37.757Z] [INFO] ============================================================
+[2025-07-23T19:21:37.759Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:21:37.761Z] [INFO] ============================================================
+[2025-07-23T19:21:37.763Z] [INFO] Environment: development
+[2025-07-23T19:21:37.766Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:21:37.768Z] [INFO] Validating feature flag states...
+[2025-07-23T19:21:37.769Z] [INFO] Found rollback data from: 2025-07-23T19:21:37.751Z
+[2025-07-23T19:21:37.769Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:21:37.770Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:21:37.773Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:21:37.774Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:21:43.556Z] [INFO] Navigation tests passed
+[2025-07-23T19:21:43.556Z] [INFO] Validating performance metrics...
+[2025-07-23T19:21:43.557Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:21:43.558Z] [INFO] Validating system health...
+[2025-07-23T19:21:43.558Z] [INFO] Checking project build...
+[2025-07-23T19:21:44.249Z] [INFO] Project build successful
+[2025-07-23T19:21:44.250Z] [INFO] ============================================================
+[2025-07-23T19:21:44.251Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:21:44.253Z] [INFO] ============================================================
+[2025-07-23T19:21:44.258Z] [INFO] Overall Status: PASS
+[2025-07-23T19:21:44.259Z] [INFO] Total Checks: 10
+[2025-07-23T19:21:44.260Z] [INFO] Passed: 10
+[2025-07-23T19:21:44.261Z] [INFO] Failed: 0
+[2025-07-23T19:21:44.262Z] [INFO] Validation Time: 6.49 seconds
+[2025-07-23T19:24:17.695Z] [INFO] ============================================================
+[2025-07-23T19:24:17.706Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:24:17.707Z] [INFO] ============================================================
+[2025-07-23T19:24:17.709Z] [INFO] Environment: development
+[2025-07-23T19:24:17.711Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:24:17.712Z] [INFO] Validating feature flag states...
+[2025-07-23T19:24:17.713Z] [INFO] Found rollback data from: 2025-07-23T19:24:17.687Z
+[2025-07-23T19:24:17.714Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:24:17.715Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:24:17.717Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:24:17.717Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:24:22.517Z] [INFO] Navigation tests passed
+[2025-07-23T19:24:22.517Z] [INFO] Validating performance metrics...
+[2025-07-23T19:24:22.518Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:24:22.519Z] [INFO] Validating system health...
+[2025-07-23T19:24:22.519Z] [INFO] Checking project build...
+[2025-07-23T19:24:23.253Z] [INFO] Project build successful
+[2025-07-23T19:24:23.255Z] [INFO] ============================================================
+[2025-07-23T19:24:23.255Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:24:23.256Z] [INFO] ============================================================
+[2025-07-23T19:24:23.257Z] [INFO] Overall Status: PASS
+[2025-07-23T19:24:23.257Z] [INFO] Total Checks: 10
+[2025-07-23T19:24:23.258Z] [INFO] Passed: 10
+[2025-07-23T19:24:23.258Z] [INFO] Failed: 0
+[2025-07-23T19:24:23.259Z] [INFO] Validation Time: 5.56 seconds
+[2025-07-23T19:24:23.267Z] [INFO] ============================================================
+[2025-07-23T19:24:23.268Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:24:23.269Z] [INFO] ============================================================
+[2025-07-23T19:24:23.270Z] [INFO] Environment: development
+[2025-07-23T19:24:23.271Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:24:23.272Z] [INFO] Validating feature flag states...
+[2025-07-23T19:24:23.272Z] [INFO] Found rollback data from: 2025-07-23T19:24:23.263Z
+[2025-07-23T19:24:23.273Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:24:23.273Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:24:23.275Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:24:23.275Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:24:28.044Z] [INFO] Navigation tests passed
+[2025-07-23T19:24:28.045Z] [INFO] Validating performance metrics...
+[2025-07-23T19:24:28.046Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:24:28.046Z] [INFO] Validating system health...
+[2025-07-23T19:24:28.047Z] [INFO] Checking project build...
+[2025-07-23T19:24:28.716Z] [INFO] Project build successful
+[2025-07-23T19:24:28.717Z] [INFO] ============================================================
+[2025-07-23T19:24:28.718Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:24:28.719Z] [INFO] ============================================================
+[2025-07-23T19:24:28.719Z] [INFO] Overall Status: PASS
+[2025-07-23T19:24:28.720Z] [INFO] Total Checks: 10
+[2025-07-23T19:24:28.721Z] [INFO] Passed: 10
+[2025-07-23T19:24:28.722Z] [INFO] Failed: 0
+[2025-07-23T19:24:28.722Z] [INFO] Validation Time: 5.45 seconds
+[2025-07-23T19:24:28.730Z] [INFO] ============================================================
+[2025-07-23T19:24:28.731Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:24:28.732Z] [INFO] ============================================================
+[2025-07-23T19:24:28.733Z] [INFO] Environment: development
+[2025-07-23T19:24:28.734Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:24:28.735Z] [INFO] Validating feature flag states...
+[2025-07-23T19:24:28.736Z] [INFO] Found rollback data from: 2025-07-23T19:24:28.726Z
+[2025-07-23T19:24:28.736Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:24:28.737Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:24:28.738Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:24:28.738Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:24:33.354Z] [INFO] Navigation tests passed
+[2025-07-23T19:24:33.354Z] [INFO] Validating performance metrics...
+[2025-07-23T19:24:33.355Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:24:33.355Z] [INFO] Validating system health...
+[2025-07-23T19:24:33.356Z] [INFO] Checking project build...
+[2025-07-23T19:24:33.891Z] [INFO] Project build successful
+[2025-07-23T19:24:33.892Z] [INFO] ============================================================
+[2025-07-23T19:24:33.892Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:24:33.893Z] [INFO] ============================================================
+[2025-07-23T19:24:33.893Z] [INFO] Overall Status: PASS
+[2025-07-23T19:24:33.894Z] [INFO] Total Checks: 10
+[2025-07-23T19:24:33.894Z] [INFO] Passed: 10
+[2025-07-23T19:24:33.895Z] [INFO] Failed: 0
+[2025-07-23T19:24:33.896Z] [INFO] Validation Time: 5.16 seconds
+[2025-07-23T19:47:32.443Z] [INFO] ============================================================
+[2025-07-23T19:47:32.455Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:47:32.457Z] [INFO] ============================================================
+[2025-07-23T19:47:32.459Z] [INFO] Environment: development
+[2025-07-23T19:47:32.461Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:47:32.463Z] [INFO] Validating feature flag states...
+[2025-07-23T19:47:32.464Z] [INFO] Found rollback data from: 2025-07-23T19:47:32.438Z
+[2025-07-23T19:47:32.464Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:47:32.464Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:47:32.467Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:47:32.467Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:47:36.532Z] [INFO] Validating performance metrics...
+[2025-07-23T19:47:36.533Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:47:36.534Z] [INFO] Validating system health...
+[2025-07-23T19:47:36.534Z] [INFO] Checking project build...
+[2025-07-23T19:47:37.189Z] [INFO] Project build successful
+[2025-07-23T19:47:37.190Z] [INFO] ============================================================
+[2025-07-23T19:47:37.192Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:47:37.193Z] [INFO] ============================================================
+[2025-07-23T19:47:37.194Z] [INFO] Overall Status: PARTIAL
+[2025-07-23T19:47:37.195Z] [INFO] Total Checks: 10
+[2025-07-23T19:47:37.197Z] [INFO] Passed: 9
+[2025-07-23T19:47:37.198Z] [INFO] Failed: 1
+[2025-07-23T19:47:37.199Z] [INFO] Validation Time: 4.75 seconds
+[2025-07-23T19:47:37.201Z] [INFO] Errors found:
+[2025-07-23T19:47:37.203Z] [ERROR]   - Navigation tests failed: Command failed: npm test -- __tests__/navigation/ --passWithNoTests
+FAIL __tests__/navigation/NavigationWrapper.test.tsx
+  ● Test suite failed to run
+
+    Cannot find module 'react' from '../node_modules/use-latest-callback/lib/src/index.js'
+
+    Require stack:
+      C:/Users/green/Desktop/island-rides-app-main/node_modules/use-latest-callback/lib/src/index.js
+      node_modules/@react-navigation/core/lib/commonjs/PreventRemoveProvider.js
+      node_modules/@react-navigation/core/lib/commonjs/index.js
+      node_modules/@react-navigation/native/lib/commonjs/useLinkProps.js
+      node_modules/@react-navigation/native/lib/commonjs/Link.js
+      node_modules/@react-navigation/native/lib/commonjs/index.js
+      src/navigation/EnhancedAppNavigator.tsx
+      src/navigation/NavigationWrapper.tsx
+      __tests__/navigation/NavigationWrapper.test.tsx
+
+    [0m [90m 1 |[39m [36mimport[39m [33mReact[39m [36mfrom[39m [32m'react'[39m[33m;[39m
+    [31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { [33mNavigationContainer[39m } [36mfrom[39m [32m'@react-navigation/native'[39m[33m;[39m
+     [90m   |[39m [31m[1m^[22m[39m
+     [90m 3 |[39m [36mimport[39m { createStackNavigator } [36mfrom[39m [32m'@react-navigation/stack'[39m[33m;[39m
+     [90m 4 |[39m [36mimport[39m { createBottomTabNavigator } [36mfrom[39m [32m'@react-navigation/bottom-tabs'[39m[33m;[39m
+     [90m 5 |[39m [36mimport[39m { [33mIonicons[39m } [36mfrom[39m [32m'@expo/vector-icons'[39m[33m;[39m[0m
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (../node_modules/use-latest-callback/lib/src/index.js:2:13)
+      at Object.require (node_modules/@react-navigation/core/src/PreventRemoveProvider.tsx:3:1)
+      at Object.require (node_modules/@react-navigation/core/src/index.tsx:15:1)
+      at Object.require (node_modules/@react-navigation/native/src/useLinkProps.tsx:1:1)
+      at Object.require (node_modules/@react-navigation/native/src/Link.tsx:5:1)
+      at Object.require (node_modules/@react-navigation/native/src/index.tsx:1:1)
+      at Object.require (src/navigation/EnhancedAppNavigator.tsx:2:1)
+      at Object.require (src/navigation/NavigationWrapper.tsx:10:1)
+      at Object.require (__tests__/navigation/NavigationWrapper.test.tsx:55:1)
+
+FAIL __tests__/navigation/NavigationIntegration.test.tsx
+  ● Test suite failed to run
+
+    Cannot find module 'react' from '../node_modules/use-latest-callback/lib/src/index.js'
+
+    Require stack:
+      C:/Users/green/Desktop/island-rides-app-main/node_modules/use-latest-callback/lib/src/index.js
+      node_modules/@react-navigation/core/lib/commonjs/PreventRemoveProvider.js
+      node_modules/@react-navigation/core/lib/commonjs/index.js
+      node_modules/@react-navigation/native/lib/commonjs/useLinkProps.js
+      node_modules/@react-navigation/native/lib/commonjs/Link.js
+      node_modules/@react-navigation/native/lib/commonjs/index.js
+      src/navigation/EnhancedAppNavigator.tsx
+      src/navigation/NavigationWrapper.tsx
+      __tests__/navigation/NavigationIntegration.test.tsx
+
+    [0m [90m 1 |[39m [36mimport[39m [33mReact[39m [36mfrom[39m [32m'react'[39m[33m;[39m
+    [31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { [33mNavigationContainer[39m } [36mfrom[39m [32m'@react-navigation/native'[39m[33m;[39m
+     [90m   |[39m [31m[1m^[22m[39m
+     [90m 3 |[39m [36mimport[39m { createStackNavigator } [36mfrom[39m [32m'@react-navigation/stack'[39m[33m;[39m
+     [90m 4 |[39m [36mimport[39m { createBottomTabNavigator } [36mfrom[39m [32m'@react-navigation/bottom-tabs'[39m[33m;[39m
+     [90m 5 |[39m [36mimport[39m { [33mIonicons[39m } [36mfrom[39m [32m'@expo/vector-icons'[39m[33m;[39m[0m
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (../node_modules/use-latest-callback/lib/src/index.js:2:13)
+      at Object.require (node_modules/@react-navigation/core/src/PreventRemoveProvider.tsx:3:1)
+      at Object.require (node_modules/@react-navigation/core/src/index.tsx:15:1)
+      at Object.require (node_modules/@react-navigation/native/src/useLinkProps.tsx:1:1)
+      at Object.require (node_modules/@react-navigation/native/src/Link.tsx:5:1)
+      at Object.require (node_modules/@react-navigation/native/src/index.tsx:1:1)
+      at Object.require (src/navigation/EnhancedAppNavigator.tsx:2:1)
+      at Object.require (src/navigation/NavigationWrapper.tsx:10:1)
+      at Object.require (__tests__/navigation/NavigationIntegration.test.tsx:55:1)
+
+Test Suites: 2 failed, 2 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        2.26 s
+Ran all test suites matching /__tests__\\navigation\\/i.
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path C:\Users\green\Desktop\island-rides-app-main\IslandRidesApp
+npm error workspace keylo-app@1.0.0
+npm error location C:\Users\green\Desktop\island-rides-app-main\IslandRidesApp
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c jest __tests__/navigation/ --passWithNoTests
+
+[2025-07-23T19:47:37.220Z] [INFO] ============================================================
+[2025-07-23T19:47:37.222Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:47:37.225Z] [INFO] ============================================================
+[2025-07-23T19:47:37.226Z] [INFO] Environment: development
+[2025-07-23T19:47:37.228Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:47:37.230Z] [INFO] Validating feature flag states...
+[2025-07-23T19:47:37.231Z] [INFO] Found rollback data from: 2025-07-23T19:47:37.214Z
+[2025-07-23T19:47:37.231Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:47:37.232Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:47:37.236Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:47:37.237Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:47:42.522Z] [INFO] Validating performance metrics...
+[2025-07-23T19:47:42.523Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:47:42.523Z] [INFO] Validating system health...
+[2025-07-23T19:47:42.524Z] [INFO] Checking project build...
+[2025-07-23T19:47:43.192Z] [INFO] Project build successful
+[2025-07-23T19:47:43.193Z] [INFO] ============================================================
+[2025-07-23T19:47:43.195Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:47:43.196Z] [INFO] ============================================================
+[2025-07-23T19:47:43.198Z] [INFO] Overall Status: PARTIAL
+[2025-07-23T19:47:43.200Z] [INFO] Total Checks: 10
+[2025-07-23T19:47:43.201Z] [INFO] Passed: 9
+[2025-07-23T19:47:43.203Z] [INFO] Failed: 1
+[2025-07-23T19:47:43.204Z] [INFO] Validation Time: 5.97 seconds
+[2025-07-23T19:47:43.206Z] [INFO] Errors found:
+[2025-07-23T19:47:43.207Z] [ERROR]   - Navigation tests failed: Command failed: npm test -- __tests__/navigation/ --passWithNoTests
+FAIL __tests__/navigation/NavigationWrapper.test.tsx
+  ● Test suite failed to run
+
+    Cannot find module 'react' from '../node_modules/use-latest-callback/lib/src/index.js'
+
+    Require stack:
+      C:/Users/green/Desktop/island-rides-app-main/node_modules/use-latest-callback/lib/src/index.js
+      node_modules/@react-navigation/core/lib/commonjs/PreventRemoveProvider.js
+      node_modules/@react-navigation/core/lib/commonjs/index.js
+      node_modules/@react-navigation/native/lib/commonjs/useLinkProps.js
+      node_modules/@react-navigation/native/lib/commonjs/Link.js
+      node_modules/@react-navigation/native/lib/commonjs/index.js
+      src/navigation/EnhancedAppNavigator.tsx
+      src/navigation/NavigationWrapper.tsx
+      __tests__/navigation/NavigationWrapper.test.tsx
+
+    [0m [90m 1 |[39m [36mimport[39m [33mReact[39m [36mfrom[39m [32m'react'[39m[33m;[39m
+    [31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { [33mNavigationContainer[39m } [36mfrom[39m [32m'@react-navigation/native'[39m[33m;[39m
+     [90m   |[39m [31m[1m^[22m[39m
+     [90m 3 |[39m [36mimport[39m { createStackNavigator } [36mfrom[39m [32m'@react-navigation/stack'[39m[33m;[39m
+     [90m 4 |[39m [36mimport[39m { createBottomTabNavigator } [36mfrom[39m [32m'@react-navigation/bottom-tabs'[39m[33m;[39m
+     [90m 5 |[39m [36mimport[39m { [33mIonicons[39m } [36mfrom[39m [32m'@expo/vector-icons'[39m[33m;[39m[0m
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (../node_modules/use-latest-callback/lib/src/index.js:2:13)
+      at Object.require (node_modules/@react-navigation/core/src/PreventRemoveProvider.tsx:3:1)
+      at Object.require (node_modules/@react-navigation/core/src/index.tsx:15:1)
+      at Object.require (node_modules/@react-navigation/native/src/useLinkProps.tsx:1:1)
+      at Object.require (node_modules/@react-navigation/native/src/Link.tsx:5:1)
+      at Object.require (node_modules/@react-navigation/native/src/index.tsx:1:1)
+      at Object.require (src/navigation/EnhancedAppNavigator.tsx:2:1)
+      at Object.require (src/navigation/NavigationWrapper.tsx:10:1)
+      at Object.require (__tests__/navigation/NavigationWrapper.test.tsx:55:1)
+
+FAIL __tests__/navigation/NavigationIntegration.test.tsx
+  ● Test suite failed to run
+
+    Cannot find module 'react' from '../node_modules/use-latest-callback/lib/src/index.js'
+
+    Require stack:
+      C:/Users/green/Desktop/island-rides-app-main/node_modules/use-latest-callback/lib/src/index.js
+      node_modules/@react-navigation/core/lib/commonjs/PreventRemoveProvider.js
+      node_modules/@react-navigation/core/lib/commonjs/index.js
+      node_modules/@react-navigation/native/lib/commonjs/useLinkProps.js
+      node_modules/@react-navigation/native/lib/commonjs/Link.js
+      node_modules/@react-navigation/native/lib/commonjs/index.js
+      src/navigation/EnhancedAppNavigator.tsx
+      src/navigation/NavigationWrapper.tsx
+      __tests__/navigation/NavigationIntegration.test.tsx
+
+    [0m [90m 1 |[39m [36mimport[39m [33mReact[39m [36mfrom[39m [32m'react'[39m[33m;[39m
+    [31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { [33mNavigationContainer[39m } [36mfrom[39m [32m'@react-navigation/native'[39m[33m;[39m
+     [90m   |[39m [31m[1m^[22m[39m
+     [90m 3 |[39m [36mimport[39m { createStackNavigator } [36mfrom[39m [32m'@react-navigation/stack'[39m[33m;[39m
+     [90m 4 |[39m [36mimport[39m { createBottomTabNavigator } [36mfrom[39m [32m'@react-navigation/bottom-tabs'[39m[33m;[39m
+     [90m 5 |[39m [36mimport[39m { [33mIonicons[39m } [36mfrom[39m [32m'@expo/vector-icons'[39m[33m;[39m[0m
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (../node_modules/use-latest-callback/lib/src/index.js:2:13)
+      at Object.require (node_modules/@react-navigation/core/src/PreventRemoveProvider.tsx:3:1)
+      at Object.require (node_modules/@react-navigation/core/src/index.tsx:15:1)
+      at Object.require (node_modules/@react-navigation/native/src/useLinkProps.tsx:1:1)
+      at Object.require (node_modules/@react-navigation/native/src/Link.tsx:5:1)
+      at Object.require (node_modules/@react-navigation/native/src/index.tsx:1:1)
+      at Object.require (src/navigation/EnhancedAppNavigator.tsx:2:1)
+      at Object.require (src/navigation/NavigationWrapper.tsx:10:1)
+      at Object.require (__tests__/navigation/NavigationIntegration.test.tsx:55:1)
+
+Test Suites: 2 failed, 2 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        2.791 s
+Ran all test suites matching /__tests__\\navigation\\/i.
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path C:\Users\green\Desktop\island-rides-app-main\IslandRidesApp
+npm error workspace keylo-app@1.0.0
+npm error location C:\Users\green\Desktop\island-rides-app-main\IslandRidesApp
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c jest __tests__/navigation/ --passWithNoTests
+
+[2025-07-23T19:47:43.224Z] [INFO] ============================================================
+[2025-07-23T19:47:43.228Z] [INFO] ROLLBACK VALIDATION STARTED
+[2025-07-23T19:47:43.230Z] [INFO] ============================================================
+[2025-07-23T19:47:43.233Z] [INFO] Environment: development
+[2025-07-23T19:47:43.235Z] [INFO] Timeout: 60 seconds
+[2025-07-23T19:47:43.239Z] [INFO] Validating feature flag states...
+[2025-07-23T19:47:43.240Z] [INFO] Found rollback data from: 2025-07-23T19:47:43.216Z
+[2025-07-23T19:47:43.241Z] [INFO] Rollback reason: Setup for validation test
+[2025-07-23T19:47:43.241Z] [INFO] Enhancement flags validation: PASS
+[2025-07-23T19:47:43.244Z] [INFO] Validating navigation functionality...
+[2025-07-23T19:47:43.245Z] [INFO] Running navigation functionality tests...
+[2025-07-23T19:47:47.870Z] [INFO] Validating performance metrics...
+[2025-07-23T19:47:47.871Z] [INFO] Rollback completed in 0s (within 300s limit)
+[2025-07-23T19:47:47.871Z] [INFO] Validating system health...
+[2025-07-23T19:47:47.872Z] [INFO] Checking project build...
+[2025-07-23T19:47:48.677Z] [INFO] Project build successful
+[2025-07-23T19:47:48.678Z] [INFO] ============================================================
+[2025-07-23T19:47:48.680Z] [INFO] ROLLBACK VALIDATION COMPLETED
+[2025-07-23T19:47:48.681Z] [INFO] ============================================================
+[2025-07-23T19:47:48.682Z] [INFO] Overall Status: PARTIAL
+[2025-07-23T19:47:48.684Z] [INFO] Total Checks: 10
+[2025-07-23T19:47:48.685Z] [INFO] Passed: 9
+[2025-07-23T19:47:48.686Z] [INFO] Failed: 1
+[2025-07-23T19:47:48.687Z] [INFO] Validation Time: 5.45 seconds
+[2025-07-23T19:47:48.688Z] [INFO] Errors found:
+[2025-07-23T19:47:48.689Z] [ERROR]   - Navigation tests failed: Command failed: npm test -- __tests__/navigation/ --passWithNoTests
+FAIL __tests__/navigation/NavigationIntegration.test.tsx
+  ● Test suite failed to run
+
+    Cannot find module 'react' from '../node_modules/use-latest-callback/lib/src/index.js'
+
+    Require stack:
+      C:/Users/green/Desktop/island-rides-app-main/node_modules/use-latest-callback/lib/src/index.js
+      node_modules/@react-navigation/core/lib/commonjs/PreventRemoveProvider.js
+      node_modules/@react-navigation/core/lib/commonjs/index.js
+      node_modules/@react-navigation/native/lib/commonjs/useLinkProps.js
+      node_modules/@react-navigation/native/lib/commonjs/Link.js
+      node_modules/@react-navigation/native/lib/commonjs/index.js
+      src/navigation/EnhancedAppNavigator.tsx
+      src/navigation/NavigationWrapper.tsx
+      __tests__/navigation/NavigationIntegration.test.tsx
+
+    [0m [90m 1 |[39m [36mimport[39m [33mReact[39m [36mfrom[39m [32m'react'[39m[33m;[39m
+    [31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { [33mNavigationContainer[39m } [36mfrom[39m [32m'@react-navigation/native'[39m[33m;[39m
+     [90m   |[39m [31m[1m^[22m[39m
+     [90m 3 |[39m [36mimport[39m { createStackNavigator } [36mfrom[39m [32m'@react-navigation/stack'[39m[33m;[39m
+     [90m 4 |[39m [36mimport[39m { createBottomTabNavigator } [36mfrom[39m [32m'@react-navigation/bottom-tabs'[39m[33m;[39m
+     [90m 5 |[39m [36mimport[39m { [33mIonicons[39m } [36mfrom[39m [32m'@expo/vector-icons'[39m[33m;[39m[0m
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (../node_modules/use-latest-callback/lib/src/index.js:2:13)
+      at Object.require (node_modules/@react-navigation/core/src/PreventRemoveProvider.tsx:3:1)
+      at Object.require (node_modules/@react-navigation/core/src/index.tsx:15:1)
+      at Object.require (node_modules/@react-navigation/native/src/useLinkProps.tsx:1:1)
+      at Object.require (node_modules/@react-navigation/native/src/Link.tsx:5:1)
+      at Object.require (node_modules/@react-navigation/native/src/index.tsx:1:1)
+      at Object.require (src/navigation/EnhancedAppNavigator.tsx:2:1)
+      at Object.require (src/navigation/NavigationWrapper.tsx:10:1)
+      at Object.require (__tests__/navigation/NavigationIntegration.test.tsx:55:1)
+
+FAIL __tests__/navigation/NavigationWrapper.test.tsx
+  ● Test suite failed to run
+
+    Cannot find module 'react' from '../node_modules/use-latest-callback/lib/src/index.js'
+
+    Require stack:
+      C:/Users/green/Desktop/island-rides-app-main/node_modules/use-latest-callback/lib/src/index.js
+      node_modules/@react-navigation/core/lib/commonjs/PreventRemoveProvider.js
+      node_modules/@react-navigation/core/lib/commonjs/index.js
+      node_modules/@react-navigation/native/lib/commonjs/useLinkProps.js
+      node_modules/@react-navigation/native/lib/commonjs/Link.js
+      node_modules/@react-navigation/native/lib/commonjs/index.js
+      src/navigation/EnhancedAppNavigator.tsx
+      src/navigation/NavigationWrapper.tsx
+      __tests__/navigation/NavigationWrapper.test.tsx
+
+    [0m [90m 1 |[39m [36mimport[39m [33mReact[39m [36mfrom[39m [32m'react'[39m[33m;[39m
+    [31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { [33mNavigationContainer[39m } [36mfrom[39m [32m'@react-navigation/native'[39m[33m;[39m
+     [90m   |[39m [31m[1m^[22m[39m
+     [90m 3 |[39m [36mimport[39m { createStackNavigator } [36mfrom[39m [32m'@react-navigation/stack'[39m[33m;[39m
+     [90m 4 |[39m [36mimport[39m { createBottomTabNavigator } [36mfrom[39m [32m'@react-navigation/bottom-tabs'[39m[33m;[39m
+     [90m 5 |[39m [36mimport[39m { [33mIonicons[39m } [36mfrom[39m [32m'@expo/vector-icons'[39m[33m;[39m[0m
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (../node_modules/use-latest-callback/lib/src/index.js:2:13)
+      at Object.require (node_modules/@react-navigation/core/src/PreventRemoveProvider.tsx:3:1)
+      at Object.require (node_modules/@react-navigation/core/src/index.tsx:15:1)
+      at Object.require (node_modules/@react-navigation/native/src/useLinkProps.tsx:1:1)
+      at Object.require (node_modules/@react-navigation/native/src/Link.tsx:5:1)
+      at Object.require (node_modules/@react-navigation/native/src/index.tsx:1:1)
+      at Object.require (src/navigation/EnhancedAppNavigator.tsx:2:1)
+      at Object.require (src/navigation/NavigationWrapper.tsx:10:1)
+      at Object.require (__tests__/navigation/NavigationWrapper.test.tsx:55:1)
+
+Test Suites: 2 failed, 2 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        2.519 s
+Ran all test suites matching /__tests__\\navigation\\/i.
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path C:\Users\green\Desktop\island-rides-app-main\IslandRidesApp
+npm error workspace keylo-app@1.0.0
+npm error location C:\Users\green\Desktop\island-rides-app-main\IslandRidesApp
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c jest __tests__/navigation/ --passWithNoTests
+

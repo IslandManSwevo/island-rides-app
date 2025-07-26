@@ -180,6 +180,9 @@ export const {
   clearRollbackHistory,
 } = featureFlagsSlice.actions;
 
+// Export the slice itself for use in tests and store configuration
+export { featureFlagsSlice };
+
 export default featureFlagsSlice.reducer;
 
 // Selectors for accessing feature flag state

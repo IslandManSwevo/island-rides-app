@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../styles/theme';
 
 interface BulkRateUpdateScreenProps {
-  navigation: any;
+  navigation: NavigationProp<any>;
   route: {
     params: {
       vehicleIds: number[];

@@ -23,7 +23,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   fallbackComponent: FallbackComponent = UnauthorizedScreen,
 }) => {
-  const { isAuthenticated, currentUser, isLoading } = useAuth();
+  const { isAuthenticated, user: currentUser, isLoading } = useAuth();
 
   // Show loading state while authentication is being checked
   if (isLoading) {
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
  * Hook for checking user permissions in components
  */
 export const usePermissions = () => {
-  const { currentUser, isAuthenticated } = useAuth();
+  const { user: currentUser, isAuthenticated } = useAuth();
 
   const hasRole = (requiredRole: UserRole | UserRole[]): boolean => {
     if (!isAuthenticated || !currentUser) return false;

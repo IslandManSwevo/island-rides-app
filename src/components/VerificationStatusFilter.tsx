@@ -15,31 +15,37 @@ const VerificationStatusFilter = <K extends string = 'verificationStatus'>({ ver
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>Verification Status</Text>
       <View style={styles.optionsGrid}>
-        {VERIFICATION_STATUS_OPTIONS.map((option: VerificationStatusOption) => (
-          <TouchableOpacity
-            key={option.key}
-            style={[
-              styles.verificationChip,
-              verificationStatus.includes(option.key) && styles.verificationChipSelected
-            ]}
-            onPress={() => onToggleFilter(filterKey, option.key)}
-            accessibilityRole="button"
-            accessibilityLabel={`${option.label} verification status filter`}
-            accessibilityState={{ selected: verificationStatus.includes(option.key) }}
-          >
-            <Ionicons 
-              name={option.icon} 
-              size={16} 
-              color={verificationStatus.includes(option.key) ? colors.white : colors.primary} 
-            />
-            <Text style={[
-              styles.verificationChipText,
-              verificationStatus.includes(option.key) && styles.verificationChipTextSelected
-            ]}>
-              {option.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {VERIFICATION_STATUS_OPTIONS.map((option: VerificationStatusOption) => {
+          // Ensure verificationStatus is always an array before calling includes
+          const safeVerificationStatus = Array.isArray(verificationStatus) ? verificationStatus : [];
+          const isSelected = safeVerificationStatus.includes(option.key);
+
+          return (
+            <TouchableOpacity
+              key={option.key}
+              style={[
+                styles.verificationChip,
+                isSelected && styles.verificationChipSelected
+              ]}
+              onPress={() => onToggleFilter(filterKey, option.key)}
+              accessibilityRole="button"
+              accessibilityLabel={`${option.label} verification status filter`}
+              accessibilityState={{ selected: isSelected }}
+            >
+              <Ionicons
+                name={option.icon}
+                size={16}
+                color={isSelected ? colors.white : colors.primary}
+              />
+              <Text style={[
+                styles.verificationChipText,
+                isSelected && styles.verificationChipTextSelected
+              ]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );

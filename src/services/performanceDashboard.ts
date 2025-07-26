@@ -146,7 +146,7 @@ class PerformanceDashboard {
           bridgeUtilization: this.getBridgeUtilization(),
         },
         bundleMetrics: {
-          initialLoadTime: bundleMetrics.initialBundleSize,
+          initialLoadTime: bundleMetrics.initialBundleSize || 0,
           chunkLoadTimes: bundleMetrics.chunkLoadTimes,
           treeshakingEfficiency: this.calculateTreeshakingEfficiency(dependencyAnalysis),
           codeSplittingRatio: this.calculateCodeSplittingRatio(bundleMetrics),

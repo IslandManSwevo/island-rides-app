@@ -43,7 +43,7 @@ import { conversationService } from '../services/conversationService';
 import chatService from '../services/chatService';
 import { mediaUploadService } from '../services/mediaUploadService';
 import { AppHeader } from '../components/AppHeader';
-import { useAuth } from '../context/AuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 import { colors, spacing, borderRadius } from '../styles/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -64,7 +64,7 @@ const QUICK_REPLIES = [
 type ChatConversationScreenProps = StackScreenProps<RootStackParamList, 'Chat'>;
 
 const ChatConversationScreen: React.FC<ChatConversationScreenProps> = React.memo(({ route, navigation }) => {
-  const { currentUser: authUser } = useAuth();
+  const { user: authUser } = useUnifiedAuth();
   const { context, title: initialTitle } = route.params;
 
   // State management

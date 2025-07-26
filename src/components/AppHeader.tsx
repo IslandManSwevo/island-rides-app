@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useAuth } from '../context/AuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 import { colors, typography, spacing } from '../styles/theme';
 import { NavigationProp } from '@react-navigation/native';
 import { BusinessLogicError } from '../services/errors/BusinessLogicError';
@@ -24,7 +24,7 @@ export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
   showProfileButton = true,
   rightComponent
 }) => {
-  const { logout } = useAuth();
+  const { logout } = useUnifiedAuth();
 
   const handleLogout = useCallback(() => {
     Alert.alert(

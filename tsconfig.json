@@ -14,6 +14,15 @@
     "target": "esnext",
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"]
-  }
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "types": ["jest"]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

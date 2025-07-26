@@ -10,7 +10,7 @@ import { MaintenanceFormModal } from './vehicle-condition/MaintenanceFormModal';
 import { DamageReportModal } from './vehicle-condition/DamageReportModal';
 import { styles } from './vehicle-condition/styles';
 import { VehicleMaintenance } from '../types';
-import { useAuth } from '../context/AuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 import { loggingService } from '../services/LoggingService';
 
 // Custom hook for managing modal states
@@ -66,7 +66,7 @@ interface VehicleConditionTrackerProps {
 
 export const VehicleConditionTracker: React.FC<VehicleConditionTrackerProps> = React.memo(({ vehicleId }) => {
   const vehicleIdNumber = useMemo(() => parseInt(vehicleId), [vehicleId]);
-  const { currentUser } = useAuth();
+  const { user: currentUser } = useUnifiedAuth();
   
   const { rating, isLoading: isRatingLoading, refresh: updateRating } = useConditionRating(vehicleId);
   const { records, addRecord, loading: isMaintenanceLoading } = useMaintenanceRecords(vehicleIdNumber);

@@ -1,3 +1,11 @@
+/**
+ * @deprecated This file is deprecated and will be removed.
+ * Use UnifiedAuthContext instead.
+ *
+ * This file is kept temporarily for migration purposes only.
+ * All new code should use UnifiedAuthContext from './UnifiedAuthContext'
+ */
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { apiService } from '../services/apiService';
 import { authService } from '../services/authService';

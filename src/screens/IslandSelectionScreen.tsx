@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../components/AppHeader';
 import { vehicleService } from '../services/vehicleService';
 import { locationService } from '../services/LocationService';
-import { useAuth } from '../context/AuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { Island, VehicleRecommendation } from '../types';
 import { ROUTES, RootStackParamList } from '../navigation/routes';
@@ -18,7 +18,7 @@ interface IslandSelectionScreenProps {
 const IslandSelectionScreen: React.FC<IslandSelectionScreenProps> = ({
   navigation
 }) => {
-  const { logout } = useAuth();
+  const { logout } = useUnifiedAuth();
   // ✅ NO useEffect auth check - App.tsx guarantees we're authenticated
 
   const [isLoading, setIsLoading] = React.useState(false);

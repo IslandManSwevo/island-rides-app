@@ -248,7 +248,7 @@ export const useIslandRides = () => {
         const timer = performanceMonitor.startTimer('dashboard_data_load');
         
         try {
-          const data: any = {};
+          const data: Record<string, unknown> = {};
 
           // Load role-specific data
           if (roleFeatures.features.canRentVehicles) {

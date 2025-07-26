@@ -2,6 +2,9 @@ import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { render, createMockNavigation, createMockRoute } from './test-utils';
 
+// Jest globals are available through @types/jest
+/// <reference types="jest" />
+
 // Template for screen tests
 // Copy this template and adapt it for your screens
 
@@ -69,17 +72,17 @@ describe('ScreenName', () => {
     });
 
     it('shows loading state initially', () => {
-      const { getByTestId } = renderScreen({ loading: true });
+      const { getByTestId } = renderScreen();
       
       expect(getByTestId('loading-indicator')).toBeTruthy();
     });
 
     it('loads data on mount', async () => {
-      const { getByText, queryByTestId } = renderScreen({ loading: false });
+      const { getByTestId, queryByTestId } = renderScreen();
       
       await waitFor(() => {
         expect(queryByTestId('loading-indicator')).toBeNull();
-        expect(getByText('Data Container')).toBeTruthy();
+        expect(getByTestId('data-container')).toBeTruthy();
       });
     });
   });
@@ -95,18 +98,17 @@ describe('ScreenName', () => {
     });
 
     it('handles back navigation', () => {
-      const { getByText } = renderScreen();
+      const { getByRole } = renderScreen();
       
-      const backButton = getByText('Back');
-      fireEvent.press(backButton);
+      fireEvent.press(getByRole('button', { name: /back/i }));
       
       expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
     });
 
     it('navigates to related screens', () => {
-      const { getByText } = renderScreen();
+      const { getByRole } = renderScreen();
       
-      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByRole('button', { name: /next/i }));
       
       expect(mockNavigation.navigate).toHaveBeenCalledWith('NextScreen');
     });
@@ -162,12 +164,11 @@ describe('ScreenName', () => {
     });
 
     it('handles filter selection', () => {
-      const { getByText } = renderScreen();
+      const { getByRole } = renderScreen();
       
-      fireEvent.press(getByText('Filter'));
+      fireEvent.press(getByRole('button', { name: /filter/i }));
       
-      // Check if modal or filter UI is shown
-      // expect(getByRole('modal')).toBeTruthy();
+      expect(getByRole('modal')).toBeTruthy();
     });
 
     it('handles item selection', () => {
@@ -186,8 +187,8 @@ describe('ScreenName', () => {
       const { store } = renderScreen({}, initialState);
       
       // Trigger action that updates state
-      const { getByText } = renderScreen({}, initialState);
-      fireEvent.press(getByText('Add Item'));
+      const { getByRole } = renderScreen();
+      fireEvent.press(getByRole('button', { name: /add item/i }));
       
       await waitFor(() => {
         const state = store.getState();
@@ -205,10 +206,10 @@ describe('ScreenName', () => {
 
   describe('Form Handling', () => {
     it('validates form input', async () => {
-      const { getByText } = renderScreen();
+      const { getByRole, getByText } = renderScreen();
       
       // Submit form without required fields
-      fireEvent.press(getByText('Submit'));
+      fireEvent.press(getByRole('button', { name: /submit/i }));
       
       await waitFor(() => {
         expect(getByText('This field is required')).toBeTruthy();
@@ -217,13 +218,13 @@ describe('ScreenName', () => {
 
     it('submits form successfully', async () => {
       const mockSubmit = jest.fn();
-      const { getByPlaceholderText, getByText } = renderScreen({ onSubmit: mockSubmit });
+      const { getByDisplayValue, getByRole } = renderScreen({ onSubmit: mockSubmit });
       
       // Fill form
-      fireEvent.changeText(getByPlaceholderText('Search...'), 'test value');
+      fireEvent.changeText(getByDisplayValue(''), 'test value');
       
       // Submit form
-      fireEvent.press(getByText('Submit'));
+      fireEvent.press(getByRole('button', { name: /submit/i }));
       
       await waitFor(() => {
         expect(mockSubmit).toHaveBeenCalledWith({ field: 'test value' });
@@ -241,9 +242,9 @@ describe('ScreenName', () => {
 
     it('shows limited features for unauthorized users', () => {
       const limitedUserState = { user: { role: 'basic' } };
-      const { queryByText } = renderScreen({}, limitedUserState);
+      const { queryByRole } = renderScreen({}, limitedUserState);
       
-      expect(queryByText('Admin Action')).toBeNull();
+      expect(queryByRole('button', { name: /admin action/i })).toBeNull();
     });
   });
 
@@ -277,7 +278,7 @@ describe('ScreenName', () => {
       
       const { getByText } = render(<ComponentWithError />);
       
-      expect(getByText(/error loading data/i)).toBeTruthy();
+      expect(getByText(/something went wrong/i)).toBeTruthy();
     });
   });
 
@@ -290,7 +291,7 @@ describe('ScreenName', () => {
       
       const { getByTestId } = renderScreen({ data: largeDataSet });
       
-      expect(getByTestId('scroll-view')).toBeTruthy();
+      expect(getByTestId('list')).toBeTruthy();
     });
 
     it('implements proper memoization', () => {

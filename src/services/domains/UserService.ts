@@ -156,7 +156,7 @@ export class UserService {
    * Get saved searches
    */
   async getSavedSearches(): Promise<any[]> {
-    const response = await apiService.get<{ searches: any[] }>('/api/user/saved-searches');
+    const response = await apiService.get<{ searches: unknown[] }>('/api/user/saved-searches');
     return response.searches;
   }
 

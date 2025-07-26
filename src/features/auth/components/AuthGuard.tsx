@@ -23,7 +23,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   loadingComponent: LoadingComponent,
 }) => {
   const navigation = useNavigation();
-  const { isAuthenticated, currentUser, isLoading } = useAuth();
+  const { isAuthenticated, user: currentUser, isLoading } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;

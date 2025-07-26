@@ -81,7 +81,7 @@ const FirebaseAuthScreen: React.FC = () => {
       // Clear form
       setEmail('');
       setPassword('');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       const errorCode = error.code;
       const errorMessage = error.message;
       console.error('Sign up error:', { errorCode, errorMessage });
@@ -112,7 +112,7 @@ const FirebaseAuthScreen: React.FC = () => {
       // Clear form
       setEmail('');
       setPassword('');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       const errorCode = error.code;
       const errorMessage = error.message;
       console.error('Sign in error:', { errorCode, errorMessage });
@@ -128,7 +128,7 @@ const FirebaseAuthScreen: React.FC = () => {
     try {
       await signOut(auth);
       Alert.alert('Success', 'Signed out successfully!');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Sign out error:', error);
       Alert.alert('Error', 'Failed to sign out');
     } finally {

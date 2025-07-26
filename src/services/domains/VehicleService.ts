@@ -180,7 +180,7 @@ export class VehicleService {
    * Get vehicle reviews
    */
   async getVehicleReviews(vehicleId: string): Promise<any[]> {
-    const response = await apiService.get<{ reviews: any[] }>(`/api/vehicles/${vehicleId}/reviews`);
+    const response = await apiService.get<{ reviews: unknown[] }>(`/api/vehicles/${vehicleId}/reviews`);
     return response.reviews;
   }
 

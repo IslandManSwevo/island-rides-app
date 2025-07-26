@@ -1,0 +1,22 @@
+[2025-07-23T19:47:54.131Z] [INFO] Starting FULL rollback for environment: development
+[2025-07-23T19:47:54.135Z] [INFO] Reason: Log activity test
+[2025-07-23T19:47:54.139Z] [INFO] Rollback data written to: C:\Users\green\Desktop\island-rides-app-main\IslandRidesApp\temp\emergency-rollback.json
+[2025-07-23T19:47:54.144Z] [INFO] Flags disabled successfully
+[2025-07-23T19:47:54.146Z] [INFO] Rollback completed in 0.01 seconds
+[2025-07-23T19:48:28.330Z] [INFO] ============================================================
+[2025-07-23T19:48:28.337Z] [INFO] EMERGENCY NAVIGATION ROLLBACK INITIATED
+[2025-07-23T19:48:28.338Z] [INFO] ============================================================
+[2025-07-23T19:48:28.339Z] [INFO] Environment: development
+[2025-07-23T19:48:28.340Z] [INFO] Type: specific
+[2025-07-23T19:48:28.340Z] [INFO] Reason: Testing Epic 2 rollback
+[2025-07-23T19:48:28.341Z] [INFO] Dry Run: YES
+[2025-07-23T19:48:28.342Z] [INFO] Starting SPECIFIC rollback for environment: development
+[2025-07-23T19:48:28.342Z] [INFO] Reason: Testing Epic 2 rollback
+[2025-07-23T19:48:28.343Z] [INFO] Flags to rollback: ENHANCED_HOME_SCREEN, SMART_ISLAND_SELECTION
+[2025-07-23T19:48:28.344Z] [INFO] DRY RUN: Would disable the following specific flags:
+[2025-07-23T19:48:28.345Z] [INFO]   - ENHANCED_HOME_SCREEN
+[2025-07-23T19:48:28.345Z] [INFO]   - SMART_ISLAND_SELECTION
+[2025-07-23T19:48:28.346Z] [INFO] ============================================================
+[2025-07-23T19:48:28.346Z] [INFO] ROLLBACK COMPLETED SUCCESSFULLY
+[2025-07-23T19:48:28.347Z] [INFO] ============================================================
+[2025-07-23T19:48:28.347Z] [INFO] Flags disabled: ENHANCED_HOME_SCREEN, SMART_ISLAND_SELECTION

@@ -22,7 +22,7 @@ export interface AppError {
   message: string;
   code?: string;
   statusCode?: number;
-  details?: any;
+  details?: Record<string, unknown>;
   timestamp: string;
   context?: string;
 }
@@ -36,7 +36,7 @@ export function createError(
   options: {
     code?: string;
     statusCode?: number;
-    details?: any;
+    details?: Record<string, unknown>;
     context?: string;
   } = {}
 ): AppError {
@@ -54,7 +54,7 @@ export function createError(
 /**
  * Parse API error response into AppError
  */
-export function parseApiError(error: any, context?: string): AppError {
+export function parseApiError(error: Error | unknown, context?: string): AppError {
   // Network error
   if (!error.response) {
     return createError(ErrorType.NETWORK, 'Network connection failed', {
@@ -152,7 +152,7 @@ export function showErrorAlert(error: AppError, options: {
  * Handle error with logging and user notification
  */
 export function handleError(
-  error: any,
+  error: Error | unknown,
   context: string,
   options: {
     showAlert?: boolean;
@@ -199,7 +199,7 @@ export async function withRetry<T>(
     delay?: number;
     backoffMultiplier?: number;
     context?: string;
-    shouldRetry?: (error: any) => boolean;
+    shouldRetry?: (error: Error | unknown) => boolean;
   } = {}
 ): Promise<T> {
   const {
@@ -240,7 +240,7 @@ export async function withRetry<T>(
 /**
  * Check if error is retryable
  */
-export function isRetryableError(error: any): boolean {
+export function isRetryableError(error: Error | unknown): boolean {
   if (!error) return false;
 
   // Network errors are retryable

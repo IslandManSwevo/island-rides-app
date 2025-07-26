@@ -1,8 +1,15 @@
+/**
+ * @deprecated This Firebase authentication hook is deprecated and will be removed.
+ * Use useUnifiedAuth from '../context/UnifiedAuthContext' instead.
+ *
+ * This file is kept temporarily for migration purposes only.
+ */
+
 import { useState, useEffect } from 'react';
-import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
   User,
@@ -63,7 +70,7 @@ export const useFirebaseAuth = () => {
       console.log('useFirebaseAuth: Sign up successful', { uid: user.uid, email: user.email });
       
       return userCredential;
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       const errorCode = error.code;
       const errorMessage = error.message;
       console.error('useFirebaseAuth: Sign up error', { errorCode, errorMessage });
@@ -89,7 +96,7 @@ export const useFirebaseAuth = () => {
       console.log('useFirebaseAuth: Sign in successful', { uid: user.uid, email: user.email });
       
       return userCredential;
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       const errorCode = error.code;
       const errorMessage = error.message;
       console.error('useFirebaseAuth: Sign in error', { errorCode, errorMessage });
@@ -108,7 +115,7 @@ export const useFirebaseAuth = () => {
       
       await signOut(auth);
       console.log('useFirebaseAuth: Sign out successful');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('useFirebaseAuth: Sign out error', error);
       setError(error.message);
       throw error;
