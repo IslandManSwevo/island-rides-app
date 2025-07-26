@@ -10,7 +10,102 @@ const net = require('net');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 require('dotenv').config();
+
+// JWT Security Configuration and Validation
+const validateJWTConfiguration = () => {
+  const errors = [];
+
+  // Validate JWT_SECRET
+  if (!process.env.JWT_SECRET) {
+    errors.push('JWT_SECRET environment variable is required');
+  } else if (process.env.JWT_SECRET.length < 32) {
+    errors.push('JWT_SECRET must be at least 32 characters long for security');
+  } else if (process.env.JWT_SECRET === 'your_jwt_secret_here' ||
+             process.env.JWT_SECRET === 'default_secret' ||
+             process.env.JWT_SECRET.includes('example')) {
+    errors.push('JWT_SECRET appears to be a default/example value - use a secure random secret');
+  }
+
+  // Validate JWT_REFRESH_SECRET
+  if (!process.env.JWT_REFRESH_SECRET) {
+    errors.push('JWT_REFRESH_SECRET environment variable is required');
+  } else if (process.env.JWT_REFRESH_SECRET.length < 32) {
+    errors.push('JWT_REFRESH_SECRET must be at least 32 characters long for security');
+  } else if (process.env.JWT_REFRESH_SECRET === process.env.JWT_SECRET) {
+    errors.push('JWT_REFRESH_SECRET must be different from JWT_SECRET');
+  }
+
+  // Validate JWT_EXPIRES_IN
+  const validExpirationPattern = /^(\d+[smhd]|\d+)$/;
+  if (process.env.JWT_EXPIRES_IN && !validExpirationPattern.test(process.env.JWT_EXPIRES_IN)) {
+    errors.push('JWT_EXPIRES_IN must be a valid time format (e.g., "24h", "7d", "3600")');
+  }
+
+  // Production environment additional checks
+  if (process.env.NODE_ENV === 'production') {
+    if (process.env.JWT_SECRET.length < 64) {
+      errors.push('In production, JWT_SECRET should be at least 64 characters long');
+    }
+    if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.length < 64) {
+      errors.push('In production, JWT_REFRESH_SECRET should be at least 64 characters long');
+    }
+  }
+
+  return errors;
+};
+
+// Generate secure JWT secrets if missing or insecure
+const generateSecureSecret = (length = 64) => {
+  return crypto.randomBytes(length).toString('hex');
+};
+
+// Initialize JWT security
+const initializeJWTSecurity = () => {
+  const validationErrors = validateJWTConfiguration();
+
+  if (validationErrors.length > 0) {
+    console.error('🚨 JWT SECURITY CONFIGURATION ERRORS:');
+    validationErrors.forEach(error => console.error(`   ❌ ${error}`));
+
+    // In development, auto-generate secure secrets
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔧 Auto-generating secure JWT secrets for development...');
+
+      if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+        process.env.JWT_SECRET = generateSecureSecret(64);
+        console.log('✅ Generated secure JWT_SECRET');
+      }
+
+      if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.length < 32) {
+        process.env.JWT_REFRESH_SECRET = generateSecureSecret(64);
+        console.log('✅ Generated secure JWT_REFRESH_SECRET');
+      }
+
+      console.log('⚠️  For production, set these secrets in your environment variables:');
+      console.log(`   JWT_SECRET=${process.env.JWT_SECRET}`);
+      console.log(`   JWT_REFRESH_SECRET=${process.env.JWT_REFRESH_SECRET}`);
+    } else {
+      // In production, fail fast
+      console.error('🛑 CRITICAL: Cannot start server with insecure JWT configuration in production');
+      process.exit(1);
+    }
+  } else {
+    console.log('✅ JWT security configuration validated successfully');
+  }
+
+  // Log security status (without exposing secrets)
+  console.log('🔐 JWT Security Status:');
+  console.log(`   JWT_SECRET length: ${process.env.JWT_SECRET.length} characters`);
+  console.log(`   JWT_REFRESH_SECRET length: ${process.env.JWT_REFRESH_SECRET.length} characters`);
+  console.log(`   JWT_EXPIRES_IN: ${process.env.JWT_EXPIRES_IN || '24h'}`);
+  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+};
+
+// Initialize JWT security before starting the server
+initializeJWTSecurity();
+
 const db = require('./db');
 const transfiService = require('./services/transfiService');
 const paypalService = require('./services/paypalService');
@@ -484,20 +579,92 @@ async function handleSuccessfulLogin(user) {
   logAuditEvent('LOGIN_SUCCESS', user.id, { email: user.email });
 }
 
-// Refresh token functions for frontend compatibility
+// Enhanced JWT token functions with security improvements
+function generateAccessToken(userId, email, role) {
+  const payload = {
+    userId,
+    email,
+    role,
+    type: 'access',
+    iat: Math.floor(Date.now() / 1000),
+    jti: crypto.randomUUID() // Unique token ID for tracking/revocation
+  };
+
+  const options = {
+    expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+    issuer: 'keylo-api',
+    audience: 'keylo-app',
+    algorithm: 'HS256'
+  };
+
+  return jwt.sign(payload, process.env.JWT_SECRET, options);
+}
+
 function generateRefreshToken(userId, email) {
-  return jwt.sign(
-    { userId, email, type: 'refresh' },
-    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh',
-    { expiresIn: '7d' }
-  );
+  const payload = {
+    userId,
+    email,
+    type: 'refresh',
+    iat: Math.floor(Date.now() / 1000),
+    jti: crypto.randomUUID() // Unique token ID for tracking/revocation
+  };
+
+  const options = {
+    expiresIn: '7d',
+    issuer: 'keylo-api',
+    audience: 'keylo-app',
+    algorithm: 'HS256'
+  };
+
+  // Use dedicated refresh secret (never fall back to access token secret)
+  if (!process.env.JWT_REFRESH_SECRET) {
+    throw new Error('JWT_REFRESH_SECRET is required for refresh token generation');
+  }
+
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, options);
 }
 
 function verifyRefreshToken(token) {
   try {
-    return jwt.verify(token, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh');
+    if (!process.env.JWT_REFRESH_SECRET) {
+      throw new Error('JWT_REFRESH_SECRET is not configured');
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET, {
+      issuer: 'keylo-api',
+      audience: 'keylo-app',
+      algorithms: ['HS256']
+    });
+
+    // Validate token type
+    if (decoded.type !== 'refresh') {
+      throw new Error('Invalid token type');
+    }
+
+    return decoded;
   } catch (error) {
+    console.error('Refresh token verification failed:', error.message);
     throw new Error('Invalid refresh token');
+  }
+}
+
+function verifyAccessToken(token) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: 'keylo-api',
+      audience: 'keylo-app',
+      algorithms: ['HS256']
+    });
+
+    // Validate token type
+    if (decoded.type !== 'access') {
+      throw new Error('Invalid token type');
+    }
+
+    return decoded;
+  } catch (error) {
+    console.error('Access token verification failed:', error.message);
+    throw new Error('Invalid access token');
   }
 }
 
@@ -650,44 +817,27 @@ async function generateRecommendations(userId, island) {
 
 const authenticateToken = (req, res, next) => {
   console.log('🔍 Backend: Auth check for:', req.path);
-  
+
   const authHeader = req.headers['authorization'];
   console.log('🔍 Backend: Auth header exists:', !!authHeader);
-  
+
   const token = authHeader && authHeader.split(' ')[1];
   console.log('🔍 Backend: Token extracted:', !!token);
-  
+
   if (!token) {
-    return res.status(401).json({ 
+    return res.status(401).json({
       error: 'Access token required',
       code: 'TOKEN_MISSING',
       message: 'Authorization header with Bearer token is required'
     });
   }
-  
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      console.log('❌ Backend: JWT verify failed:', err.message);
-      let errorResponse = {
-        error: 'Invalid or expired token',
-        code: 'TOKEN_INVALID',
-        message: 'The provided token is invalid or has expired'
-      };
-      
-      if (err.name === 'TokenExpiredError') {
-        errorResponse.code = 'TOKEN_EXPIRED';
-        errorResponse.message = 'Token has expired, please refresh your session';
-      } else if (err.name === 'JsonWebTokenError') {
-        errorResponse.code = 'TOKEN_MALFORMED';
-        errorResponse.message = 'Token format is invalid';
-      }
-      
-      return res.status(401).json(errorResponse);
-    }
-    
-    console.log('✅ Backend: Token decoded successfully:', JSON.stringify(user, null, 2));
+
+  try {
+    // Use enhanced token verification with security checks
+    const user = verifyAccessToken(token);
+
     console.log('✅ Backend: Token valid for user:', user.userId);
-    
+
     if (!user.userId) {
       console.log('⚠️ Backend: Warning - userId is null/undefined in token payload');
       return res.status(401).json({
@@ -696,10 +846,52 @@ const authenticateToken = (req, res, next) => {
         message: 'Token does not contain valid user information'
       });
     }
-    
+
+    // Log successful authentication for security monitoring
+    console.log('🔐 Authentication successful:', {
+      userId: user.userId,
+      email: user.email,
+      role: user.role,
+      tokenId: user.jti,
+      path: req.path,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      timestamp: new Date().toISOString()
+    });
+
     req.user = user;
     next();
-  });
+  } catch (error) {
+    console.log('❌ Backend: JWT verify failed:', error.message);
+
+    let errorResponse = {
+      error: 'Invalid or expired token',
+      code: 'TOKEN_INVALID',
+      message: 'The provided token is invalid or has expired'
+    };
+
+    if (error.message.includes('expired')) {
+      errorResponse.code = 'TOKEN_EXPIRED';
+      errorResponse.message = 'Token has expired, please refresh your session';
+    } else if (error.message.includes('Invalid token type')) {
+      errorResponse.code = 'TOKEN_TYPE_INVALID';
+      errorResponse.message = 'Invalid token type for this endpoint';
+    } else if (error.message.includes('malformed')) {
+      errorResponse.code = 'TOKEN_MALFORMED';
+      errorResponse.message = 'Token format is invalid';
+    }
+
+    // Log failed authentication for security monitoring
+    console.log('🚨 Authentication failed:', {
+      error: error.message,
+      path: req.path,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      timestamp: new Date().toISOString()
+    });
+
+    return res.status(401).json(errorResponse);
+  }
 };
 
 const checkRole = (allowedRoles) => {
@@ -749,12 +941,8 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
     const newUserResult = await db.query(insertUserQuery, [sanitizedEmail, passwordHash, sanitizedFirstName, sanitizedLastName, role]);
     const user = newUserResult.rows[0];
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-    );
-
+    // Generate secure tokens with enhanced security
+    const token = generateAccessToken(user.id, user.email, user.role);
     const refreshToken = generateRefreshToken(user.id, user.email);
 
     logAuditEvent('USER_REGISTRATION', user.id, { 
@@ -817,12 +1005,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
     await handleSuccessfulLogin(user);
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-    );
-
+    // Generate secure tokens with enhanced security
+    const token = generateAccessToken(user.id, user.email, user.role);
     const refreshToken = generateRefreshToken(user.id, user.email);
 
     res.json({
@@ -890,13 +1074,8 @@ app.post('/api/auth/refresh', async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // Generate new tokens
-    const newToken = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-    );
-
+    // Generate new secure tokens with enhanced security
+    const newToken = generateAccessToken(user.id, user.email, user.role);
     const newRefreshToken = generateRefreshToken(user.id, user.email);
 
     res.json({
