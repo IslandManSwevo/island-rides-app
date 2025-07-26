@@ -261,7 +261,7 @@ export class PerformanceMonitoringService {
     
     switch (severity) {
       case 'critical':
-        this.logger.error(alertMessage, { metric, threshold, severity });
+        this.logger.error(alertMessage, new Error(alertMessage), { metric, threshold, severity });
         break;
       case 'warning':
         this.logger.warn(alertMessage, { metric, threshold, severity });

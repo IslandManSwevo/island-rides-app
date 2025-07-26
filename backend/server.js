@@ -21,6 +21,13 @@ const reviewModerationService = require('./services/reviewModerationService');
 const ownerDashboardService = require('./services/ownerDashboardService');
 const cron = require('node-cron');
 
+// Import error handling middleware
+const {
+  handleError,
+  handleNotFound,
+  addRequestId
+} = require('./middleware/errorHandler');
+
 const app = express();
 
 // Smart Port Management System
@@ -277,6 +284,9 @@ const authLimiter = rateLimit({
 });
 
 app.use(express.json());
+
+// Add request ID to all requests for tracking
+app.use(addRequestId);
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -3538,9 +3548,176 @@ app.get('/api/vehicles/:vehicleId/damage-reports', authenticateToken, checkRole(
   }
 });
 
-// Enhanced vehicle search with advanced filtering
+// Input validation and sanitization utilities
+const validateSearchParams = (params) => {
+  const errors = [];
+  const sanitized = {};
+
+  // Validate and sanitize location
+  if (params.location) {
+    if (typeof params.location !== 'string' || params.location.length > 100) {
+      errors.push('Location must be a string with maximum 100 characters');
+    } else {
+      sanitized.location = validator.escape(params.location.trim());
+    }
+  }
+
+  // Validate vehicleType
+  const validVehicleTypes = ['car', 'suv', 'truck', 'van', 'motorcycle', 'boat', 'atv'];
+  if (params.vehicleType) {
+    if (!validVehicleTypes.includes(params.vehicleType)) {
+      errors.push('Invalid vehicle type');
+    } else {
+      sanitized.vehicleType = params.vehicleType;
+    }
+  }
+
+  // Validate fuelType
+  const validFuelTypes = ['gasoline', 'diesel', 'electric', 'hybrid'];
+  if (params.fuelType) {
+    if (!validFuelTypes.includes(params.fuelType)) {
+      errors.push('Invalid fuel type');
+    } else {
+      sanitized.fuelType = params.fuelType;
+    }
+  }
+
+  // Validate transmissionType
+  const validTransmissionTypes = ['manual', 'automatic', 'cvt'];
+  if (params.transmissionType) {
+    if (!validTransmissionTypes.includes(params.transmissionType)) {
+      errors.push('Invalid transmission type');
+    } else {
+      sanitized.transmissionType = params.transmissionType;
+    }
+  }
+
+  // Validate seatingCapacity
+  if (params.seatingCapacity) {
+    const capacity = parseInt(params.seatingCapacity);
+    if (isNaN(capacity) || capacity < 1 || capacity > 50) {
+      errors.push('Seating capacity must be a number between 1 and 50');
+    } else {
+      sanitized.seatingCapacity = capacity;
+    }
+  }
+
+  // Validate price range
+  if (params.minPrice) {
+    const price = parseFloat(params.minPrice);
+    if (isNaN(price) || price < 0 || price > 10000) {
+      errors.push('Minimum price must be a number between 0 and 10000');
+    } else {
+      sanitized.minPrice = price;
+    }
+  }
+
+  if (params.maxPrice) {
+    const price = parseFloat(params.maxPrice);
+    if (isNaN(price) || price < 0 || price > 10000) {
+      errors.push('Maximum price must be a number between 0 and 10000');
+    } else {
+      sanitized.maxPrice = price;
+    }
+  }
+
+  // Validate features
+  if (params.features) {
+    if (typeof params.features !== 'string') {
+      errors.push('Features must be a comma-separated string');
+    } else {
+      const featureIds = params.features.split(',')
+        .map(id => parseInt(id.trim()))
+        .filter(id => !isNaN(id) && id > 0 && id <= 1000);
+
+      if (featureIds.length === 0 && params.features.trim() !== '') {
+        errors.push('Invalid feature IDs');
+      } else {
+        sanitized.features = featureIds;
+      }
+    }
+  }
+
+  // Validate conditionRating
+  if (params.conditionRating) {
+    const rating = parseInt(params.conditionRating);
+    if (isNaN(rating) || rating < 1 || rating > 5) {
+      errors.push('Condition rating must be a number between 1 and 5');
+    } else {
+      sanitized.conditionRating = rating;
+    }
+  }
+
+  // Validate verificationStatus
+  const validStatuses = ['pending', 'verified', 'rejected', 'expired'];
+  if (params.verificationStatus) {
+    if (!validStatuses.includes(params.verificationStatus)) {
+      errors.push('Invalid verification status');
+    } else {
+      sanitized.verificationStatus = params.verificationStatus;
+    }
+  }
+
+  // Validate boolean flags
+  if (params.deliveryAvailable) {
+    sanitized.deliveryAvailable = params.deliveryAvailable === 'true';
+  }
+
+  if (params.airportPickup) {
+    sanitized.airportPickup = params.airportPickup === 'true';
+  }
+
+  // Validate sortBy
+  const validSortOptions = ['popularity', 'price_low', 'price_high', 'rating', 'newest', 'condition'];
+  if (params.sortBy) {
+    if (!validSortOptions.includes(params.sortBy)) {
+      errors.push('Invalid sort option');
+    } else {
+      sanitized.sortBy = params.sortBy;
+    }
+  } else {
+    sanitized.sortBy = 'popularity';
+  }
+
+  // Validate pagination
+  if (params.page) {
+    const page = parseInt(params.page);
+    if (isNaN(page) || page < 1 || page > 1000) {
+      errors.push('Page must be a number between 1 and 1000');
+    } else {
+      sanitized.page = page;
+    }
+  } else {
+    sanitized.page = 1;
+  }
+
+  if (params.limit) {
+    const limit = parseInt(params.limit);
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      errors.push('Limit must be a number between 1 and 100');
+    } else {
+      sanitized.limit = limit;
+    }
+  } else {
+    sanitized.limit = 20;
+  }
+
+  return { errors, sanitized };
+};
+
+// Enhanced vehicle search with advanced filtering and security
 app.get('/api/vehicles/search', authenticateToken, async (req, res) => {
   try {
+    // Validate and sanitize input parameters
+    const { errors, sanitized } = validateSearchParams(req.query);
+
+    if (errors.length > 0) {
+      return res.status(400).json({
+        error: 'Invalid search parameters',
+        details: errors
+      });
+    }
+
     const {
       location,
       vehicleType,
@@ -3554,134 +3731,138 @@ app.get('/api/vehicles/search', authenticateToken, async (req, res) => {
       verificationStatus,
       deliveryAvailable,
       airportPickup,
-      sortBy = 'popularity',
-      page = 1,
-      limit = 20
-    } = req.query;
-    
+      sortBy,
+      page,
+      limit
+    } = sanitized;
+
+    // Build secure SQL query with proper parameterization
     let query = `
-      SELECT DISTINCT v.*, 
+      SELECT DISTINCT v.*,
              AVG(r.rating) as average_rating,
              COUNT(r.id) as total_reviews
       FROM vehicles v
       LEFT JOIN reviews r ON v.id = r.vehicle_id AND r.moderation_status = 'approved'
     `;
-    
-    const conditions = ['v.available = 1'];
-    const params = [];
-    let paramIndex = 1;
-    
+
+    const conditions = ['v.available = $1'];
+    const params = [true]; // Use boolean instead of integer
+    let paramIndex = 2;
+
+    // Secure parameter binding with validated inputs
     if (location) {
       conditions.push(`v.location ILIKE $${paramIndex}`);
       params.push(`%${location}%`);
       paramIndex++;
     }
-    
+
     if (vehicleType) {
       conditions.push(`v.vehicle_type = $${paramIndex}`);
       params.push(vehicleType);
       paramIndex++;
     }
-    
+
     if (fuelType) {
       conditions.push(`v.fuel_type = $${paramIndex}`);
       params.push(fuelType);
       paramIndex++;
     }
-    
+
     if (transmissionType) {
       conditions.push(`v.transmission_type = $${paramIndex}`);
       params.push(transmissionType);
       paramIndex++;
     }
-    
+
     if (seatingCapacity) {
       conditions.push(`v.seating_capacity >= $${paramIndex}`);
-      params.push(parseInt(seatingCapacity));
+      params.push(seatingCapacity); // Already validated as integer
       paramIndex++;
     }
-    
+
     if (minPrice) {
       conditions.push(`v.daily_rate >= $${paramIndex}`);
-      params.push(parseFloat(minPrice));
+      params.push(minPrice); // Already validated as float
       paramIndex++;
     }
-    
+
     if (maxPrice) {
       conditions.push(`v.daily_rate <= $${paramIndex}`);
-      params.push(parseFloat(maxPrice));
+      params.push(maxPrice); // Already validated as float
       paramIndex++;
     }
-    
+
     if (conditionRating) {
       conditions.push(`v.condition_rating >= $${paramIndex}`);
-      params.push(parseInt(conditionRating));
+      params.push(conditionRating); // Already validated as integer
       paramIndex++;
     }
-    
+
     if (verificationStatus) {
       conditions.push(`v.verification_status = $${paramIndex}`);
       params.push(verificationStatus);
       paramIndex++;
     }
-    
-    if (deliveryAvailable === 'true') {
-      conditions.push(`v.delivery_available = 1`);
+
+    if (deliveryAvailable === true) {
+      conditions.push(`v.delivery_available = $${paramIndex}`);
+      params.push(true);
+      paramIndex++;
     }
-    
-    if (airportPickup === 'true') {
-      conditions.push(`v.airport_pickup = 1`);
+
+    if (airportPickup === true) {
+      conditions.push(`v.airport_pickup = $${paramIndex}`);
+      params.push(true);
+      paramIndex++;
     }
-    
+
+    // Secure feature filtering with validated feature IDs
     if (features && features.length > 0) {
-      const featureIds = features.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
-      if (featureIds.length > 0) {
-        query += ` 
-          INNER JOIN vehicle_feature_assignments vfa ON v.id = vfa.vehicle_id 
-          INNER JOIN vehicle_features vf ON vfa.feature_id = vf.id 
-        `;
-        conditions.push(`vf.id IN (${featureIds.map((_, i) => `$${paramIndex + i}`).join(', ')})`);
-        conditions.push(`vfa.is_included = 1`);
-        params.push(...featureIds);
-        paramIndex += featureIds.length;
-      }
+      query += `
+        INNER JOIN vehicle_feature_assignments vfa ON v.id = vfa.vehicle_id
+        INNER JOIN vehicle_features vf ON vfa.feature_id = vf.id
+      `;
+      conditions.push(`vf.id IN (${features.map((_, i) => `$${paramIndex + i}`).join(', ')})`);
+      conditions.push(`vfa.is_included = $${paramIndex + features.length}`);
+      params.push(...features, true);
+      paramIndex += features.length + 1;
     }
-    
+
     if (conditions.length > 0) {
       query += ` WHERE ${conditions.join(' AND ')}`;
     }
-    
+
     query += ` GROUP BY v.id`;
-    
-    // Add sorting
-    switch (sortBy) {
-      case 'price_low':
-        query += ` ORDER BY v.daily_rate ASC`;
-        break;
-      case 'price_high':
-        query += ` ORDER BY v.daily_rate DESC`;
-        break;
-      case 'rating':
-        query += ` ORDER BY average_rating DESC NULLS LAST`;
-        break;
-      case 'newest':
-        query += ` ORDER BY v.created_at DESC`;
-        break;
-      case 'condition':
-        query += ` ORDER BY v.condition_rating DESC NULLS LAST`;
-        break;
-      default: // popularity
-        query += ` ORDER BY total_reviews DESC, average_rating DESC NULLS LAST`;
-    }
-    
-    // Add pagination
+
+    // Secure sorting with predefined options (no user input in ORDER BY)
+    const sortOptions = {
+      'price_low': 'v.daily_rate ASC',
+      'price_high': 'v.daily_rate DESC',
+      'rating': 'average_rating DESC NULLS LAST',
+      'newest': 'v.created_at DESC',
+      'condition': 'v.condition_rating DESC NULLS LAST',
+      'popularity': 'total_reviews DESC, average_rating DESC NULLS LAST'
+    };
+
+    const orderBy = sortOptions[sortBy] || sortOptions['popularity'];
+    query += ` ORDER BY ${orderBy}`;
+
+    // Secure pagination with validated parameters
     const offset = (page - 1) * limit;
     query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    params.push(parseInt(limit), offset);
-    
+    params.push(limit, offset); // Already validated integers
+
+    // Execute main query with security logging
+    console.log('Executing vehicle search query with parameters:', {
+      queryLength: query.length,
+      paramCount: params.length,
+      userId: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+
     const result = await db.query(query, params);
-    
-    // Get total count for pagination
+
+    // Build secure count query (same structure as main query)
     let countQuery = `SELECT COUNT(DISTINCT v.id) as total FROM vehicles v`;
     if (features && features.length > 0) {
       countQuery += ` INNER JOIN vehicle_feature_assignments vfa ON v.id = vfa.vehicle_id INNER JOIN vehicle_features vf ON vfa.feature_id = vf.id`;
@@ -3689,22 +3870,44 @@ app.get('/api/vehicles/search', authenticateToken, async (req, res) => {
     if (conditions.length > 0) {
       countQuery += ` WHERE ${conditions.join(' AND ')}`;
     }
-    
-    const countResult = await db.query(countQuery, params.slice(0, -2)); // Remove limit and offset
+
+    // Use same parameters but exclude limit and offset
+    const countParams = params.slice(0, -2);
+    const countResult = await db.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
-    
+
+    // Log successful search for security monitoring
+    console.log('Vehicle search completed:', {
+      userId: req.user?.id,
+      resultsCount: result.rows.length,
+      totalMatches: total,
+      searchParams: Object.keys(sanitized).filter(key => sanitized[key] !== undefined),
+      timestamp: new Date().toISOString()
+    });
+
     res.json({
       vehicles: result.rows,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: page,
+        limit: limit,
         total,
         pages: Math.ceil(total / limit)
       }
     });
   } catch (error) {
-    console.error('Vehicle search error:', error);
-    res.status(500).json({ error: 'Failed to search vehicles' });
+    // Enhanced error logging for security monitoring
+    console.error('Vehicle search error:', {
+      error: error.message,
+      userId: req.user?.id,
+      queryParams: Object.keys(req.query),
+      timestamp: new Date().toISOString(),
+      stack: error.stack
+    });
+
+    res.status(500).json({
+      error: 'Failed to search vehicles',
+      requestId: Date.now().toString(36) // For error tracking
+    });
   }
 });
 
@@ -3871,6 +4074,10 @@ app.get('/api/payments/history', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch payment history' });
   }
 });
+
+// Error handling middleware (must be last)
+app.use(handleNotFound);
+app.use(handleError);
 
 // Replace the existing server startup section
 if (require.main === module) {

@@ -76,6 +76,7 @@ export const markAllNotificationsAsRead = createAsyncThunk<void, void, { rejectV
         () => apiService.put('/api/notifications/read-all', {}),
         'notification/markAllAsRead'
       );
+      return undefined; // Explicit return for void async thunk
     } catch (error) {
       return rejectWithValue((error as any).userMessage || 'Failed to mark all notifications as read');
     }

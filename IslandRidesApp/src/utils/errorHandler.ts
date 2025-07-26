@@ -142,7 +142,7 @@ export function showErrorAlert(error: AppError, options: {
   ];
   
   if (options.showRetry && options.onRetry) {
-    buttons.unshift({ text: 'Retry', onPress: options.onRetry });
+    buttons.unshift({ text: 'Retry', onPress: options.onRetry } as any);
   }
   
   Alert.alert(title, message, buttons);

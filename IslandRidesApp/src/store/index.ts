@@ -32,12 +32,13 @@ import vehicleReducer from './slices/vehicleSlice';
 import bookingReducer from './slices/bookingSlice';
 import notificationReducer from './slices/notificationSlice';
 import searchReducer from './slices/searchSlice';
+import featureFlagsReducer from './slices/featureFlagsSlice';
 
 // Persist configuration
 const persistConfig = {
   key: 'root',
   storage: storage,
-  whitelist: ['user'], // Only persist user data (auth handled by AuthContext)
+  whitelist: ['user', 'featureFlags'], // Persist user data and feature flags
   blacklist: ['search', 'notification'], // Don't persist temporary data
 };
 
@@ -49,6 +50,7 @@ const rootReducer = combineReducers({
   booking: bookingReducer,
   notification: notificationReducer,
   search: searchReducer,
+  featureFlags: featureFlagsReducer,
 });
 
 // Persisted reducer

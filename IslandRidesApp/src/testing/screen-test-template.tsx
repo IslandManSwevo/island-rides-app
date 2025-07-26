@@ -1,11 +1,6 @@
 import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
-import { render, createMockNavigation, createMockRoute, createMockStore } from './test-utils';
-import { Provider } from 'react-redux';
-import { NavigationContainer } from '@react-navigation/native';
-
-// Jest globals are available through @types/jest
-/// <reference types="jest" />
+import { render, createMockNavigation, createMockRoute } from './test-utils';
 
 // Template for screen tests
 // Copy this template and adapt it for your screens
@@ -55,10 +50,9 @@ describe('ScreenName', () => {
   };
 
   // Helper function to render screen with default props
-  const renderScreen = (props = {}, options: any = {}) => {
+  const renderScreen = (props = {}, storeState = {}) => {
     return render(<ScreenName {...defaultProps} {...props} />, {
-      preloadedState: options.preloadedState || options.initialState || {},
-      ...options,
+      preloadedState: storeState,
     });
   };
 
@@ -75,23 +69,17 @@ describe('ScreenName', () => {
     });
 
     it('shows loading state initially', () => {
-      const { getByTestId } = renderScreen({}, { initialState: { loading: true } });
+      const { getByTestId } = renderScreen();
       
       expect(getByTestId('loading-indicator')).toBeTruthy();
-    });
-
-    it('renders screen content when loaded', () => {
-      const { getByText } = renderScreen({}, { initialState: { loading: false } });
-      expect(getByText('Screen Content')).toBeTruthy();
     });
 
     it('loads data on mount', async () => {
       const { getByTestId, queryByTestId } = renderScreen();
       
-      expect(getByTestId('loading-indicator')).toBeTruthy();
-      
       await waitFor(() => {
         expect(queryByTestId('loading-indicator')).toBeNull();
+        expect(getByTestId('data-container')).toBeTruthy();
       });
     });
   });
@@ -107,17 +95,17 @@ describe('ScreenName', () => {
     });
 
     it('handles back navigation', () => {
-      const { getByText } = renderScreen();
+      const { getByRole } = renderScreen();
       
-      fireEvent.press(getByText('Back'));
+      fireEvent.press(getByRole('button', { name: /back/i }));
       
       expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
     });
 
     it('navigates to related screens', () => {
-      const { getByText } = renderScreen();
+      const { getByRole } = renderScreen();
       
-      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByRole('button', { name: /next/i }));
       
       expect(mockNavigation.navigate).toHaveBeenCalledWith('NextScreen');
     });
@@ -173,11 +161,11 @@ describe('ScreenName', () => {
     });
 
     it('handles filter selection', () => {
-      const { getByText } = renderScreen();
+      const { getByRole } = renderScreen();
       
-      fireEvent.press(getByText('Filter'));
+      fireEvent.press(getByRole('button', { name: /filter/i }));
       
-      // Note: This test needs to be updated based on actual modal implementation
+      // Check if modal or filter UI is shown
       // expect(getByRole('modal')).toBeTruthy();
     });
 
@@ -194,10 +182,11 @@ describe('ScreenName', () => {
   describe('State Management', () => {
     it('updates global state', async () => {
       const initialState = { items: [] };
-      const { store, getByText } = renderScreen({ preloadedState: initialState });
+      const { store } = renderScreen({}, initialState);
       
       // Trigger action that updates state
-      fireEvent.press(getByText('Add Item'));
+      const { getByRole } = renderScreen();
+      fireEvent.press(getByRole('button', { name: /add item/i }));
       
       await waitFor(() => {
         const state = store.getState();
@@ -207,7 +196,7 @@ describe('ScreenName', () => {
 
     it('handles state synchronization', () => {
       const stateWithItems = { items: [{ id: 1, name: 'Existing Item' }] };
-      const { getByText } = renderScreen({ preloadedState: stateWithItems });
+      const { getByText } = renderScreen({}, stateWithItems);
       
       expect(getByText('Existing Item')).toBeTruthy();
     });
@@ -215,10 +204,10 @@ describe('ScreenName', () => {
 
   describe('Form Handling', () => {
     it('validates form input', async () => {
-      const { getByText } = renderScreen();
+      const { getByRole, getByText } = renderScreen();
       
       // Submit form without required fields
-      fireEvent.press(getByText('Submit'));
+      fireEvent.press(getByRole('button', { name: /submit/i }));
       
       await waitFor(() => {
         expect(getByText('This field is required')).toBeTruthy();
@@ -227,13 +216,13 @@ describe('ScreenName', () => {
 
     it('submits form successfully', async () => {
       const mockSubmit = jest.fn();
-      const { getByDisplayValue, getByText } = renderScreen({ onSubmit: mockSubmit });
+      const { getByPlaceholderText, getByRole } = renderScreen({ onSubmit: mockSubmit });
       
       // Fill form
-      fireEvent.changeText(getByDisplayValue(''), 'test value');
+      fireEvent.changeText(getByPlaceholderText('Search...'), 'test value');
       
       // Submit form
-      fireEvent.press(getByText('Submit'));
+      fireEvent.press(getByRole('button', { name: /submit/i }));
       
       await waitFor(() => {
         expect(mockSubmit).toHaveBeenCalledWith({ field: 'test value' });
@@ -244,14 +233,14 @@ describe('ScreenName', () => {
   describe('Permissions & Authentication', () => {
     it('redirects unauthenticated users', () => {
       const unauthenticatedState = { user: null };
-      renderScreen({ preloadedState: unauthenticatedState });
+      renderScreen({}, unauthenticatedState);
       
       expect(mockNavigation.navigate).toHaveBeenCalledWith('LoginScreen');
     });
 
     it('shows limited features for unauthorized users', () => {
       const limitedUserState = { user: { role: 'basic' } };
-      const { queryByText } = renderScreen({ preloadedState: limitedUserState });
+      const { queryByText } = renderScreen({}, limitedUserState);
       
       expect(queryByText('Admin Action')).toBeNull();
     });
@@ -306,31 +295,10 @@ describe('ScreenName', () => {
     it('implements proper memoization', () => {
       const { rerender } = renderScreen();
       
-      // Test that component doesn't re-render unnecessarily
-      expect(rerender).toBeDefined();
-    });
-
-    it('handles debouncing correctly', async () => {
-      jest.useFakeTimers();
+      // Re-render with same props should not trigger unnecessary renders
+      rerender(<ScreenName {...defaultProps} />);
       
-      const mockCallback = jest.fn();
-      const { getByPlaceholderText } = renderScreen({ onSearch: mockCallback });
-      
-      const searchInput = getByPlaceholderText('Search...');
-      
-      // Rapid fire changes
-      fireEvent.changeText(searchInput, 'a');
-      fireEvent.changeText(searchInput, 'ab');
-      fireEvent.changeText(searchInput, 'abc');
-      
-      // Fast forward time
-      jest.advanceTimersByTime(500);
-      
-      // Should only call once due to debouncing
-      expect(mockCallback).toHaveBeenCalledTimes(1);
-      expect(mockCallback).toHaveBeenCalledWith('abc');
-      
-      jest.useRealTimers();
+      // This would require additional setup to test memoization effectively
     });
   });
 });

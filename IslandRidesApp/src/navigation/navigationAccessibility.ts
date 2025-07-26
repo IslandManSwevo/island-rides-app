@@ -184,6 +184,7 @@ export const navigationAccessibility = new NavigationAccessibility({
   customAnnouncements: {
     // Add custom announcements for specific screens
     'Search': 'Vehicle search screen opened. Use the search form to find vehicles.',
+    'Map': 'Vehicle map opened. Explore available vehicles by location. Double tap vehicle markers for details.',
     'VehicleDetail': 'Vehicle details screen opened. Swipe to explore vehicle information.',
     'Checkout': 'Checkout screen opened. Review your booking details.',
     'Profile': 'Profile screen opened. Manage your account settings.',

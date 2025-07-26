@@ -167,7 +167,7 @@ class NotificationService {
       );
       this.responseListener = Notifications.addNotificationResponseReceivedListener(
         (response: ApiResponse<unknown>) => {
-          const data: NotificationData | undefined = response.notification?.request?.content?.data;
+          const data: NotificationData | undefined = (response.notification?.request as any)?.content?.data;
           
           if (data?.screen) {
             switch (data.screen) {

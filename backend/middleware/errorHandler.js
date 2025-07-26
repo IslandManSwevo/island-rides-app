@@ -1,4 +1,5 @@
 const { logError } = require('../config/logger');
+const { v4: uuidv4 } = require('uuid');
 
 /**
  * Global Error Handling Middleware
@@ -70,28 +71,42 @@ class DatabaseError extends ApiError {
 }
 
 /**
- * Format error response
+ * Format error response with standardized structure
  */
 function formatErrorResponse(error, req) {
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   const response = {
-    error: error.message || 'Internal server error',
-    code: error.code || 'INTERNAL_ERROR',
-    timestamp: new Date().toISOString(),
-    path: req.path,
-    method: req.method
+    success: false,
+    error: {
+      message: error.message || 'Internal server error',
+      code: error.code || 'INTERNAL_ERROR',
+      type: error.name || 'Error',
+      statusCode: error.statusCode || 500
+    },
+    meta: {
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      method: req.method,
+      requestId: req.id || 'unknown',
+      version: '1.0.0'
+    }
   };
 
   // Add additional details in development
   if (isDevelopment) {
-    response.stack = error.stack;
-    response.details = error.details || {};
+    response.debug = {
+      stack: error.stack,
+      details: error.details || {},
+      headers: req.headers,
+      query: req.query,
+      params: req.params
+    };
   }
 
-  // Add request ID if available
-  if (req.id) {
-    response.requestId = req.id;
+  // Add validation details if available
+  if (error.details && error.details.details) {
+    response.error.validation = error.details.details;
   }
 
   return response;
@@ -169,6 +184,15 @@ function handleNotFound(req, res, next) {
 }
 
 /**
+ * Request ID middleware - adds unique ID to each request
+ */
+function addRequestId(req, res, next) {
+  req.id = uuidv4();
+  res.setHeader('X-Request-ID', req.id);
+  next();
+}
+
+/**
  * Async error wrapper
  */
 function asyncHandler(fn) {
@@ -225,5 +249,6 @@ module.exports = {
   asyncHandler,
   validateRequest,
   handleRateLimit,
-  formatErrorResponse
+  formatErrorResponse,
+  addRequestId
 };

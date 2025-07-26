@@ -4,6 +4,7 @@
  */
 
 import { ChatContext, SearchFilters, Vehicle, VehicleRecommendation } from '../types';
+import { Island } from '../contexts/IslandContext';
 
 export const ROUTES = {
   // Authentication routes
@@ -23,6 +24,7 @@ export const ROUTES = {
   ROLE_BASED_DASHBOARD: 'RoleBasedDashboard',
   SEARCH_RESULTS: 'SearchResults',
   SEARCH: 'Search',
+  MAP: 'Map',
   VEHICLE_DETAIL: 'VehicleDetail',
   CHECKOUT: 'Checkout',
   BOOKING_CONFIRMED: 'BookingConfirmed',
@@ -103,6 +105,16 @@ export type RootStackParamList = {
   };
   [ROUTES.SEARCH]: {
     filters?: SearchFilters; // SearchFilters type
+  } | undefined;
+  [ROUTES.MAP]: {
+    island?: Island;
+    vehicles?: VehicleRecommendation[];
+    initialRegion?: {
+      latitude: number;
+      longitude: number;
+      latitudeDelta: number;
+      longitudeDelta: number;
+    };
   } | undefined;
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;

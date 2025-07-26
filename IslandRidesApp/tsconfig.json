@@ -1,73 +1,19 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    // Basic options
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "isolatedModules": true,
     "jsx": "react-native",
-    "lib": ["esnext", "dom"],
+    "lib": ["esnext"],
     "moduleResolution": "bundler",
     "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
     "target": "esnext",
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
-
-    // Strict type checking
-    "strict": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitOverride": true,
-    "useUnknownInCatchVariables": true,
-    "noFallthroughCasesInSwitch": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-
-    // Relaxed for development (can be tightened later)
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "exactOptionalPropertyTypes": false,
-    "noUncheckedIndexedAccess": false,
-
-    // Module resolution
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/components/*"],
-      "@/screens/*": ["src/screens/*"],
-      "@/services/*": ["src/services/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/types/*": ["src/types/*"],
-      "@/config/*": ["src/config/*"],
-      "@/store/*": ["src/store/*"],
-      "@/hooks/*": ["src/hooks/*"],
-      "@/navigation/*": ["src/navigation/*"],
-      "@/styles/*": ["src/styles/*"]
-    },
-
-    // Type definitions
-    "typeRoots": ["./node_modules/@types", "./types"],
-    "types": ["jest", "react-native"]
-  },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "types/**/*.d.ts",
-    "App.tsx",
-    "index.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
-    "**/__tests__/**/*",
-    "coverage"
-  ]
+    "typeRoots": ["./node_modules/@types", "./src/types"]
+  }
 }

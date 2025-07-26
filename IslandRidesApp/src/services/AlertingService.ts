@@ -83,7 +83,7 @@ export class AlertingService {
       id: 'slow_render',
       name: 'Slow Render Detection',
       enabled: true,
-      condition: (data) => data.type === 'render' && data.value > 16,
+      condition: (data) => data.type === 'render' && (data.value ?? 0) > 16,
       severity: 'warning',
       type: 'performance',
       cooldown: 5000,
@@ -97,7 +97,7 @@ export class AlertingService {
       id: 'very_slow_render',
       name: 'Very Slow Render Detection',
       enabled: true,
-      condition: (data) => data.type === 'render' && data.value > 50,
+      condition: (data) => data.type === 'render' && (data.value ?? 0) > 50,
       severity: 'critical',
       type: 'performance',
       cooldown: 3000,
@@ -112,7 +112,7 @@ export class AlertingService {
       id: 'api_error',
       name: 'API Error Detection',
       enabled: true,
-      condition: (data) => data.type === 'api' && data.statusCode >= 500,
+      condition: (data) => data.type === 'api' && (data.statusCode ?? 0) >= 500,
       severity: 'critical',
       type: 'error',
       cooldown: 10000,
@@ -127,7 +127,7 @@ export class AlertingService {
       id: 'slow_api',
       name: 'Slow API Response',
       enabled: true,
-      condition: (data) => data.type === 'api' && data.value > 2000,
+      condition: (data) => data.type === 'api' && (data.value ?? 0) > 2000,
       severity: 'warning',
       type: 'performance',
       cooldown: 30000,
@@ -141,7 +141,7 @@ export class AlertingService {
       id: 'memory_high',
       name: 'High Memory Usage',
       enabled: true,
-      condition: (data) => data.type === 'memory' && data.value > 150,
+      condition: (data) => data.type === 'memory' && (data.value ?? 0) > 150,
       severity: 'warning',
       type: 'system',
       cooldown: 60000,
@@ -154,7 +154,7 @@ export class AlertingService {
       id: 'memory_critical',
       name: 'Critical Memory Usage',
       enabled: true,
-      condition: (data) => data.type === 'memory' && data.value > 200,
+      condition: (data) => data.type === 'memory' && (data.value ?? 0) > 200,
       severity: 'critical',
       type: 'system',
       cooldown: 30000,
@@ -232,7 +232,7 @@ export class AlertingService {
     this.updateRule(ruleId, { enabled: false });
   }
 
-  checkRules(data: Record<string, unknown>): void {
+  checkRules(data: AlertData): void {
     if (!this.isEnabled) return;
 
     this.rules.forEach((rule) => {
@@ -248,7 +248,7 @@ export class AlertingService {
     });
   }
 
-  private triggerAlert(rule: AlertRule, data: Record<string, unknown>): void {
+  private triggerAlert(rule: AlertRule, data: AlertData): void {
     const cooldownKey = `${rule.id}_${JSON.stringify(data).substring(0, 100)}`;
     const now = Date.now();
     

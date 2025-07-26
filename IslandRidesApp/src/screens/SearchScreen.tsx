@@ -23,8 +23,6 @@ import { VehicleCard } from '../components/VehicleCard';
 import { vehicleService } from '../services/vehicleService';
 import { notificationService } from '../services/notificationService';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
-import { useServices } from '../services/ServiceRegistry';
-import { useFeatureFlag } from '../services/FeatureFlagService';
 import { Island, VehicleRecommendation, VehicleFeature, VehicleFeatureCategory } from '../types';
 import DateFilter from '../components/DateFilter';
 import PriceRangeFilter from '../components/PriceRangeFilter';
@@ -352,7 +350,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = React.memo(({ navigatio
         />
         <VerificationStatusFilter
           verificationStatus={filters.verificationStatus}
-          onToggleFilter={(key, value) => toggleArrayFilter(key, value as "rejected" | "pending" | "verified" | "expired")}
+          onToggleFilter={(key, value) => toggleArrayFilter(key, value)}
           filterKey="verificationStatus"
         />
         <FeaturesFilter
@@ -503,9 +501,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = React.memo(({ navigatio
         </View>
       </View>
     </Modal>
-  ), [showIslandSelector, filters.island, islands, updateFilter, hasSearched, performSearch]);
+  ), [filters, updateFilter, hasSearched, performSearch]);
 
-  const renderSortModal = useCallback(() => (
+  const renderSortModal = () => (
     <Modal
       visible={showSortModal}
       transparent
@@ -553,7 +551,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = React.memo(({ navigatio
         </View>
       </View>
     </Modal>
-  ), [showSortModal, filters.sortBy, updateFilter, hasSearched, performSearch]);
+  );
 
   return (
     <View style={styles.container}>

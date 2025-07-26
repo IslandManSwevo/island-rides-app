@@ -1,8 +1,5 @@
 import { createMockApiService, createMockAsyncStorage } from './test-utils';
 
-// Jest globals are available through @types/jest
-/// <reference types="jest" />
-
 // Template for service tests
 // Copy this template and adapt it for your services
 
@@ -293,8 +290,8 @@ describe('ServiceName', () => {
       service.debouncedMethod('param2');
       service.debouncedMethod('param3');
       
-      // Wait for debounce delay - fix the setTimeout callback signature
-      await new Promise<void>(resolve => setTimeout(() => resolve(), 100));
+      // Wait for debounce delay
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       expect(mockCallback).toHaveBeenCalledTimes(1);
       expect(mockCallback).toHaveBeenCalledWith('param3');

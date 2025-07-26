@@ -112,13 +112,7 @@ const HostDashboard: React.FC<{ navigation: DashboardNavigationProp }> = ({ navi
         <DashboardCard
           title="Host Storefront"
           description="Customize your listing page"
-          onPress={() => navigation.navigate('HostApp', {
-            screen: 'HostDashboardTab',
-            params: {
-              screen: 'HostStorefront',
-              params: { hostId: 1 }
-            }
-          })}
+          onPress={() => navigation.navigate('HostStorefront', { hostId: 1 })}
           color={colors.accent}
         />
       </View>
@@ -150,25 +144,14 @@ const OwnerDashboard: React.FC<{ navigation: DashboardNavigationProp }> = ({ nav
         <DashboardCard
           title="Fleet Management"
           description="Advanced fleet operations"
-          onPress={() => navigation.navigate('HostApp', {
-            screen: 'HostVehiclesTab',
-            params: {
-              screen: 'FleetManagement'
-            }
-          })}
+          onPress={() => navigation.navigate('FleetManagement')}
           color={colors.accent}
         />
         
         <DashboardCard
           title="Document Management"
           description="Vehicle documents and compliance"
-          onPress={() => navigation.navigate('HostApp', {
-            screen: 'HostVehiclesTab',
-            params: {
-              screen: 'VehicleDocumentManagement',
-              params: { vehicleId: 1 }
-            }
-          })}
+          onPress={() => navigation.navigate('VehicleDocumentManagement', { vehicleId: 1 })}
           color={colors.info}
         />
       </View>

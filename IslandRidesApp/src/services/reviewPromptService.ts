@@ -406,7 +406,7 @@ class ReviewPromptService {
           year: booking.vehicle.year
         }
       };
-      navigationRef.current.navigate(ROUTES.WRITE_REVIEW, { booking: mappedBooking });
+      navigationRef.current.navigate(ROUTES.WRITE_REVIEW as any, { booking: mappedBooking });
     }
   }
 

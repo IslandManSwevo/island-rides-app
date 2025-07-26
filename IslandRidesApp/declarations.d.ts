@@ -9,6 +9,7 @@ declare global {
   var global: typeof globalThis;
   var performance: Performance;
   var localStorage: Storage;
+  var window: Window & typeof globalThis;
   
   namespace NodeJS {
     interface ProcessEnv {
@@ -49,6 +50,8 @@ declare global {
     startTime: number;
     duration: number;
   }
+  
+  type PerformanceEntryList = PerformanceEntry[];
   
   interface Storage {
     readonly length: number;
