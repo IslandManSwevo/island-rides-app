@@ -26,25 +26,24 @@ export const linking: LinkingOptions<RootStackParamList> = {
       // Customer App Flow
       CustomerApp: {
         screens: {
-          [ROUTES.CUSTOMER_SEARCH_TAB]: {
+          [ROUTES.EXPLORE_TAB]: {
             screens: {
-              [ROUTES.SEARCH]: 'search',
-              [ROUTES.SEARCH_RESULTS]: 'search/results',
-              [ROUTES.VEHICLE_DETAIL]: 'search/vehicle/:vehicleId',
+              [ROUTES.SEARCH]: 'explore',
+              [ROUTES.SEARCH_RESULTS]: 'explore/results',
+              [ROUTES.VEHICLE_DETAIL]: 'explore/vehicle/:vehicleId',
             },
           },
-          [ROUTES.CUSTOMER_BOOKINGS_TAB]: {
+          [ROUTES.TRIPS_TAB]: {
             screens: {
-              [ROUTES.MY_BOOKINGS]: 'bookings',
-              [ROUTES.VEHICLE_DETAIL]: 'bookings/vehicle/:vehicleId',
-              [ROUTES.CHAT]: 'chat/:conversationId',
+              [ROUTES.MY_BOOKINGS]: 'trips',
+              [ROUTES.VEHICLE_DETAIL]: 'trips/vehicle/:vehicleId',
               [ROUTES.WRITE_REVIEW]: 'review/:bookingId',
             },
           },
-          [ROUTES.CUSTOMER_FAVORITES_TAB]: {
+          [ROUTES.INBOX_TAB]: {
             screens: {
-              [ROUTES.FAVORITES]: 'favorites',
-              [ROUTES.VEHICLE_DETAIL]: 'favorites/vehicle/:vehicleId',
+              [ROUTES.INBOX]: 'inbox',
+              [ROUTES.CHAT]: 'chat/:conversationId',
             },
           },
           [ROUTES.CUSTOMER_PROFILE_TAB]: {
@@ -52,6 +51,8 @@ export const linking: LinkingOptions<RootStackParamList> = {
               [ROUTES.PROFILE]: 'profile',
               [ROUTES.PAYMENT_HISTORY]: 'profile/payments',
               [ROUTES.NOTIFICATION_PREFERENCES]: 'profile/notifications',
+              [ROUTES.FAVORITES]: 'profile/favorites',
+              [ROUTES.SAVED_SEARCHES]: 'profile/saved-searches',
             },
           },
         },
@@ -141,7 +142,11 @@ export const generateDeepLink = {
   
   // Search
   search: (filters?: Record<string, unknown>) => {
-    const params = filters ? `?${new URLSearchParams(filters).toString()}` : '';
+    const params = filters
+      ? `?${new URLSearchParams(
+          Object.fromEntries(Object.entries(filters).map(([k, v]) => [k, String(v)]))
+        ).toString()}`
+      : '';
     return `keylo://search${params}`;
   },
   
