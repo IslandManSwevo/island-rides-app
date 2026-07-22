@@ -1,23 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  TouchableOpacity,
-  RefreshControl,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
-import { RootStackParamList } from '../navigation/routes';
-import { BookingService } from '../services/bookingService';
-import { BookingResponse } from '../types';
-import { notificationService } from '../services/notificationService';
-import { BookingsSkeleton } from '../components/skeletons/BookingsSkeleton';
+import { Badge, Card, Chip, DisplayText } from '../components/ui';
+import { keyloApi, ApiBooking, formatDollars } from '../services/keyloApi';
+import { apiService } from '../services/apiService';
+import { RootStackParamList, ROUTES } from '../navigation/routes';
 
 type MyBookingsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MyBookings'>;
 
@@ -25,446 +14,165 @@ interface MyBookingsScreenProps {
   navigation: MyBookingsScreenNavigationProp;
 }
 
-interface BookingWithDetails extends BookingResponse {
-  booking: BookingResponse['booking'] & {
-    canCancel?: boolean;
-  };
-}
+type TripFilter = 'upcoming' | 'active' | 'past';
 
+const FILTERS: { id: TripFilter; label: string }[] = [
+  { id: 'upcoming', label: 'Upcoming' },
+  { id: 'active', label: 'Active' },
+  { id: 'past', label: 'Past' },
+];
+
+const inFilter = (b: ApiBooking, f: TripFilter): boolean => {
+  if (f === 'active') return b.status === 'active';
+  if (f === 'upcoming') return b.status === 'pending' || b.status === 'confirmed';
+  return ['completed', 'reviewed', 'cancelled', 'declined', 'expired'].includes(b.status);
+};
+
+const dayRange = (b: ApiBooking) => {
+  const opts = { month: 'short', day: 'numeric' } as const;
+  return `${new Date(b.startAt).toLocaleDateString('en-US', opts)} – ${new Date(b.endAt).toLocaleDateString('en-US', opts)}`;
+};
+
+const hoursLeft = (deadline: string) =>
+  Math.max(0, Math.round((new Date(deadline).getTime() - Date.now()) / (60 * 60 * 1000)));
+
+/** Trips — design/mockups/05-trips.html. The booking lifecycle made visible. */
 export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }) => {
-  const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
+  const [filter, setFilter] = useState<TripFilter>('upcoming');
+  const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [cancellingBookingId, setCancellingBookingId] = useState<number | null>(null);
+  const [signedOut, setSignedOut] = useState(false);
 
-  const loadBookings = useCallback(async (showLoader = true) => {
+  const load = useCallback(async () => {
+    setLoading(true);
     try {
-      if (showLoader) setLoading(true);
-      const response = await BookingService.getBookings();
-      
-      // Add cancellation eligibility to each booking
-      // Ensure response is an array before calling map
-      const safeResponse = Array.isArray(response) ? response : [];
-      const bookingsWithCancelInfo = safeResponse.map(booking => {
-        const startDate = new Date(booking.booking.startDate);
-        const now = new Date();
-        const hoursUntilStart = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-        
-        return {
-          ...booking,
-          booking: {
-            ...booking.booking,
-            canCancel: hoursUntilStart > 24 && 
-                      booking.booking.status !== 'cancelled' && 
-                      booking.booking.status !== 'completed'
-          }
-        };
-      });
-      
-      setBookings(bookingsWithCancelInfo);
-    } catch (error) {
-      console.error('Failed to load bookings:', error);
-      notificationService.error('Failed to load bookings');
+      const token = await apiService.getToken();
+      if (!token) {
+        setSignedOut(true);
+        setBookings([]);
+        return;
+      }
+      const res = await keyloApi.myBookings(token);
+      setBookings(res.bookings);
+      setSignedOut(false);
+    } catch {
+      setBookings([]);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
-    loadBookings();
-  }, [loadBookings]);
+    const unsubscribe = navigation.addListener('focus', load);
+    return unsubscribe;
+  }, [navigation, load]);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadBookings(false);
-  }, [loadBookings]);
+  const visible = useMemo(() => bookings.filter((b) => inFilter(b, filter)), [bookings, filter]);
 
-  const handleCancelBooking = (booking: BookingWithDetails) => {
-    Alert.alert(
-      'Cancel Booking',
-      `Are you sure you want to cancel your booking for ${booking.booking.vehicle.make} ${booking.booking.vehicle.model}?\n\nThis action cannot be undone.`,
-      [
-        {
-          text: 'Keep Booking',
-          style: 'cancel',
-        },
-        {
-          text: 'Cancel Booking',
-          style: 'destructive',
-          onPress: () => confirmCancelBooking(booking.booking.id),
-        },
-      ]
-    );
-  };
-
-  const confirmCancelBooking = async (bookingId: number) => {
-    try {
-      setCancellingBookingId(bookingId);
-      await BookingService.cancelBooking(bookingId.toString());
-      
-      notificationService.success('Booking cancelled successfully');
-      
-      // Refresh the bookings list
-      loadBookings(false);
-    } catch (error) {
-      console.error('Failed to cancel booking:', error);
-      notificationService.error(
-        error instanceof Error ? error.message : 'Failed to cancel booking'
-      );
-    } finally {
-      setCancellingBookingId(null);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return colors.success;
-      case 'pending':
-        return colors.warning;
-      case 'completed':
-        return colors.primary;
-      case 'cancelled':
-        return colors.error;
-      default:
-        return colors.textSecondary;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'checkmark-circle';
-      case 'pending':
-        return 'time';
-      case 'completed':
-        return 'checkmark-done-circle';
-      case 'cancelled':
-        return 'close-circle';
-      default:
-        return 'help-circle';
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const renderBookingCard = (booking: BookingWithDetails) => {
-    const { booking: bookingData } = booking;
-    const isCancelling = cancellingBookingId === bookingData.id;
+  const renderBooking = ({ item }: { item: ApiBooking }) => {
+    const vehicleName = item.vehicle ? `${item.vehicle.make} ${item.vehicle.model}` : 'Vehicle';
+    const isActive = item.status === 'active';
 
     return (
-      <View key={bookingData.id} style={styles.bookingCard}>
-        <View style={styles.bookingHeader}>
-          <View style={styles.vehicleInfo}>
-            <Text style={styles.vehicleName}>
-              {bookingData.vehicle.make} {bookingData.vehicle.model}
-            </Text>
-            <Text style={styles.vehicleYear}>{bookingData.vehicle.year}</Text>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(bookingData.status) }]}>
-            <Ionicons 
-              name={getStatusIcon(bookingData.status)} 
-              size={12} 
-              color="white" 
-              style={styles.statusIcon}
-            />
-            <Text style={styles.statusText}>
-              {bookingData.status.charAt(0).toUpperCase() + bookingData.status.slice(1)}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.bookingDetails}>
-          <View style={styles.dateRow}>
-            <Ionicons name="calendar" size={16} color={colors.textSecondary} />
-            <Text style={styles.dateText}>
-              {formatDate(bookingData.startDate)} - {formatDate(bookingData.endDate)}
-            </Text>
-          </View>
-          
-          <View style={styles.locationRow}>
-            <Ionicons name="location" size={16} color={colors.textSecondary} />
-            <Text style={styles.locationText}>{bookingData.vehicle.location}</Text>
-          </View>
-          
-          <View style={styles.priceRow}>
-            <Ionicons name="card" size={16} color={colors.textSecondary} />
-            <Text style={styles.priceText}>${bookingData.totalAmount}</Text>
-          </View>
-        </View>
-
-        <View style={styles.bookingActions}>
-          <TouchableOpacity 
-            style={styles.viewButton}
-            onPress={() => {
-              // Navigate to booking details if needed
-              console.log('View booking details:', bookingData.id);
-            }}
-          >
-            <Text style={styles.viewButtonText}>View Details</Text>
-          </TouchableOpacity>
-          
-          {bookingData.canCancel && (
-            <TouchableOpacity 
-              style={[styles.cancelButton, isCancelling && styles.cancelButtonDisabled]}
-              onPress={() => handleCancelBooking(booking)}
-              disabled={isCancelling}
-            >
-              {isCancelling ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    );
-  };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Bookings</Text>
-        </View>
-        <BookingsSkeleton itemCount={5} />
-      </SafeAreaView>
-    );
-  }
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Bookings</Text>
-      </View>
-
-      <ScrollView 
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+      <Card
+        hero={isActive}
+        className={`mb-3.5 overflow-hidden ${isActive ? 'border-teal' : ''}`}
       >
-        {bookings.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={64} color={colors.textSecondary} />
-            <Text style={styles.emptyTitle}>No Bookings Yet</Text>
-            <Text style={styles.emptyMessage}>
-              When you book a vehicle, your reservations will appear here.
+        {isActive && (
+          <View className="flex-row justify-between bg-teal px-card-pad py-2">
+            <Text className="font-ui-bold text-overline uppercase text-white">● Active trip</Text>
+            <Text className="font-ui-bold text-overline text-white">
+              Returns {new Date(item.endAt).toLocaleDateString('en-US', { weekday: 'short' })}
             </Text>
-            <TouchableOpacity 
-              style={styles.browseButton}
-              onPress={() => navigation.navigate('IslandSelection')}
-            >
-              <Text style={styles.browseButtonText}>Browse Vehicles</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.bookingsList}>
-            {/* Ensure bookings is an array before calling map */}
-            {Array.isArray(bookings) ? bookings.map(renderBookingCard) : null}
           </View>
         )}
-      </ScrollView>
+        <View className="flex-row items-center gap-3 p-card-pad">
+          <View className="h-14 w-[72px] items-center justify-center rounded-field bg-ink dark:bg-night-raised">
+            <Ionicons name="car-sport" size={30} color="#F2EFE9" />
+          </View>
+          <View className="flex-1">
+            <DisplayText size="title" numberOfLines={1}>
+              {vehicleName}
+            </DisplayText>
+            <Text className="mt-0.5 font-ui text-meta text-stone dark:text-night-muted">
+              {dayRange(item)} · {formatDollars(item.totalCents)}
+              {item.flightNumber ? ` · ✈ ${item.flightNumber}` : ''}
+            </Text>
+            {item.status === 'pending' && item.approvalDeadline && (
+              <Badge
+                label={`⏳ Awaiting host approval · ${hoursLeft(item.approvalDeadline)}h left`}
+                tone="gold"
+                className="mt-1.5"
+              />
+            )}
+            {item.status === 'completed' && <Badge label="Leave a review" tone="coral" className="mt-1.5" />}
+            {item.status === 'cancelled' && <Badge label="Cancelled" tone="danger" className="mt-1.5" />}
+            {item.status === 'declined' && <Badge label="Declined by host" tone="danger" className="mt-1.5" />}
+          </View>
+        </View>
+        {(isActive || item.status === 'confirmed') && (
+          <View className="flex-row gap-2 px-card-pad pb-card-pad">
+            <Chip
+              label={isActive ? 'Check out' : 'Check in'}
+              active
+              className="flex-1 justify-center"
+              onPress={() =>
+                (navigation as { navigate: (route: string, params: object) => void }).navigate(
+                  ROUTES.TRIP_CHECK_IN,
+                  {
+                    bookingId: item.id,
+                    phase: isActive ? 'check_out' : 'check_in',
+                    vehicleName,
+                    driveSide: item.vehicle?.driveSide ?? 'LHD',
+                  }
+                )
+              }
+            />
+          </View>
+        )}
+      </Card>
+    );
+  };
+
+  return (
+    <SafeAreaView className="flex-1 bg-paper dark:bg-night" edges={['top']}>
+      <View className="px-gutter pt-2">
+        <DisplayText size="headline">Trips</DisplayText>
+        <View className="mt-3.5 flex-row gap-2">
+          {FILTERS.map((f) => (
+            <Chip key={f.id} label={f.label} active={filter === f.id} onPress={() => setFilter(f.id)} />
+          ))}
+        </View>
+      </View>
+
+      <FlatList
+        data={visible}
+        keyExtractor={(b) => b.id}
+        renderItem={renderBooking}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor="#FF5A3C" />}
+        contentContainerClassName="px-gutter pb-8 pt-4"
+        ListEmptyComponent={
+          loading ? null : (
+            <Card className="items-center p-8">
+              <Text className="font-display text-title text-ink dark:text-night-text">
+                {signedOut ? 'Sign in to see your trips' : 'No trips here yet'}
+              </Text>
+              <Text className="mt-2 text-center font-ui text-body text-stone dark:text-night-muted">
+                {signedOut
+                  ? 'Your bookings live here once you sign in.'
+                  : 'When you book a car, your trip shows up here with check-in, receipts, and reviews.'}
+              </Text>
+              {!signedOut && (
+                <Pressable onPress={() => navigation.navigate('CustomerApp' as never)} className="mt-4">
+                  <Badge label="Explore cars →" tone="coral" />
+                </Pressable>
+              )}
+            </Card>
+          )
+        }
+      />
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    marginRight: spacing.md,
-  },
-  headerTitle: {
-    ...typography.heading2,
-    color: colors.text,
-  },
-  content: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginTop: spacing.sm,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xl * 2,
-  },
-  emptyTitle: {
-    ...typography.heading3,
-    color: colors.text,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  emptyMessage: {
-    ...typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  browseButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-  },
-  browseButtonText: {
-    ...typography.button,
-    color: 'white',
-  },
-  bookingsList: {
-    padding: spacing.md,
-  },
-  bookingCard: {
-    backgroundColor: 'white',
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  bookingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  vehicleInfo: {
-    flex: 1,
-  },
-  vehicleName: {
-    ...typography.heading4,
-    color: colors.text,
-  },
-  vehicleYear: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  statusIcon: {
-    marginRight: spacing.xs,
-  },
-  statusText: {
-    ...typography.caption,
-    color: 'white',
-    fontWeight: '600',
-  },
-  bookingDetails: {
-    marginBottom: spacing.md,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  dateText: {
-    ...typography.body,
-    color: colors.text,
-    marginLeft: spacing.sm,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  locationText: {
-    ...typography.body,
-    color: colors.text,
-    marginLeft: spacing.sm,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  priceText: {
-    ...typography.heading4,
-    color: colors.primary,
-    marginLeft: spacing.sm,
-  },
-  bookingActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  viewButton: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginRight: spacing.sm,
-  },
-  viewButtonText: {
-    ...typography.button,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.error,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    minWidth: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cancelButtonDisabled: {
-    opacity: 0.6,
-  },
-  cancelButtonText: {
-    ...typography.button,
-    color: 'white',
-  },
-});
+export default MyBookingsScreen;

@@ -125,6 +125,12 @@ export type BookingsStackParamList = {
     vehicleId: number;
     hostId: number;
   };
+  [ROUTES.TRIP_CHECK_IN]: {
+    bookingId: string;
+    phase: 'check_in' | 'check_out';
+    vehicleName: string;
+    driveSide: 'LHD' | 'RHD';
+  };
 };
 
 export type InboxStackParamList = {

@@ -103,6 +103,28 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const formatDollars = (cents: number): string =>
   `$${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: cents % 100 === 0 ? 0 : 2 })}`;
 
+export type ApiBookingStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'active'
+  | 'completed'
+  | 'reviewed'
+  | 'cancelled'
+  | 'declined'
+  | 'expired';
+
+export interface ApiBooking {
+  id: string;
+  status: ApiBookingStatus;
+  startAt: string;
+  endAt: string;
+  pickupKind: string;
+  flightNumber?: string | null;
+  totalCents: number;
+  approvalDeadline?: string | null;
+  vehicle?: ApiVehicle;
+}
+
 export interface ApiProtectionPlan {
   id: string;
   name: string;
@@ -155,6 +177,22 @@ export const keyloApi = {
     request<{ booking: { id: string; status: string }; approveUrl: string }>('/v1/bookings', {
       method: 'POST',
       body: JSON.stringify(input),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  myBookings: (accessToken: string, role: 'guest' | 'host' = 'guest') =>
+    request<{ bookings: ApiBooking[] }>(`/v1/bookings?role=${role}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  checkIn: (
+    bookingId: string,
+    payload: { odometer?: number; fuelLevel?: number; photoKeys?: string[]; notes?: string },
+    accessToken: string
+  ) =>
+    request<{ success: boolean; tripActive: boolean }>(`/v1/bookings/${bookingId}/check-in`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
 
