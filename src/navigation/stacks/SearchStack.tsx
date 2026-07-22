@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { SearchScreen } from '../../screens/SearchScreen';
+import { ExploreScreen } from '../../screens/ExploreScreen';
 import { SearchResultsScreen } from '../../screens/SearchResultsScreen';
 import { VehicleDetailScreen } from '../../screens/VehicleDetailScreen';
 import { ROUTES } from '../routes';
@@ -32,11 +32,8 @@ export const SearchStack: React.FC = () => {
     >
       <Stack.Screen
         name={ROUTES.SEARCH}
-        component={SearchScreen}
-        options={{
-          title: 'Find Your Ride',
-          headerShown: true,
-        }}
+        component={ExploreScreen as never}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name={ROUTES.SEARCH_RESULTS}

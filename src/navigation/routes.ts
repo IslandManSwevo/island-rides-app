@@ -122,7 +122,7 @@ export type RootStackParamList = {
   } | undefined;
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
-    vehicleId?: number;
+    vehicleId?: number | string;
   };
   [ROUTES.CHECKOUT]: {
     vehicle: Vehicle;
