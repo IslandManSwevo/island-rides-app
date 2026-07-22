@@ -30,7 +30,7 @@ export type RootStackParamList = {
   // Shared modal screens
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
-    vehicleId?: number;
+    vehicleId?: number | string;
   };
   [ROUTES.CHECKOUT]: {
     vehicle: Vehicle;
@@ -105,7 +105,7 @@ export type SearchStackParamList = {
   };
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
-    vehicleId?: number;
+    vehicleId?: number | string;
   };
 };
 
@@ -113,7 +113,7 @@ export type BookingsStackParamList = {
   [ROUTES.MY_BOOKINGS]: undefined;
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
-    vehicleId?: number;
+    vehicleId?: number | string;
   };
   [ROUTES.CHAT]: {
     conversationId: string;
@@ -146,7 +146,7 @@ export type ProfileStackParamList = {
   } | undefined;
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
-    vehicleId?: number;
+    vehicleId?: number | string;
   };
 };
 
@@ -185,7 +185,7 @@ export type HostBookingsStackParamList = {
   [ROUTES.MY_BOOKINGS]: undefined;
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
-    vehicleId?: number;
+    vehicleId?: number | string;
   };
   [ROUTES.CHAT]: {
     conversationId: string;
