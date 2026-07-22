@@ -6,7 +6,7 @@ import { env, isProd } from './config/env.js';
 import authPlugin from './plugins/auth.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { userRoutes } from './modules/users/routes.js';
-import { islandRoutes } from './modules/islands/routes.js';
+import { islandRoutes, protectionPlanRoutes } from './modules/islands/routes.js';
 import { vehicleRoutes } from './modules/vehicles/routes.js';
 import { bookingRoutes } from './modules/bookings/routes.js';
 import { paymentRoutes } from './modules/payments/routes.js';
@@ -50,6 +50,7 @@ export async function buildApp() {
   await app.register(authRoutes, { prefix: '/v1/auth' });
   await app.register(userRoutes, { prefix: '/v1/users' });
   await app.register(islandRoutes, { prefix: '/v1/islands' });
+  await app.register(protectionPlanRoutes, { prefix: '/v1/protection-plans' });
   await app.register(vehicleRoutes, { prefix: '/v1/vehicles' });
   await app.register(bookingRoutes, { prefix: '/v1/bookings' });
   await app.register(paymentRoutes, { prefix: '/v1/payments' });

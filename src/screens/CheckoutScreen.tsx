@@ -1,625 +1,302 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
-import { notificationService } from '../services/notificationService';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
-import { StandardButton } from '../components/templates/StandardButton';
-import { Vehicle } from '../types';
-import { BookingService } from '../services/bookingService';
-import { hapticService } from '../services/hapticService';
-import { pricingConfigService, PricingConfig, BusinessRules } from '../services/pricingConfigService';
 import { StackScreenProps } from '@react-navigation/stack';
+import { Badge, Button, Card, DisplayText, SectionLabel } from '../components/ui';
+import {
+  keyloApi,
+  ApiProtectionPlan,
+  ApiVehicle,
+  QuoteBreakdown,
+  formatDollars,
+  KeyloApiError,
+} from '../services/keyloApi';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
+import { notificationService } from '../services/notificationService';
+import { apiService } from '../services/apiService';
 
 type CheckoutScreenProps = StackScreenProps<RootStackParamList, typeof ROUTES.CHECKOUT>;
 
+type PickupKind = 'host_location' | 'airport' | 'delivery';
+
+const DEDUCTIBLE_LABEL = (cents: number) => (cents === 0 ? '$0 deductible' : `${formatDollars(cents)} deductible`);
+
+const dayLabel = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+/** Checkout — design/mockups/04-checkout.html. Quote math is server-side. */
 export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, route }) => {
-  const { vehicle } = route.params;
-  
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date(Date.now() + 24 * 60 * 60 * 1000));
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [pricingConfig, setPricingConfig] = useState<PricingConfig | null>(null);
-  const [businessRules, setBusinessRules] = useState<BusinessRules | null>(null);
+  const { vehicle, startDate, endDate } = route.params;
+  const vehicleId = String(vehicle.id);
 
-  const days = BookingService.calculateDays(
-    startDate.toISOString().split('T')[0],
-    endDate.toISOString().split('T')[0]
-  );
-  const basePrice = days * vehicle.dailyRate;
-  const insuranceFee = pricingConfig ? days * pricingConfig.insuranceFeePerDay : days * 15;
-  const serviceFee = pricingConfig ? pricingConfig.serviceFee : 25;
-  const taxRate = pricingConfig ? pricingConfig.taxRate : 0.10;
-  const subtotal = basePrice + insuranceFee + serviceFee;
-  const tax = subtotal * taxRate;
-  const total = subtotal + tax;
-
-  const validateDateSelection = (newStartDate: Date, newEndDate: Date): { isValid: boolean; errorMessage?: string } => {
-    if (!businessRules) {
-      return { isValid: true }; // Allow if rules not loaded yet
-    }
-
-    const now = new Date();
-    const minAdvanceTime = new Date(now.getTime() + businessRules.minAdvanceBookingHours * 60 * 60 * 1000);
-    const maxAdvanceTime = new Date(now.getTime() + businessRules.maxAdvanceBookingHours * 60 * 60 * 1000);
-    
-    // Check minimum advance booking
-    if (newStartDate < minAdvanceTime) {
-      return {
-        isValid: false,
-        errorMessage: `Booking must be made at least ${businessRules.minAdvanceBookingHours} hours in advance`
-      };
-    }
-    
-    // Check maximum advance booking
-    if (newStartDate > maxAdvanceTime) {
-      return {
-        isValid: false,
-        errorMessage: `Booking cannot be made more than ${Math.floor(businessRules.maxAdvanceBookingHours / 24)} days in advance`
-      };
-    }
-    
-    // Check rental period length
-    const rentalDays = BookingService.calculateDays(
-      newStartDate.toISOString().split('T')[0],
-      newEndDate.toISOString().split('T')[0]
-    );
-    
-    if (rentalDays < businessRules.minRentalDays) {
-      return {
-        isValid: false,
-        errorMessage: `Minimum rental period is ${businessRules.minRentalDays} day${businessRules.minRentalDays > 1 ? 's' : ''}`
-      };
-    }
-    
-    if (rentalDays > businessRules.maxRentalDays) {
-      return {
-        isValid: false,
-        errorMessage: `Maximum rental period is ${businessRules.maxRentalDays} days`
-      };
-    }
-    
-    return { isValid: true };
-  };
-
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate: Date | undefined, type: 'start' | 'end') => {
-    if (selectedDate) {
-      let newStartDate = startDate;
-      let newEndDate = endDate;
-      
-      if (type === 'start') {
-        newStartDate = selectedDate;
-        if (selectedDate >= endDate) {
-          newEndDate = new Date(selectedDate.getTime() + 24 * 60 * 60 * 1000);
-        }
-      } else {
-        if (selectedDate > startDate) {
-          newEndDate = selectedDate;
-        } else {
-          setShowStartPicker(false);
-          setShowEndPicker(false);
-          return; // Don't update if end date is not after start date
-        }
-      }
-      
-      // Validate the new date selection
-      const validation = validateDateSelection(newStartDate, newEndDate);
-      
-      if (validation.isValid) {
-        setStartDate(newStartDate);
-        setEndDate(newEndDate);
-      } else {
-        notificationService.error(validation.errorMessage || 'Invalid date selection', {
-          title: 'Date Selection Error',
-          duration: 4000
-        });
-      }
-    }
-    setShowStartPicker(false);
-    setShowEndPicker(false);
-  };
-
-  const handlePayment = async () => {
-    try {
-      setLoading(true);
-      
-      // Haptic feedback for payment processing
-      await hapticService.paymentProcessing();
-      
-      const token = await AsyncStorage.getItem('authToken');
-      if (!token) {
-        notificationService.error('Please log in to continue', {
-          title: 'Authentication Required',
-          duration: 4000
-        });
-        navigation.navigate(ROUTES.LOGIN);
-        return;
-      }
-
-      const bookingData = {
-        vehicleId: vehicle.id,
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
-      };
-
-      const response = await BookingService.createBooking(bookingData);
-      
-      navigation.navigate(ROUTES.PAYMENT, {
-        booking: {
-          ...response.booking,
-          vehicle: vehicle
-        }
-      });
-      
-    } catch (error: unknown) {
-      notificationService.error(error instanceof Error ? error.message : String(error), {
-        title: 'Booking Error',
-        duration: 5000
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [apiVehicle, setApiVehicle] = useState<ApiVehicle | null>(null);
+  const [plans, setPlans] = useState<ApiProtectionPlan[]>([]);
+  const [planId, setPlanId] = useState('standard');
+  const [pickupKind, setPickupKind] = useState<PickupKind>('host_location');
+  const [extraIds, setExtraIds] = useState<string[]>([]);
+  const [quote, setQuote] = useState<QuoteBreakdown | null>(null);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
-    // Load pricing configuration and business rules
-    const loadConfigurations = async () => {
-      try {
-        const [config, rules] = await Promise.all([
-          pricingConfigService.getPricingConfig(),
-          pricingConfigService.getBusinessRules()
-        ]);
-        setPricingConfig(config);
-        setBusinessRules(rules);
-      } catch (error) {
-        console.warn('Failed to load configurations:', error);
-        // Fallback values are handled in the service
+    keyloApi
+      .vehicle(vehicleId)
+      .then((res) => setApiVehicle(res.vehicle))
+      .catch(() => setApiVehicle(null));
+    keyloApi
+      .protectionPlans()
+      .then((res) => setPlans(res.plans))
+      .catch(() => setPlans([]));
+  }, [vehicleId]);
+
+  const refreshQuote = useCallback(() => {
+    setQuoteError(null);
+    keyloApi
+      .quote({ vehicleId, startAt: startDate, endAt: endDate, pickupKind, protectionPlanId: planId, extraIds })
+      .then((res) => setQuote(res.quote))
+      .catch((e) => {
+        setQuote(null);
+        setQuoteError(e instanceof KeyloApiError ? e.message : "Couldn't price this trip.");
+      });
+  }, [vehicleId, startDate, endDate, pickupKind, planId, extraIds]);
+
+  useEffect(() => {
+    refreshQuote();
+  }, [refreshQuote]);
+
+  const toggleExtra = (id: string) =>
+    setExtraIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+
+  const extras = apiVehicle?.extras ?? [];
+
+  const pickupOptions = useMemo(() => {
+    const options: { kind: PickupKind; label: string; feeCents: number }[] = [
+      { kind: 'host_location', label: 'Host location', feeCents: 0 },
+    ];
+    if (apiVehicle?.airportPickup)
+      options.push({ kind: 'airport', label: 'Airport (LPIA)', feeCents: apiVehicle.airportFeeCents });
+    if (apiVehicle?.deliveryAvailable)
+      options.push({ kind: 'delivery', label: 'Deliver to me', feeCents: apiVehicle.deliveryFeeCents });
+    return options;
+  }, [apiVehicle]);
+
+  const pay = async () => {
+    setPaying(true);
+    try {
+      const token = await apiService.getToken();
+      if (!token) {
+        notificationService.error('Sign in to book this car', { title: 'Sign in required' });
+        return;
       }
-    };
-    
-    loadConfigurations();
-  }, []);
+      const result = await keyloApi.createBooking(
+        {
+          vehicleId,
+          startAt: startDate,
+          endAt: endDate,
+          pickupKind,
+          protectionPlanId: planId,
+          extraIds,
+        },
+        token
+      );
+      if (result.approveUrl) {
+        // PayPal approval sheet (in-app browser); the webhook confirms capture.
+        await Linking.openURL(result.approveUrl);
+      }
+      navigation.navigate(ROUTES.BOOKING_CONFIRMED, {
+        booking: {
+          id: Number(result.booking.id) || 0,
+          start_date: startDate,
+          end_date: endDate,
+          status: result.booking.status,
+          total_amount: (quote?.totalCents ?? 0) / 100,
+          vehicle: {
+            id: Number(vehicle.id) || 0,
+            make: vehicle.make,
+            model: vehicle.model,
+            year: vehicle.year,
+            location: vehicle.location,
+            daily_rate: vehicle.dailyRate,
+          },
+        },
+        vehicle,
+      });
+    } catch (e) {
+      const message = e instanceof KeyloApiError ? e.message : 'Something went wrong — you were not charged.';
+      notificationService.error(message, { title: 'Booking failed' });
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const line = (label: string, cents: number, negative = false) =>
+    cents !== 0 ? (
+      <View className="flex-row justify-between py-1" key={label}>
+        <Text className="font-ui text-body text-stone dark:text-night-muted">{label}</Text>
+        <Text className="font-ui text-body text-ink dark:text-night-text">
+          {negative ? '−' : ''}
+          {formatDollars(Math.abs(cents))}
+        </Text>
+      </View>
+    ) : null;
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Complete Your Booking</Text>
-        <Text style={styles.vehicleInfo}>
-          {vehicle.make} {vehicle.model} ({vehicle.year})
-        </Text>
-        <Text style={styles.location}>📍 {vehicle.location}</Text>
-      </View>
+    <SafeAreaView className="flex-1 bg-paper dark:bg-night" edges={['bottom']}>
+      <ScrollView className="flex-1 px-gutter" showsVerticalScrollIndicator={false}>
+        <DisplayText size="title" className="mt-4">
+          Confirm and pay
+        </DisplayText>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Select Rental Period</Text>
-        
-        <TouchableOpacity style={styles.calendarSelector} onPress={() => setShowStartPicker(true)}>
-          <View style={styles.calendarHeader}>
-            <Ionicons name="calendar" size={20} color={colors.primary} />
-            <Text style={styles.calendarTitle}>Select Rental Period</Text>
-            <View style={styles.availabilityBadge}>
-              <View style={styles.availabilityDot} />
-              <Text style={styles.availabilityText}>Available</Text>
-            </View>
+        {/* Trip summary */}
+        <Card className="mt-4 flex-row items-center gap-3 p-card-pad">
+          <View className="h-12 w-16 items-center justify-center rounded-field bg-ink dark:bg-night-raised">
+            <Ionicons name="car-sport" size={28} color="#F2EFE9" />
           </View>
-          
-          <View style={styles.selectedDates}>
-            <View style={styles.dateSelection}>
-              <Text style={styles.dateType}>Check-in</Text>
-              <Text style={styles.selectedDate}>{startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</Text>
-            </View>
-            
-            <View style={styles.dateSeparator}>
-              <View style={styles.separatorLine} />
-              <Ionicons name="arrow-forward" size={16} color={colors.lightGrey} />
-              <View style={styles.separatorLine} />
-            </View>
-            
-            <View style={styles.dateSelection}>
-              <Text style={styles.dateType}>Check-out</Text>
-              <Text style={styles.selectedDate}>{endDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        <Text style={styles.durationText}>
-          Duration: {days} day{days !== 1 ? 's' : ''}
-        </Text>
-
-        {showStartPicker && (
-          <DateTimePicker
-            value={startDate}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            minimumDate={new Date()}
-            onChange={(event, date) => handleDateChange(event, date, 'start')}
-          />
-        )}
-
-        {showEndPicker && (
-          <DateTimePicker
-            value={endDate}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            minimumDate={new Date(startDate.getTime() + 24 * 60 * 60 * 1000)}
-            onChange={(event, date) => handleDateChange(event, date, 'end')}
-          />
-        )}
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.pricingHeader}>
-          <Text style={styles.sectionTitle}>Transparent Pricing</Text>
-          <View style={styles.trustBadge}>
-            <Ionicons name="shield-checkmark" size={16} color={colors.verified} />
-            <Text style={styles.trustText}>No Hidden Fees</Text>
-          </View>
-        </View>
-        
-        <View style={styles.priceBreakdown}>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>
-              ${vehicle.dailyRate}/day × {days} days
+          <View className="flex-1">
+            <Text className="font-ui-bold text-body text-ink dark:text-night-text">
+              {vehicle.make} {vehicle.model} {vehicle.year}
             </Text>
-            <Text style={styles.priceValue}>${basePrice.toFixed(2)}</Text>
+            <Text className="font-ui text-meta text-stone dark:text-night-muted">
+              {dayLabel(startDate)} → {dayLabel(endDate)}
+            </Text>
           </View>
-          
-          <View style={styles.priceRow}>
-            <View style={styles.priceWithInfo}>
-              <Text style={styles.priceLabel}>Insurance</Text>
-              <Text style={styles.includedText}>✅ Included</Text>
-            </View>
-            <Text style={styles.priceValue}>$0.00</Text>
-          </View>
-          
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Service Fee</Text>
-            <Text style={styles.priceValue}>${serviceFee.toFixed(2)}</Text>
-          </View>
-          
-          <View style={styles.divider} />
-          
-          <View style={[styles.priceRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>${(basePrice + serviceFee).toFixed(2)}</Text>
-          </View>
-          
-          <Text style={styles.savingsText}>
-            💰 You save ${(insuranceFee + tax).toFixed(2)} on fees!
-          </Text>
-        </View>
-      </View>
+        </Card>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Payment Options</Text>
-        
-        <View style={styles.paymentMethods}>
-          <TouchableOpacity style={[styles.paymentMethod, styles.selectedPayment]}>
-            <View style={styles.paymentInfo}>
-              <Ionicons name="card" size={24} color={colors.primary} />
-              <View style={styles.paymentDetails}>
-                <Text style={styles.paymentTitle}>Credit/Debit Card</Text>
-                <Text style={styles.paymentSubtitle}>Visa, Mastercard, American Express</Text>
-              </View>
+        {/* Pickup */}
+        {pickupOptions.length > 1 && (
+          <>
+            <SectionLabel className="mt-6">Pickup</SectionLabel>
+            <View className="mt-2 gap-2">
+              {pickupOptions.map((option) => (
+                <Pressable
+                  key={option.kind}
+                  onPress={() => setPickupKind(option.kind)}
+                  className={`flex-row items-center justify-between rounded-card border p-3.5 ${
+                    pickupKind === option.kind
+                      ? 'border-coral bg-coral-tint dark:bg-night-raised'
+                      : 'border-sand bg-white dark:border-night-line dark:bg-night-raised'
+                  }`}
+                >
+                  <Text className="font-ui-semibold text-body text-ink dark:text-night-text">{option.label}</Text>
+                  <Text className="font-ui text-meta text-stone dark:text-night-muted">
+                    {option.feeCents === 0 ? 'Free' : formatDollars(option.feeCents)}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-            <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.paymentMethod}>
-            <View style={styles.paymentInfo}>
-              <Ionicons name="phone-portrait" size={24} color={colors.lightGrey} />
-              <View style={styles.paymentDetails}>
-                <Text style={styles.paymentTitle}>Apple Pay</Text>
-                <Text style={styles.paymentSubtitle}>Quick & secure payment</Text>
-              </View>
+          </>
+        )}
+
+        {/* Protection plan */}
+        {plans.length > 0 && (
+          <>
+            <SectionLabel className="mt-6">Protection plan</SectionLabel>
+            <View className="mt-2 flex-row gap-2">
+              {plans.map((plan) => (
+                <Pressable
+                  key={plan.id}
+                  onPress={() => setPlanId(plan.id)}
+                  className={`flex-1 items-center rounded-card border p-3 ${
+                    planId === plan.id
+                      ? 'border-2 border-coral bg-white shadow-float dark:bg-night-raised'
+                      : 'border-sand bg-white dark:border-night-line dark:bg-night-raised'
+                  }`}
+                >
+                  <Text
+                    className={`font-ui-bold text-meta ${
+                      planId === plan.id ? 'text-coral-pressed dark:text-coral-night' : 'text-ink dark:text-night-text'
+                    }`}
+                  >
+                    {plan.name}
+                    {planId === plan.id ? ' ✓' : ''}
+                  </Text>
+                  <Text className="mt-0.5 font-ui text-overline normal-case tracking-normal text-stone dark:text-night-muted">
+                    {DEDUCTIBLE_LABEL(plan.deductibleCents)}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.paymentMethod}>
-            <View style={styles.paymentInfo}>
-              <Ionicons name="logo-bitcoin" size={24} color={colors.lightGrey} />
-              <View style={styles.paymentDetails}>
-                <Text style={styles.paymentTitle}>Cryptocurrency</Text>
-                <Text style={styles.paymentSubtitle}>Bitcoin, Ethereum & more</Text>
+          </>
+        )}
+
+        {/* Extras */}
+        {extras.length > 0 && (
+          <>
+            <SectionLabel className="mt-6">Extras</SectionLabel>
+            <Card className="mt-2 px-card-pad">
+              {extras.map((extra, i) => (
+                <Pressable
+                  key={extra.id}
+                  onPress={() => toggleExtra(extra.id)}
+                  className={`flex-row items-center justify-between py-3 ${
+                    i < extras.length - 1 ? 'border-b border-sand dark:border-night-line' : ''
+                  }`}
+                >
+                  <Text
+                    className={`font-ui text-body ${
+                      extraIds.includes(extra.id)
+                        ? 'font-ui-semibold text-ink dark:text-night-text'
+                        : 'text-stone dark:text-night-muted'
+                    }`}
+                  >
+                    {extraIds.includes(extra.id) ? '☑' : '☐'} {extra.name}
+                  </Text>
+                  <Text className="font-ui-bold text-meta text-ink dark:text-night-text">
+                    {formatDollars(extra.priceCents)} {extra.perTrip ? '/ trip' : '/ day'}
+                  </Text>
+                </Pressable>
+              ))}
+            </Card>
+          </>
+        )}
+
+        {/* Price details — server-authoritative */}
+        <SectionLabel className="mt-6">Price details</SectionLabel>
+        <Card className="mb-8 mt-2 p-card-pad">
+          {quote ? (
+            <>
+              {line(`${formatDollars(quote.nightlyRateCents)} × ${quote.nights} days`, quote.baseCents)}
+              {line('Duration discount', quote.durationDiscountCents, true)}
+              {line('Pickup / delivery', quote.deliveryCents)}
+              {line('Extras', quote.extrasCents)}
+              {line('Young driver fee', quote.youngDriverCents)}
+              {line('Protection', quote.protectionCents)}
+              {line('KeyLo service fee', quote.serviceFeeCents)}
+              <View className="mt-1.5 flex-row items-baseline justify-between border-t border-sand pt-2 dark:border-night-line">
+                <Text className="font-ui-bold text-body text-ink dark:text-night-text">Total (USD)</Text>
+                <Text className="font-display text-title text-coral">{formatDollars(quote.totalCents)}</Text>
               </View>
-            </View>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.securityFeatures}>
-          <View style={styles.securityItem}>
-            <Ionicons name="shield-checkmark" size={16} color={colors.verified} />
-            <Text style={styles.securityText}>🔒 Bank-level encryption</Text>
-          </View>
-          <View style={styles.securityItem}>
-            <Ionicons name="checkmark-circle" size={16} color={colors.verified} />
-            <Text style={styles.securityText}>Instant confirmation</Text>
-          </View>
-          <View style={styles.securityItem}>
-            <Ionicons name="refresh" size={16} color={colors.verified} />
-            <Text style={styles.securityText}>Free cancellation 24h</Text>
-          </View>
-        </View>
-        
-        <StandardButton
-          title={`🔒 Secure Checkout - $${(basePrice + serviceFee).toFixed(2)}`}
-          onPress={handlePayment}
-          loading={loading}
-          variant="primary"
-          fullWidth
-          style={styles.secureCheckoutButton}
+              {quote.depositCents > 0 && (
+                <Text className="mt-1 font-ui text-overline normal-case tracking-normal text-stone dark:text-night-muted">
+                  + {formatDollars(quote.depositCents)} refundable deposit hold
+                </Text>
+              )}
+            </>
+          ) : quoteError ? (
+            <Pressable onPress={refreshQuote} className="items-center py-2">
+              <Text className="font-ui text-body text-stone dark:text-night-muted">{quoteError}</Text>
+              <Badge label="Tap to retry" tone="coral" className="mt-2" />
+            </Pressable>
+          ) : (
+            <ActivityIndicator color="#FF5A3C" />
+          )}
+        </Card>
+      </ScrollView>
+
+      <View className="border-t border-sand bg-white px-gutter pb-2 pt-3 dark:border-night-line dark:bg-night-raised">
+        <Button
+          label={quote ? `Pay ${formatDollars(quote.totalCents)} with PayPal` : 'Pay with PayPal'}
+          disabled={!quote}
+          loading={paying}
+          onPress={pay}
         />
+        <Text className="mt-2 text-center font-ui text-overline normal-case tracking-normal text-stone dark:text-night-muted">
+          Card or PayPal balance · Free cancellation until 24h before pickup
+        </Text>
       </View>
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.offWhite,
-  },
-  header: {
-    padding: spacing.lg,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.offWhite,
-  },
-  title: {
-    ...typography.heading1,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  calendarSelector: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    marginBottom: spacing.md,
-  },
-  calendarHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  calendarTitle: {
-    ...typography.subheading,
-    flex: 1,
-    marginLeft: spacing.sm,
-  },
-  availabilityBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.verified + '15',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
-    gap: spacing.xs,
-  },
-  availabilityDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.verified,
-  },
-  availabilityText: {
-    ...typography.caption,
-    color: colors.verified,
-    fontWeight: '600',
-  },
-  selectedDates: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dateSelection: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  dateType: {
-    ...typography.caption,
-    color: colors.lightGrey,
-    marginBottom: spacing.xs,
-  },
-  selectedDate: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.darkGrey,
-  },
-  dateSeparator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: spacing.md,
-    gap: spacing.sm,
-  },
-  separatorLine: {
-    width: 20,
-    height: 1,
-    backgroundColor: colors.lightGrey,
-  },
-  pricingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  trustBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.verified + '15',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
-    gap: spacing.xs,
-  },
-  trustText: {
-    ...typography.caption,
-    color: colors.verified,
-    fontWeight: '600',
-  },
-  priceBreakdown: {
-    backgroundColor: colors.offWhite,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-  },
-  priceWithInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  includedText: {
-    ...typography.caption,
-    color: colors.verified,
-    fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.lightGrey,
-    marginVertical: spacing.sm,
-  },
-  savingsText: {
-    ...typography.caption,
-    color: colors.warning,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: spacing.sm,
-  },
-  paymentMethods: {
-    marginBottom: spacing.lg,
-  },
-  paymentMethod: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.lightGrey,
-    marginBottom: spacing.sm,
-  },
-  selectedPayment: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + '08',
-  },
-  paymentInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  paymentDetails: {
-    marginLeft: spacing.md,
-  },
-  paymentTitle: {
-    ...typography.body,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  paymentSubtitle: {
-    ...typography.caption,
-    color: colors.lightGrey,
-  },
-  securityFeatures: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: colors.verified + '08',
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.lg,
-  },
-  securityItem: {
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  securityText: {
-    ...typography.caption,
-    color: colors.verified,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  secureCheckoutButton: {
-    backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  vehicleInfo: {
-    ...typography.subheading,
-    textAlign: 'center',
-    marginBottom: spacing.xs,
-  },
-  location: {
-    ...typography.body,
-    textAlign: 'center',
-  },
-  section: {
-    backgroundColor: colors.white,
-    margin: spacing.md,
-    padding: spacing.lg,
-    borderRadius: borderRadius.md,
-  },
-  sectionTitle: {
-    ...typography.subheading,
-    marginBottom: spacing.md,
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  dateField: {
-    flex: 0.48,
-  },
-  dateLabel: {
-    ...typography.body,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
-  durationText: {
-    ...typography.body,
-    textAlign: 'center',
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  priceLabel: {
-    ...typography.body,
-  },
-  priceValue: {
-    ...typography.body,
-    fontWeight: '600',
-  },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: colors.offWhite,
-    paddingTop: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  totalLabel: {
-    ...typography.subheading,
-  },
-  totalValue: {
-    ...typography.subheading,
-    color: colors.primary,
-  },
-  paymentButtons: {
-    gap: spacing.md,
-  },
-  paymentNote: {
-    ...typography.body,
-    textAlign: 'center',
-  },
-});
+export default CheckoutScreen;
