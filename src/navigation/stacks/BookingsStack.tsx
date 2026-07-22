@@ -4,6 +4,7 @@ import { MyBookingsScreen } from '../../screens/MyBookingsScreen';
 import { VehicleDetailScreen } from '../../screens/VehicleDetailScreen';
 import ChatConversationScreen from '../../screens/ChatConversationScreen';
 import { WriteReviewScreen } from '../../screens/WriteReviewScreen';
+import { TripCheckInScreen } from '../../screens/TripCheckInScreen';
 import { ROUTES } from '../routes';
 import { BookingsStackParamList } from '../types';
 import { colors } from '../../styles/theme';
@@ -34,11 +35,14 @@ export const BookingsStack: React.FC = () => {
       <Stack.Screen
         name={ROUTES.MY_BOOKINGS}
         component={MyBookingsScreen}
-        options={{
-          title: 'My Bookings',
-          headerShown: true,
-        }}
+        options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name={ROUTES.TRIP_CHECK_IN}
+        options={{ title: 'Check-in', headerShown: true }}
+      >
+        {(props) => <TripCheckInScreen {...(props as any)} />}
+      </Stack.Screen>
       <Stack.Screen
         name={ROUTES.VEHICLE_DETAIL}
         component={VehicleDetailScreen}

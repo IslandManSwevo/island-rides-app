@@ -41,6 +41,9 @@ export const ROUTES = {
   // Inbox
   INBOX: 'Inbox',
 
+  // Trip lifecycle
+  TRIP_CHECK_IN: 'TripCheckIn',
+
   // Host Tab Routes
   HOST_DASHBOARD_TAB: 'HostDashboardTab',
   HOST_VEHICLES_TAB: 'HostVehiclesTab',
