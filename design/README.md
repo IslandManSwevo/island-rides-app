@@ -9,7 +9,7 @@ A complete reimagining of KeyLo (peer-to-peer car rental for the Bahamas) that k
 | [01 · Brand identity](01-brand-identity.md) | Palette, type (Fraunces + Inter), shape/motion, voice, rejected directions |
 | [02 · User flows](02-user-flows.md) | Two-role IA, booking flow, lifecycle state machine, Turo-parity mechanics |
 | [03 · Screen inventory](03-screen-inventory.md) | Every current route mapped: keep / merge / cut (~40 → 24 surfaces) |
-| [04 · Backend architecture](04-backend-architecture.md) | Railway topology (Fastify + Postgres + Redis + R2), auth, Stripe, jobs |
+| [04 · Backend architecture](04-backend-architecture.md) | Railway topology (Fastify + Postgres + Redis + R2), auth, PayPal payments, jobs |
 | [05 · API spec](05-api-spec.md) | REST surface by domain, mirrors the app's existing service layer |
 | [06 · Data model](06-data-model.md) | ER diagram + Prisma schema sketch |
 | [mockups/index.html](mockups/index.html) | 9 HTML mockups on the shared token sheet — **start here** |
@@ -31,9 +31,17 @@ Open `design/mockups/index.html` in any browser (no build, no dependencies — G
 | Framework | Fastify + TS + Zod | NestJS (heavier), Express (unvalidated) |
 | ORM | Prisma | Drizzle — Prisma's migration story wins for a rebuild |
 | Storage | Cloudflare R2, presigned uploads | Railway MinIO — self-managed ops burden |
-| Payments | Stripe (Intents + Connect Express payouts) | PayPal (no manual capture ergonomics, no payout rails) — fallback documented |
+| Payments | **PayPal (interim)**: Orders API charges, Payouts + internal ledger for hosts; gateway-neutral fields so the rail can change later | Stripe — Connect availability for a Bahamas entity is unverified; deferred, not rejected. Crypto/bank-transfer — cut |
 | Roles | `user / host / admin` | Old `owner` role merges into host |
 | Auth | Custom JWT + rotating refresh on the new API | Finishing the Firebase migration — orphaned by the custom-backend choice |
+
+## Risks & open questions
+
+Flagged now so they're decided deliberately, not discovered in production:
+
+1. **Insurance / protection plans.** The Minimum/Standard/Premium tiers are platform "plans," not underwritten insurance. Before scale, KeyLo needs either a Bahamian insurer partnership (fleet policy) or enforced host-carried rental-eligible insurance (the document is already collected at listing verification) with KeyLo tiers acting as deductible-splitting between guest and host. Interim backstop: the security-deposit authorization. This is the largest legal/financial open question.
+2. **Payment rail is interim.** PayPal is the v1 rail by explicit decision; the final choice (Stripe Connect if entity structure allows, or a local processor) is deferred. Everything payment-shaped is gateway-neutral (`gateway`/`gatewayRef`, `PaymentGateway` module) to keep the switch cheap. Note PayPal-specific constraints in doc 04 (authorization hold expiry, KeyLo as merchant of record with an internal earnings ledger).
+3. **SEO / marketing web layer.** Tourists search "car rental Nassau" on Google; the Expo web build won't rank. A small server-rendered marketing layer (landing + storefront/vehicle pages with OpenGraph) is deferred but should precede any paid growth push.
 
 ## What happens after approval
 

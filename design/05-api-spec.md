@@ -56,13 +56,14 @@ REST, JSON, versioned under `/v1`. Auth = Bearer access token (see 04). Routers 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
 | POST | `/bookings/quote` | 🌐 | dates + pickup option + protection tier + extras → itemized price breakdown (the checkout math, server-authoritative) |
-| POST | `/bookings` | 🔑 | idempotent; creates `pending` (request) or `confirmed` (Instant Book) with payment intent |
+| POST | `/bookings` | 🔑 | idempotent; creates `pending` (request) or `confirmed` (Instant Book) with a PayPal order; accepts optional `flightNumber` when pickup is `airport` |
 | GET | `/bookings` | 🔑 | own bookings; `role=guest|host`, `status` filters |
 | GET | `/bookings/:id` | 🔑 | full detail: state, payments, check-ins, modifications |
 | POST | `/bookings/:id/approve` · `/decline` | 🚗 | request-to-book responses; approve captures payment |
 | POST | `/bookings/:id/cancel` | 🔑 | policy-based refund computed server-side; `reason` |
-| POST | `/bookings/:id/check-in` | 🔑 | photos (R2 keys), odometer, fuel; both parties → `active` |
-| POST | `/bookings/:id/check-out` | 🔑 | mirrored; → `completed` |
+| POST | `/bookings/:id/check-in` | 🔑 | odometer, fuel, photo manifest; both parties → `active`. **Offline-tolerant:** metadata may arrive first with photo keys attached later via PATCH as queued uploads sync |
+| POST | `/bookings/:id/check-out` | 🔑 | mirrored; → `completed`; same offline semantics |
+| PATCH | `/bookings/:id/inspections/:inspectionId` | 🔑 | attach late-synced photo keys to a submitted check-in/out |
 | POST | `/bookings/:id/extend` | 🔑 | new end date → repriced delta, host approval unless auto-approvable |
 | POST | `/bookings/:id/review` | 🔑 | two-sided blind review |
 
@@ -74,14 +75,14 @@ State transitions are validated server-side against the machine in 02; illegal t
 |---|---|---|---|
 | GET | `/payments` | 🔑 | receipt history (replaces PaymentHistory screen data) |
 | GET | `/payments/:id/receipt` | 🔑 | itemized receipt |
-| POST | `/payments/webhook` | 🌐 (Stripe sig) | source of truth for capture/refund/payout/dispute |
-| GET | `/payments/setup-intent` | 🔑 | save a card for Payment Sheet |
+| POST | `/payments/webhook` | 🌐 (PayPal sig) | verified PayPal webhooks — source of truth for capture/refund/payout events |
+| POST | `/payments/orders/:bookingId/approve` | 🔑 | confirms the PayPal order the guest approved in the in-app sheet |
 
 ## Hosts — `/v1/hosts` (client: `HostService`)
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/hosts` | 🔑 | become a host: profile + Stripe Connect onboarding link |
+| POST | `/hosts` | 🔑 | become a host: profile + payout destination (PayPal email, verified via Payouts) |
 | GET/PATCH | `/hosts/me` | 🚗 | host profile, protection plan choice, payout account status |
 | GET | `/hosts/me/dashboard` | 🚗 | Today feed: pending requests, pickups/returns, alerts |
 | GET | `/hosts/me/earnings` | 🚗 | balance, payout schedule, `period=week|month|year` |
@@ -89,6 +90,7 @@ State transitions are validated server-side against the machine in 02; illegal t
 | GET | `/hosts/@:handle` | 🌐 | public storefront by handle: banner, bio, stats, fleet (ordered), review highlights. Old handles 301 to current |
 | GET/PATCH | `/hosts/me/storefront` | 🚗 | storefront editor: handle (unique, validated), bannerKey, tagline, featuredVehicleId, fleet ordering |
 | GET | `/hosts/me/storefront/stats` | 🚗 | share attribution: storefront views, bookings `via storefront` |
+| GET | `/hosts/me/storefront/qr` | 🚗 | SVG/PNG QR code of the storefront URL (print-ready; scans attribute `source=qr`) |
 | POST | `/hosts/me/payouts` | 🚗 | manual payout request (if balance policy allows) |
 
 ## Conversations — `/v1/conversations` (+ Socket.IO `/chat`)

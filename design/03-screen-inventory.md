@@ -24,8 +24,8 @@ Every route in `src/navigation/routes.ts` accounted for. Verdicts: **Keep** (red
 | `Map` | Merge | List/map **segmented toggle** inside Explore. |
 | `VehicleDetail` | Keep | Redesigned: gallery, Fraunces title, host card, reviews, policies, sticky price bar with Instant Book (⚡) or Request state. Mockup 03. |
 | `Checkout` | Keep | Sections: dates & pickup location → protection tier → extras → itemized total → pay. Mockup 04. |
-| `Payment`, `PayPalConfirmation` | Merge | Payment happens inside Checkout via Stripe Payment Sheet; no separate payment screens. |
-| `BankTransferInstructions`, `CryptoPayment` | Cut | v1 is card-only via Stripe. |
+| `Payment`, `PayPalConfirmation` | Merge | Payment happens inside Checkout via the PayPal approval flow (in-app browser sheet); no separate payment screens. |
+| `BankTransferInstructions`, `CryptoPayment` | Cut | v1 is PayPal-only (cards ride through PayPal checkout). |
 | `BookingConfirmed` | Keep | "You've got the keys." confirmation with trip summary + add-to-calendar. |
 | `CompareVehicles` | Cut | Deferred; favorites covers the job. |
 | `SavedSearches` | Merge | Row in Profile; saving happens from the Explore filter sheet. |
@@ -37,7 +37,7 @@ Every route in `src/navigation/routes.ts` accounted for. Verdicts: **Keep** (red
 |---|---|---|
 | `MyBookings` | Keep (renamed) | **Trips** tab: upcoming / active / past. Mockup 05. |
 | — (new) | New | **Trip detail**: countdown, pickup instructions, check-in/check-out entry, extend trip, receipt, cancel. |
-| — (new) | New | **Trip check-in / check-out**: guided photo capture (condition ×4, odometer, fuel). Mockup 08. |
+| — (new) | New | **Trip check-in / check-out**: guided photo capture (condition ×4, odometer, fuel); opens with a "we drive on the left" primer for first-time/foreign guests; works offline with queued uploads. Mockup 08. |
 | `PaymentHistory` | Merge | "Receipts" section inside Trips. |
 | `WriteReview` | Keep | Modal after check-out; two-sided blind reviews. |
 | `Chat` | Keep | **Inbox** tab: conversations (booking-scoped) + notification center. |

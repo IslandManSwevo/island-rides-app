@@ -15,7 +15,7 @@ flowchart LR
       D[(Redis)]
     end
     E[Cloudflare R2<br/>photos & documents]
-    F[Stripe<br/>payments · Connect payouts · Identity later]
+    F[PayPal<br/>Orders API charges · Payouts API]
     G[Expo Push Service]
 
     A -- HTTPS + WSS --> B
@@ -36,7 +36,7 @@ flowchart LR
 | Framework | **Fastify + TypeScript + Zod** (`fastify-type-provider-zod`) | Lighter than NestJS, first-class schema validation, typed routes; modular routers mirror the app's `src/services/domains/*` |
 | ORM | **Prisma** | Best migrations + DX story for a rebuild; schema sketch in [06-data-model.md](06-data-model.md) |
 | Realtime | **Socket.IO** server + Redis adapter | The app already ships `socket.io-client`; namespaces `/chat` and `/bookings` (status transitions pushed live) |
-| Payments | **Stripe** | See decision below |
+| Payments | **PayPal** (interim) | See decision below |
 | Push | **Expo Push** via `expo-server-sdk` | Tokens stored per device (`PushToken` table); no FCM/APNs plumbing needed |
 
 ## Environment (Railway service variables)
@@ -61,17 +61,16 @@ Client side: `EXPO_PUBLIC_API_BASE_URL=https://api.<railway-domain>` and `EXPO_P
 - Social login deferred; `AuthProvider` table reserves room.
 - Guest browsing: search/detail endpoints are public; booking, chat, favorites require auth; verification (license + selfie) required before first booking completes.
 
-## Payments — Stripe (decision)
+## Payments — PayPal (interim decision)
 
-**Recommendation: Stripe, and deprecate the PayPal/crypto/bank-transfer screens.**
+**The payment rail is deliberately an interim call: PayPal for now, revisited before scale.** The design keeps every payment-touching interface gateway-neutral (`gateway` + `gatewayRef` fields, a single `PaymentGateway` module in the API) so switching later is a migration, not a redesign.
 
-- **Charges:** Stripe Payment Intents via the Expo **Payment Sheet** (`@stripe/stripe-react-native`). Request-to-book = manual-capture intent (authorize at request, capture on host approval, auto-release on decline/expiry). Instant Book = immediate capture.
-- **Host payouts:** **Stripe Connect Express** accounts per host; payout ~3 days after trip start; KeyLo's platform fee and the host plan split applied via `application_fee_amount`.
+- **Charges:** **PayPal Orders API v2**, approved in-app via an in-app-browser sheet (the app already has PayPal screens/flows to draw on). Request-to-book = order created with `intent=AUTHORIZE` (authorize at request, capture on host approval, void on decline/expiry). Instant Book = `intent=CAPTURE` immediately. Cards work through PayPal's guest checkout — no PayPal account required.
+- **Refunds:** Captures API refunds (full or partial) against the original capture, driven by the cancellation policy in 02.
+- **Host payouts:** **PayPal Payouts API** to the host's PayPal email, ~3 days after trip start, driven by an **internal earnings ledger** (PayPal has no Connect-style split-payment platform product, so KeyLo receives full payment and owes hosts their split — the `Payout` table is that ledger).
 - **Currency:** USD (1:1 with BSD, both circulate in the Bahamas). Display "$".
-- **Webhooks:** `/payments/webhook` handles capture, refund, payout, and dispute events; webhook is the source of truth for payment state.
-- *Fallback if PayPal must stay:* keep PayPal Orders API for charges only — but you lose manual capture ergonomics and Connect-style payouts, and must build a manual payout ledger. Not recommended.
-
-Refund math follows the cancellation policy in 02 and is executed as Stripe refunds (full or partial) against the original intent.
+- **Webhooks:** `/payments/webhook` verifies PayPal webhook signatures and handles capture, refund, and payout events; the webhook is the source of truth for payment state.
+- **Known limitations to revisit:** authorization holds expire after ~29 days and honor periods are shorter (long-lead bookings need re-authorization near trip start — a BullMQ job); deposit "holds" are modeled as authorizations with the same constraint; and the earnings ledger makes KeyLo the merchant of record. A future move (e.g. Stripe Connect if entity structure allows, or a local processor) slots in behind the `PaymentGateway` module.
 
 ## Background jobs (BullMQ on Redis)
 
@@ -88,6 +87,7 @@ Refund math follows the cancellation policy in 02 and is executed as Stripe refu
 - Zod validation on every route; rate limiting via Redis (`@fastify/rate-limit`); helmet-equivalent headers; CORS locked to `APP_ORIGIN`.
 - Booking state transitions enforced server-side by a single state-machine module (the diagram in 02 is the spec) — clients can only *request* transitions.
 - Idempotency keys on booking creation and payment endpoints.
+- **Offline check-in support:** the check-in/out endpoints accept inspection metadata without photos, then photo keys via PATCH as the client's upload queue drains (Family Island connectivity). The client keeps a persistent retry queue for presigned R2 uploads; the state machine treats a metadata-complete inspection as sufficient to transition, with photos marked `pending sync` until `syncedAt` is set.
 - Structured logs (pino) to Railway logs; `/health` endpoint for Railway healthchecks.
 - Prisma migrations run on deploy (`railway run` release phase).
 

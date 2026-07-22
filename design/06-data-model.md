@@ -84,7 +84,7 @@ model HostProfile {
   responseTimeMins  Int?
   planTier          String  @default("standard")  // sets earnings split 75/80/90
   earningsSplitBps  Int     @default(8000)
-  stripeAccountId   String?                       // Connect Express
+  paypalPayerEmail  String?                       // PayPal Payouts destination (interim rail)
   payoutEnabled     Boolean @default(false)
   suspendedAt       DateTime?
 }
@@ -195,6 +195,7 @@ model Booking {
   endAt            DateTime
   pickupKind       String                 // host_location | airport | delivery
   pickupAddress    String?
+  flightNumber     String?                // airport pickups: host sees delays, pickup time follows the flight
   // itemized pricing snapshot (immutable once confirmed)
   nightlyRateCents Int
   nights           Int
@@ -229,9 +230,10 @@ model TripInspection {                    // Turo-style check-in / check-out
   party      String                       // guest | host
   odometer   Int?
   fuelLevel  Int?                         // 0–100
-  photoKeys  String[]                     // R2 keys: 4 corners + dash
+  photoKeys  String[]                     // R2 keys: 4 corners + dash; may arrive after submittedAt (offline queue)
   notes      String?
   submittedAt DateTime @default(now())
+  syncedAt   DateTime?                    // null while photos are queued on-device awaiting connectivity
   @@unique([bookingId, phase, party])
 }
 
@@ -250,7 +252,8 @@ model Payment {
   status          PaymentStatus @default(requires_payment)
   amountCents     Int
   refundedCents   Int           @default(0)
-  stripeIntentId  String?       @unique
+  gateway         String        @default("paypal") // gateway-neutral: switching rails later is a migration, not a redesign
+  gatewayRef      String?       @unique            // PayPal order/capture id today
   kind            String        @default("trip")   // trip | extension | deposit
 }
 
@@ -260,7 +263,7 @@ model Payout {
   bookingId       String?
   amountCents     Int
   status          String                  // scheduled | paid | failed
-  stripeTransferId String?
+  gatewayBatchRef String?                 // PayPal Payouts batch id today
   scheduledFor    DateTime
 }
 
