@@ -16,7 +16,7 @@ import { ROUTES } from './routes';
 const Tab = createBottomTabNavigator<HostTabParamList>();
 
 const tabBarOptions = {
-  activeTintColor: colors.primary,
+  activeTintColor: colors.text,
   inactiveTintColor: colors.textSecondary,
   style: {
     backgroundColor: colors.surface,
@@ -37,7 +37,7 @@ const getTabBarIcon = (routeName: string, focused: boolean, color: string, size:
 
   switch (routeName) {
     case ROUTES.HOST_DASHBOARD_TAB:
-      iconName = focused ? 'speedometer' : 'speedometer-outline';
+      iconName = focused ? 'sunny' : 'sunny-outline';
       break;
     case ROUTES.HOST_VEHICLES_TAB:
       iconName = focused ? 'car' : 'car-outline';
@@ -46,7 +46,7 @@ const getTabBarIcon = (routeName: string, focused: boolean, color: string, size:
       iconName = focused ? 'calendar' : 'calendar-outline';
       break;
     case ROUTES.HOST_ANALYTICS_TAB:
-      iconName = focused ? 'analytics' : 'analytics-outline';
+      iconName = focused ? 'cash' : 'cash-outline';
       break;
     default:
       iconName = 'help-outline';
@@ -70,7 +70,7 @@ export const HostTabNavigator: React.FC = () => {
         name={ROUTES.HOST_DASHBOARD_TAB}
         component={HostDashboardStack}
         options={{
-          tabBarLabel: 'Dashboard',
+          tabBarLabel: 'Today',
           tabBarAccessibilityLabel: 'Host dashboard overview',
         }}
       />
@@ -78,7 +78,7 @@ export const HostTabNavigator: React.FC = () => {
         name={ROUTES.HOST_VEHICLES_TAB}
         component={VehicleManagementStack}
         options={{
-          tabBarLabel: 'Vehicles',
+          tabBarLabel: 'Fleet',
           tabBarAccessibilityLabel: 'Manage your vehicles',
         }}
       />
@@ -94,7 +94,7 @@ export const HostTabNavigator: React.FC = () => {
         name={ROUTES.HOST_ANALYTICS_TAB}
         component={HostAnalyticsStack}
         options={{
-          tabBarLabel: 'Analytics',
+          tabBarLabel: 'Earnings',
           tabBarAccessibilityLabel: 'View performance analytics',
         }}
       />

@@ -7,7 +7,7 @@ import { colors } from '../styles/theme';
 // Stack Navigators for each tab
 import { SearchStack } from './stacks/SearchStack';
 import { BookingsStack } from './stacks/BookingsStack';
-import { FavoritesStack } from './stacks/FavoritesStack';
+import { InboxStack } from './stacks/InboxStack';
 import { ProfileStack } from './stacks/ProfileStack';
 
 // Types
@@ -16,8 +16,10 @@ import { ROUTES } from './routes';
 
 const Tab = createBottomTabNavigator<CustomerTabParamList>();
 
+// Brand rule: the active tab is ink, not coral — color stays reserved
+// for actions and prices (design/01-brand-identity.md).
 const tabBarOptions = {
-  activeTintColor: colors.primary,
+  activeTintColor: colors.text,
   inactiveTintColor: colors.textSecondary,
   style: {
     backgroundColor: colors.surface,
@@ -37,14 +39,14 @@ const getTabBarIcon = (routeName: string, focused: boolean, color: string, size:
   let iconName: keyof typeof Ionicons.glyphMap;
 
   switch (routeName) {
-    case ROUTES.CUSTOMER_SEARCH_TAB:
+    case ROUTES.EXPLORE_TAB:
       iconName = focused ? 'search' : 'search-outline';
       break;
-    case ROUTES.CUSTOMER_BOOKINGS_TAB:
-      iconName = focused ? 'calendar' : 'calendar-outline';
+    case ROUTES.TRIPS_TAB:
+      iconName = focused ? 'car' : 'car-outline';
       break;
-    case ROUTES.CUSTOMER_FAVORITES_TAB:
-      iconName = focused ? 'heart' : 'heart-outline';
+    case ROUTES.INBOX_TAB:
+      iconName = focused ? 'chatbubble' : 'chatbubble-outline';
       break;
     case ROUTES.CUSTOMER_PROFILE_TAB:
       iconName = focused ? 'person' : 'person-outline';
@@ -65,30 +67,30 @@ export const CustomerTabNavigator: React.FC = () => {
         headerShown: false,
         ...tabBarOptions,
       })}
-      initialRouteName={ROUTES.CUSTOMER_SEARCH_TAB}
+      initialRouteName={ROUTES.EXPLORE_TAB}
     >
       <Tab.Screen
-        name={ROUTES.CUSTOMER_SEARCH_TAB}
+        name={ROUTES.EXPLORE_TAB}
         component={SearchStack}
         options={{
-          tabBarLabel: 'Search',
-          tabBarAccessibilityLabel: 'Search for vehicles',
+          tabBarLabel: 'Explore',
+          tabBarAccessibilityLabel: 'Explore vehicles across the islands',
         }}
       />
       <Tab.Screen
-        name={ROUTES.CUSTOMER_BOOKINGS_TAB}
+        name={ROUTES.TRIPS_TAB}
         component={BookingsStack}
         options={{
-          tabBarLabel: 'Bookings',
-          tabBarAccessibilityLabel: 'View your bookings',
+          tabBarLabel: 'Trips',
+          tabBarAccessibilityLabel: 'View your trips',
         }}
       />
       <Tab.Screen
-        name={ROUTES.CUSTOMER_FAVORITES_TAB}
-        component={FavoritesStack}
+        name={ROUTES.INBOX_TAB}
+        component={InboxStack}
         options={{
-          tabBarLabel: 'Favorites',
-          tabBarAccessibilityLabel: 'View favorite vehicles',
+          tabBarLabel: 'Inbox',
+          tabBarAccessibilityLabel: 'Messages and notifications',
         }}
       />
       <Tab.Screen

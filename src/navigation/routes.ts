@@ -31,11 +31,15 @@ export const ROUTES = {
   PAYMENT: 'Payment',
   PAYPAL_CONFIRMATION: 'PayPalConfirmation',
 
-  // Customer Tab Routes
-  CUSTOMER_SEARCH_TAB: 'CustomerSearchTab',
-  CUSTOMER_BOOKINGS_TAB: 'CustomerBookingsTab',
-  CUSTOMER_FAVORITES_TAB: 'CustomerFavoritesTab',
+  // Customer Tab Routes — new IA (design/02-user-flows.md):
+  // Explore · Trips · Inbox · Profile
+  EXPLORE_TAB: 'ExploreTab',
+  TRIPS_TAB: 'TripsTab',
+  INBOX_TAB: 'InboxTab',
   CUSTOMER_PROFILE_TAB: 'CustomerProfileTab',
+
+  // Inbox
+  INBOX: 'Inbox',
 
   // Host Tab Routes
   HOST_DASHBOARD_TAB: 'HostDashboardTab',

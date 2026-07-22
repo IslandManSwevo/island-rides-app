@@ -3,6 +3,9 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { ProfileScreen } from '../../screens/ProfileScreen';
 import { PaymentHistoryScreen } from '../../screens/PaymentHistoryScreen';
 import { NotificationPreferencesScreen } from '../../screens/NotificationPreferencesScreen';
+import { FavoritesScreen } from '../../screens/FavoritesScreen';
+import { SavedSearchesScreen } from '../../screens/SavedSearchesScreen';
+import { VehicleDetailScreen } from '../../screens/VehicleDetailScreen';
 import { ROUTES } from '../routes';
 import { ProfileStackParamList } from '../types';
 import { colors } from '../../styles/theme';
@@ -64,6 +67,25 @@ export const ProfileStack: React.FC = () => {
           headerShown: true,
         }}
       />
+      {/* Favorites and saved searches live under Profile in the new IA */}
+      <Stack.Screen
+        name={ROUTES.FAVORITES}
+        options={{ title: 'Favorites', headerShown: true }}
+      >
+        {(props) => <FavoritesScreen {...(props as any)} />}
+      </Stack.Screen>
+      <Stack.Screen
+        name={ROUTES.SAVED_SEARCHES}
+        options={{ title: 'Saved searches', headerShown: true }}
+      >
+        {(props) => <SavedSearchesScreen {...(props as any)} />}
+      </Stack.Screen>
+      <Stack.Screen
+        name={ROUTES.VEHICLE_DETAIL}
+        options={{ title: 'Vehicle' }}
+      >
+        {(props) => <VehicleDetailScreen {...(props as any)} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };

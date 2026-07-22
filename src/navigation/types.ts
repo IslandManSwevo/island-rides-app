@@ -1,4 +1,4 @@
-import { NavigatorScreenParams } from '@react-navigation/native';
+import { NavigatorScreenParams, NavigationProp } from '@react-navigation/native';
 import { ROUTES } from './routes';
 import {
   Vehicle,
@@ -80,9 +80,9 @@ export type OnboardingStackParamList = {
 
 // Customer Tab Navigator Types
 export type CustomerTabParamList = {
-  [ROUTES.CUSTOMER_SEARCH_TAB]: NavigatorScreenParams<SearchStackParamList>;
-  [ROUTES.CUSTOMER_BOOKINGS_TAB]: NavigatorScreenParams<BookingsStackParamList>;
-  [ROUTES.CUSTOMER_FAVORITES_TAB]: NavigatorScreenParams<FavoritesStackParamList>;
+  [ROUTES.EXPLORE_TAB]: NavigatorScreenParams<SearchStackParamList>;
+  [ROUTES.TRIPS_TAB]: NavigatorScreenParams<BookingsStackParamList>;
+  [ROUTES.INBOX_TAB]: NavigatorScreenParams<InboxStackParamList>;
   [ROUTES.CUSTOMER_PROFILE_TAB]: NavigatorScreenParams<ProfileStackParamList>;
 };
 
@@ -127,11 +127,12 @@ export type BookingsStackParamList = {
   };
 };
 
-export type FavoritesStackParamList = {
-  [ROUTES.FAVORITES]: undefined;
-  [ROUTES.VEHICLE_DETAIL]: {
-    vehicle?: Vehicle;
-    vehicleId?: number;
+export type InboxStackParamList = {
+  [ROUTES.INBOX]: undefined;
+  [ROUTES.CHAT]: {
+    context?: unknown;
+    conversationId?: number;
+    title?: string;
   };
 };
 
@@ -139,6 +140,14 @@ export type ProfileStackParamList = {
   [ROUTES.PROFILE]: undefined;
   [ROUTES.PAYMENT_HISTORY]: undefined;
   [ROUTES.NOTIFICATION_PREFERENCES]: undefined;
+  [ROUTES.FAVORITES]: undefined;
+  [ROUTES.SAVED_SEARCHES]: {
+    filters?: unknown;
+  } | undefined;
+  [ROUTES.VEHICLE_DETAIL]: {
+    vehicle?: Vehicle;
+    vehicleId?: number;
+  };
 };
 
 // Host Stack Types
