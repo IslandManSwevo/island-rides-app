@@ -7,3 +7,14 @@ export async function islandRoutes(app: FastifyInstance) {
     return { islands };
   });
 }
+
+/** 🌐 GET /v1/protection-plans — checkout tier picker (mockup 04). */
+export async function protectionPlanRoutes(app: FastifyInstance) {
+  app.get('/', async () => {
+    const plans = await prisma.protectionPlan.findMany({
+      where: { active: true },
+      orderBy: { feeBps: 'asc' },
+    });
+    return { plans };
+  });
+}

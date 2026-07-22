@@ -103,8 +103,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const formatDollars = (cents: number): string =>
   `$${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: cents % 100 === 0 ? 0 : 2 })}`;
 
+export interface ApiProtectionPlan {
+  id: string;
+  name: string;
+  feeBps: number;
+  deductibleCents: number;
+}
+
 export const keyloApi = {
   islands: () => request<{ islands: ApiIsland[] }>('/v1/islands'),
+
+  protectionPlans: () => request<{ plans: ApiProtectionPlan[] }>('/v1/protection-plans'),
 
   searchVehicles: (params: VehicleSearchParams = {}) => {
     const query = new URLSearchParams(
@@ -129,6 +138,25 @@ export const keyloApi = {
     protectionPlanId?: string;
     extraIds?: string[];
   }) => request<{ quote: QuoteBreakdown }>('/v1/bookings/quote', { method: 'POST', body: JSON.stringify(input) }),
+
+  createBooking: (
+    input: {
+      vehicleId: string;
+      startAt: string;
+      endAt: string;
+      pickupKind?: 'host_location' | 'airport' | 'delivery';
+      protectionPlanId?: string;
+      extraIds?: string[];
+      flightNumber?: string;
+      requestMessage?: string;
+    },
+    accessToken: string
+  ) =>
+    request<{ booking: { id: string; status: string }; approveUrl: string }>('/v1/bookings', {
+      method: 'POST',
+      body: JSON.stringify(input),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
 
   storefront: (handle: string, source?: string) =>
     request<{ storefront: unknown }>(`/v1/hosts/@${handle}${source ? `?source=${source}` : ''}`),
