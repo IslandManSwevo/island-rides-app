@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Trips</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+</head>
+<body>
+<nav class="mock-nav"><a href="04-checkout.html">← Checkout</a><a href="06-host-dashboard.html">Next: Host dashboard →</a></nav>
+<div class="phone"><div class="screen">
+  <div class="statusbar"><span>9:41</span><span>𝗞</span><span>⌁ ▮</span></div>
+
+  <div style="padding: 8px 20px 0;">
+    <h1 class="display">Trips</h1>
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <span class="chip active">Upcoming</span><span class="chip">Active</span><span class="chip">Past</span><span class="chip">Receipts</span>
+    </div>
+  </div>
+
+  <div style="padding:16px 20px 0; display:flex; flex-direction:column; gap:14px; flex:1; overflow:hidden;">
+    <!-- Active trip -->
+    <div class="card" style="border-radius:var(--r-hero); overflow:hidden; border-color:var(--teal);">
+      <div style="background:var(--teal); color:#fff; font-size:12px; font-weight:700; padding:8px 16px; display:flex; justify-content:space-between;">
+        <span>● ACTIVE TRIP</span><span>Returns Mon 10:00</span>
+      </div>
+      <div style="padding:14px 16px; display:flex; gap:12px; align-items:center;">
+        <div class="vph" style="width:72px; height:54px;"><svg viewBox="0 0 200 70"><path d="M18 52h164c0-7-5-11-16-13l-14-2-16-13c-5-4-10-6-17-6H86c-9 0-16 3-22 9l-13 10-20 4c-8 2-13 6-13 11z" fill="#F2EFE9" opacity=".92"/></svg></div>
+        <div style="flex:1;">
+          <div class="display" style="font-size:16px;">Toyota RAV4 2024</div>
+          <div class="small muted" style="font-size:12px;">Danielle · Paradise Island</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; padding:0 16px 14px;">
+        <span class="chip" style="flex:1; justify-content:center;">Extend trip</span>
+        <span class="chip" style="flex:1; justify-content:center;">Message</span>
+        <a class="chip active" href="08-trip-checkin.html" style="flex:1; justify-content:center; text-decoration:none;">Check out</a>
+      </div>
+    </div>
+
+    <!-- Upcoming: pending request -->
+    <div class="card" style="overflow:hidden;">
+      <div style="padding:14px 16px; display:flex; gap:12px; align-items:center;">
+        <div class="vph sun" style="width:72px; height:54px;"><svg viewBox="0 0 200 70"><path d="M22 50h156c0-5-3-8-11-10l-19-4-14-12c-4-4-9-5-14-5H88c-7 0-13 2-18 7l-14 12-22 3c-8 1-12 5-12 9z" fill="#141C24" opacity=".85"/></svg></div>
+        <div style="flex:1;">
+          <div class="display" style="font-size:16px;">Honda CR-V 2022</div>
+          <div class="small muted" style="font-size:12px;">Aug 21–24 · Downtown Nassau</div>
+          <span class="badge badge-gold" style="margin-top:6px;">⏳ Awaiting host approval · 19h left</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Past trip -->
+    <div class="card" style="overflow:hidden; opacity:.92;">
+      <div style="padding:14px 16px; display:flex; gap:12px; align-items:center;">
+        <div class="vph dusk" style="width:72px; height:54px;"><svg viewBox="0 0 200 70"><path d="M20 52h160c0-6-4-10-14-12l-16-3-18-14c-4-3-9-5-15-5H84c-8 0-15 3-21 8L48 37l-18 4c-7 2-10 6-10 11z" fill="#F2EFE9" opacity=".9"/></svg></div>
+        <div style="flex:1;">
+          <div class="display" style="font-size:16px;">Jeep Wrangler 2023</div>
+          <div class="small muted" style="font-size:12px;">Jul 2–6 · Completed · $412.80</div>
+          <span class="badge badge-coral" style="margin-top:6px;">Review Danielle — 9 days left</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab"><span class="ico">⌕</span>Explore</div>
+    <div class="tab active"><span class="ico">◫</span>Trips</div>
+    <div class="tab"><span class="ico">✉</span>Inbox</div>
+    <div class="tab"><span class="ico">◯</span>Profile</div>
+  </div>
+</div></div>
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Trips.</strong> The booking lifecycle made visible: an active trip (teal header, check-out CTA), a pending request with its approval countdown, and a completed trip with the blind-review window. Receipts chip replaces the PaymentHistory screen.</p>
+</body>
+</html>

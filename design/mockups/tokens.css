@@ -1,0 +1,164 @@
+/* ==========================================================================
+   KeyLo Design Tokens — "Coastal Modern / Junkanoo Night"
+   Single source of truth for the mockups. Mirrors design/01-brand-identity.md.
+   ========================================================================== */
+
+:root {
+  /* ---- Core palette (light / "Daylight") ---- */
+  --ink: #141C24;          /* primary text, dark surfaces */
+  --paper: #FAF7F2;        /* app background — warm limestone, not clinical white */
+  --surface: #FFFFFF;      /* cards */
+  --sand: #E8E0D4;         /* hairline borders, dividers, subtle fills */
+  --sand-soft: #F1EBE1;    /* pressed / secondary fills */
+  --stone: #8C8578;        /* secondary text */
+
+  /* ---- Accent & support ---- */
+  --coral: #FF5A3C;        /* Junkanoo Coral — CTAs, prices, brand mark. Use sparingly. */
+  --coral-deep: #E04326;   /* pressed state */
+  --teal: #0E7C7B;         /* Harbour Teal — links, verified, info */
+  --gold: #E8B44C;         /* Goombay Gold — ratings, host tier */
+
+  /* ---- Semantic ---- */
+  --success: #1E8E5A;
+  --warning: #E8B44C;
+  --error: #D6453D;
+
+  /* ---- Type ---- */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-ui: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* ---- Shape ---- */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-hero: 20px;
+
+  /* ---- Elevation (two levels only) ---- */
+  --shadow-1: 0 1px 2px rgba(20, 28, 36, 0.06);
+  --shadow-2: 0 8px 24px rgba(20, 28, 36, 0.10);
+
+  /* ---- Spacing: 4pt grid ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+}
+
+/* ---- "Night Drive" dark mode ---- */
+.night {
+  --ink: #F2EFE9;
+  --paper: #10161D;
+  --surface: #1A222C;
+  --sand: #2A3441;
+  --sand-soft: #232D38;
+  --stone: #94A0AD;
+  --coral: #FF7A5C;
+  --coral-deep: #FF5A3C;
+  --teal: #2AA198;
+  --gold: #F0C468;
+  --shadow-1: none;
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   Mockup scaffolding — phone frame + shared components
+   ========================================================================== */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-ui);
+  background: #DDD6CB;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
+  color: var(--ink);
+}
+body.night { background: #060A0E; }
+
+.mock-nav {
+  width: 390px; display: flex; justify-content: space-between;
+  margin-bottom: 16px; font-size: 13px;
+}
+.mock-nav a { color: #5A5348; text-decoration: none; font-weight: 600; }
+body.night .mock-nav a { color: #94A0AD; }
+
+.phone {
+  width: 390px; background: var(--paper); border-radius: 44px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.28); overflow: hidden;
+  border: 8px solid #0B0F14;
+  color: var(--ink);
+}
+.screen { min-height: 780px; display: flex; flex-direction: column; position: relative; }
+
+.statusbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 24px 6px; font-size: 13px; font-weight: 600;
+}
+
+/* Typography helpers */
+.display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; }
+h1.display { font-size: 28px; line-height: 1.15; }
+h2.display { font-size: 21px; }
+.label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stone); }
+.muted { color: var(--stone); }
+.small { font-size: 13px; }
+
+/* Buttons */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-ui); font-size: 16px; font-weight: 600;
+  border: none; border-radius: var(--r-md); padding: 16px; cursor: pointer;
+  text-decoration: none;
+}
+.btn-primary { background: var(--coral); color: #fff; }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--sand); }
+.btn-dark { background: var(--ink); color: var(--paper); }
+
+/* Cards */
+.card {
+  background: var(--surface); border: 1px solid var(--sand);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-1);
+}
+
+/* Chips */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--sand); background: var(--surface); color: var(--ink);
+  white-space: nowrap;
+}
+.chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px;
+}
+.badge-teal { background: color-mix(in srgb, var(--teal) 12%, transparent); color: var(--teal); }
+.badge-gold { background: color-mix(in srgb, var(--gold) 18%, transparent); color: #9C7420; }
+.badge-coral { background: color-mix(in srgb, var(--coral) 12%, transparent); color: var(--coral-deep); }
+.night .badge-gold { color: var(--gold); }
+
+/* Tab bar */
+.tabbar {
+  margin-top: auto; display: flex; border-top: 1px solid var(--sand);
+  background: var(--surface); padding: 10px 8px 26px;
+}
+.tab { flex: 1; text-align: center; font-size: 10.5px; font-weight: 600; color: var(--stone); }
+.tab.active { color: var(--ink); }
+.tab .ico { font-size: 21px; display: block; margin-bottom: 3px; }
+.tab.active .ico { filter: none; }
+
+/* Rating stars */
+.stars { color: var(--gold); letter-spacing: 1px; }
+
+/* Vehicle image placeholder (no external assets) */
+.vph {
+  border-radius: var(--r-md); position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #2E3A47 0%, #141C24 60%, #3D4C5C 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+.vph svg { width: 62%; opacity: .92; }
+.vph.sun { background: linear-gradient(135deg, #C7BBA6 0%, #8C8578 55%, #5A5348 100%); }
+.vph.dusk { background: linear-gradient(135deg, #1A2733 0%, #33261F 70%, #59301F 100%); }

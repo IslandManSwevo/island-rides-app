@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+</head>
+<body>
+<nav class="mock-nav"><a href="01-home-search.html">← Explore</a><a href="03-vehicle-detail.html">Next: Vehicle detail →</a></nav>
+<div class="phone"><div class="screen">
+  <div class="statusbar"><span>9:41</span><span>𝗞</span><span>⌁ ▮</span></div>
+
+  <div style="padding: 8px 20px 0;">
+    <div class="card" style="display:flex; align-items:center; gap:12px; padding:12px 16px;">
+      <span>←</span>
+      <div style="flex:1;">
+        <div style="font-weight:600; font-size:14px;">Nassau · Aug 7–10</div>
+      </div>
+      <!-- list/map segmented toggle -->
+      <div style="display:flex; background:var(--sand-soft); border-radius:999px; padding:3px; font-size:12px; font-weight:700;">
+        <span style="background:var(--ink); color:var(--paper); border-radius:999px; padding:5px 12px;">List</span>
+        <span style="padding:5px 12px; color:var(--stone);">Map</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:12px; overflow-x:auto;">
+      <span class="chip">Filters ·2</span>
+      <span class="chip active">⚡ Instant</span>
+      <span class="chip">Under $80</span>
+      <span class="chip active">SUV</span>
+      <span class="chip">RHD</span>
+    </div>
+    <div class="small muted" style="margin:14px 0 0;">38 cars available</div>
+  </div>
+
+  <div style="padding: 12px 20px 0; display:flex; flex-direction:column; gap:14px; overflow:hidden;">
+    <!-- result card 1 -->
+    <a class="card" href="03-vehicle-detail.html" style="text-decoration:none; color:inherit; overflow:hidden;">
+      <div class="vph" style="height:150px; border-radius:0;">
+        <svg viewBox="0 0 200 70" fill="none"><path d="M18 52h164c0-7-5-11-16-13l-14-2-16-13c-5-4-10-6-17-6H86c-9 0-16 3-22 9l-13 10-20 4c-8 2-13 6-13 11z" fill="#F2EFE9" opacity=".92"/><circle cx="56" cy="52" r="9" fill="#141C24" stroke="#F2EFE9" stroke-width="3"/><circle cx="148" cy="52" r="9" fill="#141C24" stroke="#F2EFE9" stroke-width="3"/></svg>
+        <span class="badge" style="position:absolute; top:10px; left:10px; background:rgba(20,28,36,.75); color:#fff;">⚡ Instant Book</span>
+        <span style="position:absolute; top:10px; right:12px; color:var(--coral); font-size:18px;">♥</span>
+      </div>
+      <div style="padding:14px 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div class="display" style="font-size:17px;">Toyota RAV4 · 2024</div>
+          <div><span class="display" style="font-size:17px; color:var(--coral);">$74</span><span class="small muted">/day</span></div>
+        </div>
+        <div class="small muted" style="margin-top:3px;"><span class="stars">★</span> <b style="color:var(--ink);">4.8</b> (52) · Paradise Island · Delivery available</div>
+      </div>
+    </a>
+    <!-- result card 2 -->
+    <div class="card" style="overflow:hidden;">
+      <div class="vph sun" style="height:150px; border-radius:0;">
+        <svg viewBox="0 0 200 70" fill="none"><path d="M22 50h156c0-5-3-8-11-10l-19-4-14-12c-4-4-9-5-14-5H88c-7 0-13 2-18 7l-14 12-22 3c-8 1-12 5-12 9z" fill="#141C24" opacity=".85"/><circle cx="58" cy="50" r="9" fill="#F2EFE9" stroke="#141C24" stroke-width="3"/><circle cx="144" cy="50" r="9" fill="#F2EFE9" stroke="#141C24" stroke-width="3"/></svg>
+        <span class="badge badge-teal" style="position:absolute; top:10px; left:10px; background:rgba(250,247,242,.9);">✓ KeyLo verified</span>
+        <span style="position:absolute; top:10px; right:12px; color:#fff; font-size:18px;">♡</span>
+      </div>
+      <div style="padding:14px 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div class="display" style="font-size:17px;">Honda CR-V · 2022</div>
+          <div><span class="display" style="font-size:17px; color:var(--coral);">$62</span><span class="small muted">/day</span></div>
+        </div>
+        <div class="small muted" style="margin-top:3px;"><span class="stars">★</span> <b style="color:var(--ink);">4.7</b> (29) · Downtown Nassau · Request to book</div>
+      </div>
+    </div>
+    <!-- result card 3 (clipped) -->
+    <div class="card" style="overflow:hidden;">
+      <div class="vph dusk" style="height:90px; border-radius:0;">
+        <svg viewBox="0 0 200 70" fill="none"><path d="M20 52h160c0-6-4-10-14-12l-16-3-18-14c-4-3-9-5-15-5H84c-8 0-15 3-21 8L48 37l-18 4c-7 2-10 6-10 11z" fill="#F2EFE9" opacity=".9"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active"><span class="ico">⌕</span>Explore</div>
+    <div class="tab"><span class="ico">◫</span>Trips</div>
+    <div class="tab"><span class="ico">✉</span>Inbox</div>
+    <div class="tab"><span class="ico">◯</span>Profile</div>
+  </div>
+</div></div>
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Results.</strong> List/map is a segmented toggle (one Explore surface replaces Search + SearchResults + Map). Instant Book vs request-to-book is visible at card level. Active filter chips invert to ink.</p>
+</body>
+</html>

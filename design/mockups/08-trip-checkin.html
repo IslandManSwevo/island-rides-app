@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Trip check-in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+</head>
+<body>
+<nav class="mock-nav"><a href="07-dark-mode.html">← Night Drive</a><a href="09-host-storefront.html">Next: Storefront →</a></nav>
+<div class="phone"><div class="screen">
+  <div class="statusbar"><span>10:02</span><span>𝗞</span><span>⌁ ▮</span></div>
+
+  <div style="padding: 8px 20px 0;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span>✕</span>
+      <div style="flex:1;">
+        <h1 class="display" style="font-size:21px;">Trip check-in</h1>
+        <div class="small muted" style="font-size:12px;">Toyota RAV4 · with Danielle</div>
+      </div>
+      <span class="badge badge-teal">Step 2 of 3</span>
+    </div>
+    <!-- Progress -->
+    <div style="display:flex; gap:6px; margin-top:14px;">
+      <div style="flex:1; height:4px; border-radius:2px; background:var(--teal);"></div>
+      <div style="flex:1; height:4px; border-radius:2px; background:var(--coral);"></div>
+      <div style="flex:1; height:4px; border-radius:2px; background:var(--sand);"></div>
+    </div>
+  </div>
+
+  <div style="padding:18px 20px 0; flex:1; overflow:hidden;">
+    <!-- Drive-side primer (first-time / foreign guests) -->
+    <div style="background:var(--ink); color:var(--paper); border-radius:var(--r-md); padding:12px 14px; display:flex; gap:10px; align-items:center; margin-bottom:16px;">
+      <span style="font-size:20px;">🇧🇸</span>
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:13px;">We drive on the <span style="color:var(--gold);">left</span> in the Bahamas</div>
+        <div class="small" style="font-size:11.5px; color:#94A0AD;">This car is LHD — driver sits on the left, keep left at roundabouts.</div>
+      </div>
+      <span style="color:#94A0AD;">✕</span>
+    </div>
+
+    <span class="label">Condition photos · 3 of 6</span>
+    <div class="small muted" style="margin-top:6px; line-height:1.5;">Walk around the car and capture each angle. These photos protect both you and Danielle if anything is disputed later.</div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:14px;">
+      <div class="vph" style="aspect-ratio:1; position:relative;"><svg viewBox="0 0 200 70"><path d="M18 52h164c0-7-5-11-16-13l-14-2-16-13c-5-4-10-6-17-6H86c-9 0-16 3-22 9l-13 10-20 4c-8 2-13 6-13 11z" fill="#F2EFE9" opacity=".92"/></svg><span class="badge badge-teal" style="position:absolute; bottom:6px; left:6px;">✓ Front</span></div>
+      <div class="vph sun" style="aspect-ratio:1; position:relative;"><svg viewBox="0 0 200 70"><path d="M22 50h156c0-5-3-8-11-10l-19-4-14-12c-4-4-9-5-14-5H88c-7 0-13 2-18 7l-14 12-22 3c-8 1-12 5-12 9z" fill="#141C24" opacity=".85"/></svg><span class="badge badge-teal" style="position:absolute; bottom:6px; left:6px;">✓ Driver side</span></div>
+      <div class="vph dusk" style="aspect-ratio:1; position:relative;"><svg viewBox="0 0 200 70"><path d="M20 52h160c0-6-4-10-14-12l-16-3-18-14c-4-3-9-5-15-5H84c-8 0-15 3-21 8L48 37l-18 4c-7 2-10 6-10 11z" fill="#F2EFE9" opacity=".9"/></svg><span class="badge badge-teal" style="position:absolute; bottom:6px; left:6px;">✓ Rear</span></div>
+      <div style="aspect-ratio:1; border:2px dashed var(--coral); border-radius:var(--r-md); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:var(--coral-deep); font-weight:700; font-size:12px;"><span style="font-size:22px;">📷</span>Passenger side</div>
+      <div style="aspect-ratio:1; border:2px dashed var(--sand); border-radius:var(--r-md); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:var(--stone); font-weight:600; font-size:12px;"><span style="font-size:22px;">📷</span>Odometer</div>
+      <div style="aspect-ratio:1; border:2px dashed var(--sand); border-radius:var(--r-md); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:var(--stone); font-weight:600; font-size:12px;"><span style="font-size:22px;">📷</span>Fuel level</div>
+    </div>
+
+    <!-- Odometer / fuel inputs -->
+    <div style="display:flex; gap:10px; margin-top:16px;">
+      <div class="card" style="flex:1; padding:12px 14px;">
+        <div class="label" style="font-size:10px;">Odometer (mi)</div>
+        <div style="font-weight:700; font-size:17px; margin-top:2px;">24,318</div>
+      </div>
+      <div class="card" style="flex:1; padding:12px 14px;">
+        <div class="label" style="font-size:10px;">Fuel</div>
+        <div style="font-weight:700; font-size:17px; margin-top:2px;">▮▮▮▮▯ ¾</div>
+      </div>
+    </div>
+
+    <div class="small muted" style="margin-top:14px; display:flex; gap:8px; align-items:center;">
+      <span class="badge badge-gold">ⓘ</span> Danielle completed her check-in at 9:54. Your trip starts when yours is done.
+    </div>
+  </div>
+
+  <div style="border-top:1px solid var(--sand); background:var(--surface); padding:14px 20px 28px;">
+    <span class="btn btn-primary" style="opacity:.5;">Add 3 more photos to start trip</span>
+  </div>
+</div></div>
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Trip check-in (new surface).</strong> Turo-parity guided capture: 4 condition angles + odometer + fuel, with the next required shot highlighted in coral. Both parties must complete check-in for the booking to go <em>active</em>; the same flow mirrored at return is check-out. Photos become the dispute evidence record. A dismissible "we drive on the left" primer greets first-time/foreign guests, and the whole flow works offline — photos queue on-device and sync when signal returns.</p>
+</body>
+</html>

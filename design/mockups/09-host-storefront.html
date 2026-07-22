@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Host storefront</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+</head>
+<body>
+<nav class="mock-nav"><a href="08-trip-checkin.html">← Check-in</a><a href="index.html">Back to hub →</a></nav>
+<div class="phone"><div class="screen">
+
+  <!-- Banner -->
+  <div class="vph dusk" style="height:150px; border-radius:0; align-items:flex-start; justify-content:flex-start;">
+    <span style="position:absolute; top:16px; left:16px; background:rgba(250,247,242,.92); width:32px; height:32px; border-radius:999px; display:flex; align-items:center; justify-content:center; color:var(--ink);">←</span>
+    <span style="position:absolute; top:16px; right:16px; background:var(--coral); color:#fff; font-size:12px; font-weight:700; padding:8px 14px; border-radius:999px;">↗ Share</span>
+  </div>
+
+  <!-- Identity -->
+  <div style="padding:0 20px; margin-top:-32px;">
+    <div style="display:flex; align-items:flex-end; gap:14px;">
+      <div style="width:76px; height:76px; border-radius:20px; background:var(--ink); color:var(--paper); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:28px; border:3px solid var(--paper);">D</div>
+      <div style="padding-bottom:4px;">
+        <div class="display" style="font-size:21px;">Danielle's Island Fleet</div>
+        <div class="small" style="color:var(--teal); font-weight:700;">keylo.bs/@daniellesfleet</div>
+      </div>
+    </div>
+    <div class="small muted" style="margin-top:10px; line-height:1.5;">"Nassau born and raised. Seven cars, all garage-kept, all delivered with a cold Goombay Punch. 🥤"</div>
+
+    <!-- Stats row -->
+    <div class="card" style="margin-top:14px; display:flex; padding:12px 0; text-align:center;">
+      <div style="flex:1; border-right:1px solid var(--sand);">
+        <div style="font-weight:700; font-size:16px;"><span class="stars">★</span> 4.9</div>
+        <div class="small muted" style="font-size:11px;">214 trips</div>
+      </div>
+      <div style="flex:1; border-right:1px solid var(--sand);">
+        <div style="font-weight:700; font-size:16px;">~15 min</div>
+        <div class="small muted" style="font-size:11px;">Response</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:16px;"><span class="badge badge-gold">★ All-Star</span></div>
+        <div class="small muted" style="font-size:11px;">Since 2023</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fleet -->
+  <div style="padding:18px 20px 0; flex:1; overflow:hidden;">
+    <div style="display:flex; justify-content:space-between; align-items:baseline;">
+      <span class="label">The fleet · 7</span>
+      <div style="display:flex; gap:6px;">
+        <span class="chip" style="padding:5px 10px; font-size:11px;">All</span>
+        <span class="chip active" style="padding:5px 10px; font-size:11px;">SUV</span>
+        <span class="chip" style="padding:5px 10px; font-size:11px;">Convertible</span>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+      <div class="card" style="overflow:hidden;">
+        <div class="vph" style="height:80px; border-radius:0;"><svg viewBox="0 0 200 70"><path d="M18 52h164c0-7-5-11-16-13l-14-2-16-13c-5-4-10-6-17-6H86c-9 0-16 3-22 9l-13 10-20 4c-8 2-13 6-13 11z" fill="#F2EFE9" opacity=".92"/></svg>
+          <span class="badge" style="position:absolute; top:6px; left:6px; background:rgba(20,28,36,.75); color:#fff; font-size:9px;">⚡</span>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="font-weight:700; font-size:13px;">RAV4 2024</div>
+          <div class="small" style="font-size:12px;"><span style="color:var(--coral); font-weight:700;">$74</span><span class="muted">/day · ★ 4.8</span></div>
+        </div>
+      </div>
+      <div class="card" style="overflow:hidden;">
+        <div class="vph sun" style="height:80px; border-radius:0;"><svg viewBox="0 0 200 70"><path d="M22 50h156c0-5-3-8-11-10l-19-4-14-12c-4-4-9-5-14-5H88c-7 0-13 2-18 7l-14 12-22 3c-8 1-12 5-12 9z" fill="#141C24" opacity=".85"/></svg></div>
+        <div style="padding:10px 12px;">
+          <div style="font-weight:700; font-size:13px;">CR-V 2022</div>
+          <div class="small" style="font-size:12px;"><span style="color:var(--coral); font-weight:700;">$62</span><span class="muted">/day · ★ 4.7</span></div>
+        </div>
+      </div>
+      <div class="card" style="overflow:hidden;">
+        <div class="vph dusk" style="height:80px; border-radius:0;"><svg viewBox="0 0 200 70"><path d="M20 52h160c0-6-4-10-14-12l-16-3-18-14c-4-3-9-5-15-5H84c-8 0-15 3-21 8L48 37l-18 4c-7 2-10 6-10 11z" fill="#F2EFE9" opacity=".9"/></svg></div>
+        <div style="padding:10px 12px;">
+          <div style="font-weight:700; font-size:13px;">Wrangler 4×4</div>
+          <div class="small" style="font-size:12px;"><span style="color:var(--coral); font-weight:700;">$89</span><span class="muted">/day · ★ 4.9</span></div>
+        </div>
+      </div>
+      <div class="card" style="overflow:hidden; display:flex; align-items:center; justify-content:center; min-height:120px;">
+        <div class="small" style="color:var(--teal); font-weight:700;">+ 4 more</div>
+      </div>
+    </div>
+
+    <!-- Review teaser -->
+    <div class="card" style="margin-top:14px; padding:12px 16px;">
+      <div class="small"><span class="stars">★★★★★</span> <b>"Best host on the island."</b></div>
+      <div class="small muted" style="font-size:12px; margin-top:4px;">Marcus B. · Jeep Wrangler · July 2026</div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid var(--sand); background:var(--surface); padding:14px 20px 28px; display:flex; gap:10px;">
+    <span class="btn btn-ghost" style="flex:1;">Message Danielle</span>
+    <span class="btn btn-dark" style="flex:1;">Browse fleet</span>
+  </div>
+</div></div>
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Host storefront (public, shareable).</strong> Every host gets a branded page at a claimable handle — <code>keylo.bs/@daniellesfleet</code> — with banner, bio, stats, filterable fleet grid, and reviews. The Share button copies the link / opens the native share sheet; the same URL works on the web build and deep-links into the app. Hosts edit it from a "My storefront" editor in host mode.</p>
+</body>
+</html>
