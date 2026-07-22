@@ -1,0 +1,448 @@
+// KeyLo data model — source: design/06-data-model.md
+// Money is integer cents, USD. IDs are cuids.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  host
+  admin
+}
+
+enum VerificationStatus {
+  unverified
+  pending
+  verified
+  rejected
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  active
+  completed
+  reviewed
+  cancelled
+  declined
+  expired
+}
+
+enum PaymentStatus {
+  requires_payment
+  authorized
+  captured
+  refunded
+  partially_refunded
+  failed
+}
+
+enum DriveSide {
+  LHD
+  RHD
+}
+
+model User {
+  id                  String             @id @default(cuid())
+  email               String             @unique
+  passwordHash        String
+  firstName           String
+  lastName            String
+  role                Role               @default(user)
+  phoneNumber         String?
+  avatarKey           String?
+  preferredIslandId   String?
+  dateOfBirth         DateTime?
+  verificationStatus  VerificationStatus @default(unverified)
+  licenseKey          String?
+  selfieKey           String?
+  failedLoginAttempts Int                @default(0)
+  lockoutUntil        DateTime?
+  deletedAt           DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  hostProfile    HostProfile?
+  authProviders  AuthProvider[]
+  pushTokens     PushToken[]
+  favorites      Favorite[]
+  savedSearches  SavedSearch[]
+  bookings       Booking[]
+  reviews        Review[]
+  messages       Message[]
+  refreshTokens  RefreshToken[]
+  inspections    TripInspection[]
+}
+
+model AuthProvider {
+  id         String @id @default(cuid())
+  userId     String
+  provider   String
+  providerId String
+  user       User   @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerId])
+}
+
+model HostProfile {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  handle           String?   @unique
+  displayName      String?
+  tagline          String?
+  bannerKey        String?
+  featuredVehicleId String?
+  fleetOrder       String[]
+  bio              String?
+  responseTimeMins Int?
+  planTier         String    @default("standard")
+  earningsSplitBps Int       @default(8000)
+  paypalPayerEmail String?
+  payoutEnabled    Boolean   @default(false)
+  suspendedAt      DateTime?
+  createdAt        DateTime  @default(now())
+
+  user     User      @relation(fields: [userId], references: [id])
+  vehicles Vehicle[]
+  payouts  Payout[]
+}
+
+model HandleRedirect {
+  oldHandle String @id
+  hostId    String
+}
+
+model StorefrontVisit {
+  id        String   @id @default(cuid())
+  hostId    String
+  source    String?
+  visitedAt DateTime @default(now())
+
+  @@index([hostId, visitedAt])
+}
+
+model Island {
+  id       String   @id
+  name     String
+  features String[]
+  active   Boolean  @default(true)
+
+  vehicles Vehicle[]
+}
+
+model Vehicle {
+  id       String @id @default(cuid())
+  hostId   String
+  islandId String
+
+  make        String
+  model       String
+  year        Int
+  vehicleType String
+  driveSide   DriveSide
+  seats       Int
+  doors       Int?
+  transmission String?
+  fuelType    String?
+  color       String?
+  licensePlate String?
+  vin         String?
+  mileage     Int?
+  description String?
+  features    String[]
+
+  dailyRateCents       Int
+  weeklyDiscountBps    Int @default(0)
+  monthlyDiscountBps   Int @default(0)
+  securityDepositCents Int @default(0)
+  youngDriverFeeCents  Int @default(0)
+
+  address           String?
+  latitude          Float?
+  longitude         Float?
+  deliveryAvailable Boolean @default(false)
+  deliveryFeeCents  Int     @default(0)
+  deliveryRadiusKm  Int     @default(0)
+  airportPickup     Boolean @default(false)
+  airportFeeCents   Int     @default(0)
+
+  instantBook       Boolean @default(false)
+  advanceNoticeHrs  Int     @default(12)
+  minTripDays       Int     @default(1)
+  maxTripDays       Int     @default(30)
+  approvalWindowHrs Int     @default(24)
+
+  verificationStatus VerificationStatus @default(pending)
+  listedAt           DateTime?
+  unlistedAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  host          HostProfile         @relation(fields: [hostId], references: [id])
+  island        Island              @relation(fields: [islandId], references: [id])
+  photos        VehiclePhoto[]
+  documents     VehicleDocument[]
+  availability  AvailabilityBlock[]
+  extras        Extra[]
+  bookings      Booking[]
+
+  @@index([islandId, verificationStatus])
+}
+
+model VehiclePhoto {
+  id        String  @id @default(cuid())
+  vehicleId String
+  key       String
+  kind      String  @default("exterior")
+  position  Int
+  isPrimary Boolean @default(false)
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+model VehicleDocument {
+  id        String             @id @default(cuid())
+  vehicleId String
+  kind      String
+  key       String
+  expiresAt DateTime?
+  status    VerificationStatus @default(pending)
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+model AvailabilityBlock {
+  id                 String   @id @default(cuid())
+  vehicleId          String
+  startDate          DateTime @db.Date
+  endDate            DateTime @db.Date
+  kind               String
+  priceOverrideCents Int?
+  bookingId          String?
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+
+  @@index([vehicleId, startDate, endDate])
+}
+
+model Extra {
+  id         String  @id @default(cuid())
+  vehicleId  String
+  name       String
+  priceCents Int
+  perTrip    Boolean @default(true)
+  active     Boolean @default(true)
+
+  vehicle       Vehicle        @relation(fields: [vehicleId], references: [id])
+  bookingExtras BookingExtra[]
+}
+
+model ProtectionPlan {
+  id              String  @id
+  name            String
+  feeBps          Int
+  deductibleCents Int
+  active          Boolean @default(true)
+
+  bookings Booking[]
+}
+
+model Booking {
+  id      String        @id @default(cuid())
+  guestId String
+  vehicleId String
+  status  BookingStatus @default(pending)
+
+  startAt      DateTime
+  endAt        DateTime
+  pickupKind   String
+  pickupAddress String?
+  flightNumber String?
+
+  nightlyRateCents      Int
+  nights                Int
+  durationDiscountCents Int @default(0)
+  extrasCents           Int @default(0)
+  deliveryCents         Int @default(0)
+  youngDriverCents      Int @default(0)
+  protectionPlanId      String
+  protectionCents       Int
+  serviceFeeCents       Int
+  totalCents            Int
+  hostEarningsCents     Int
+
+  requestMessage          String?
+  approvalDeadline        DateTime?
+  declineReason           String?
+  cancelledBy             String?
+  cancellationRefundCents Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guest          User                 @relation(fields: [guestId], references: [id])
+  vehicle        Vehicle              @relation(fields: [vehicleId], references: [id])
+  protectionPlan ProtectionPlan       @relation(fields: [protectionPlanId], references: [id])
+  payments       Payment[]
+  extras         BookingExtra[]
+  inspections    TripInspection[]
+  modifications  BookingModification[]
+  reviews        Review[]
+  conversation   Conversation?
+
+  @@index([guestId, status])
+  @@index([vehicleId, startAt, endAt])
+}
+
+model BookingExtra {
+  id                 String @id @default(cuid())
+  bookingId          String
+  extraId            String
+  priceCentsSnapshot Int
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  extra   Extra   @relation(fields: [extraId], references: [id])
+}
+
+model TripInspection {
+  id          String    @id @default(cuid())
+  bookingId   String
+  phase       String // check_in | check_out
+  party       String // guest | host
+  partyUserId String
+  odometer    Int?
+  fuelLevel   Int?
+  photoKeys   String[]
+  notes       String?
+  submittedAt DateTime  @default(now())
+  syncedAt    DateTime?
+
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  partyUser User    @relation(fields: [partyUserId], references: [id])
+
+  @@unique([bookingId, phase, party])
+}
+
+model BookingModification {
+  id        String   @id @default(cuid())
+  bookingId String
+  newEndAt  DateTime
+  deltaCents Int
+  status    String
+  paymentId String?
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  bookingId     String
+  status        PaymentStatus @default(requires_payment)
+  amountCents   Int
+  refundedCents Int           @default(0)
+  gateway       String        @default("paypal")
+  gatewayRef    String?       @unique
+  kind          String        @default("trip")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}
+
+model Payout {
+  id              String   @id @default(cuid())
+  hostId          String
+  bookingId       String?
+  amountCents     Int
+  status          String
+  gatewayBatchRef String?
+  scheduledFor    DateTime
+  createdAt       DateTime @default(now())
+
+  host HostProfile @relation(fields: [hostId], references: [id])
+}
+
+model Review {
+  id           String    @id @default(cuid())
+  bookingId    String
+  authorId     String
+  targetKind   String // vehicle | guest
+  rating       Int
+  body         String?
+  publishedAt  DateTime?
+  hostResponse String?
+  createdAt    DateTime  @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  author  User    @relation(fields: [authorId], references: [id])
+
+  @@unique([bookingId, authorId])
+}
+
+model Conversation {
+  id        String  @id @default(cuid())
+  bookingId String? @unique
+  vehicleId String?
+  guestId   String
+  hostId    String
+
+  messages Message[]
+  booking  Booking?  @relation(fields: [bookingId], references: [id])
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+model Favorite {
+  userId    String
+  vehicleId String
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([userId, vehicleId])
+}
+
+model SavedSearch {
+  id      String @id @default(cuid())
+  userId  String
+  name    String
+  filters Json
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model PushToken {
+  id       String @id @default(cuid())
+  userId   String
+  token    String @unique
+  platform String
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+}
