@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Checkout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+</head>
+<body>
+<nav class="mock-nav"><a href="03-vehicle-detail.html">← Vehicle detail</a><a href="05-trips.html">Next: Trips →</a></nav>
+<div class="phone"><div class="screen">
+  <div class="statusbar"><span>9:41</span><span>𝗞</span><span>⌁ ▮</span></div>
+
+  <div style="padding: 8px 20px 12px; display:flex; align-items:center; gap:12px;">
+    <span>←</span><h1 class="display" style="font-size:21px;">Confirm and pay</h1>
+  </div>
+
+  <div style="padding:0 20px; flex:1; overflow:hidden; display:flex; flex-direction:column; gap:14px;">
+    <!-- Trip summary -->
+    <div class="card" style="padding:14px 16px; display:flex; gap:12px; align-items:center;">
+      <div class="vph" style="width:64px; height:48px;"><svg viewBox="0 0 200 70"><path d="M18 52h164c0-7-5-11-16-13l-14-2-16-13c-5-4-10-6-17-6H86c-9 0-16 3-22 9l-13 10-20 4c-8 2-13 6-13 11z" fill="#F2EFE9" opacity=".92"/></svg></div>
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:14px;">Toyota RAV4 2024</div>
+        <div class="small muted" style="font-size:12px;">Fri Aug 7, 10:00 → Mon Aug 10, 10:00 · Airport pickup</div>
+      </div>
+    </div>
+
+    <!-- Protection plan -->
+    <div>
+      <span class="label">Protection plan</span>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <div class="card" style="flex:1; padding:12px 10px; text-align:center;">
+          <div style="font-weight:700; font-size:13px;">Minimum</div>
+          <div class="small muted" style="font-size:11px;">$3,000 deductible</div>
+          <div style="font-weight:700; font-size:13px; margin-top:4px;">$18</div>
+        </div>
+        <div class="card" style="flex:1; padding:12px 10px; text-align:center; border:2px solid var(--coral); box-shadow:var(--shadow-2);">
+          <div style="font-weight:700; font-size:13px; color:var(--coral-deep);">Standard ✓</div>
+          <div class="small muted" style="font-size:11px;">$500 deductible</div>
+          <div style="font-weight:700; font-size:13px; margin-top:4px;">$37</div>
+        </div>
+        <div class="card" style="flex:1; padding:12px 10px; text-align:center;">
+          <div style="font-weight:700; font-size:13px;">Premium</div>
+          <div class="small muted" style="font-size:11px;">$0 deductible</div>
+          <div style="font-weight:700; font-size:13px; margin-top:4px;">$62</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extras -->
+    <div>
+      <span class="label">Extras</span>
+      <div class="card" style="margin-top:8px; padding:4px 16px;">
+        <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--sand); font-size:14px;">
+          <span>☑ Child seat</span><b>$15 / trip</b>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:10px 0; font-size:14px;" class="muted">
+          <span>☐ Beach kit — cooler, chairs, umbrella</span><span>$25 / trip</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Itemized total -->
+    <div>
+      <span class="label">Price details</span>
+      <div class="card" style="margin-top:8px; padding:12px 16px; font-size:14px;">
+        <div style="display:flex; justify-content:space-between; padding:4px 0;"><span class="muted">$74 × 3 days</span><span>$222.00</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0;"><span class="muted">Airport pickup (LPIA)</span><span>$25.00</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0;"><span class="muted">Child seat</span><span>$15.00</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0;"><span class="muted">Standard protection</span><span>$37.00</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0;"><span class="muted">KeyLo service fee</span><span>$26.60</span></div>
+        <div style="display:flex; justify-content:space-between; padding:8px 0 2px; border-top:1px solid var(--sand); margin-top:6px; font-weight:700;">
+          <span>Total (USD)</span><span class="display" style="color:var(--coral);">$325.60</span>
+        </div>
+        <div class="small muted" style="font-size:11px; margin-top:2px;">+ $500 refundable deposit hold · Free cancellation until Aug 6, 10:00</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid var(--sand); background:var(--surface); padding:14px 20px 28px; display:flex; flex-direction:column; gap:8px;">
+    <a class="btn btn-primary" href="05-trips.html">Pay $325.60 · Visa ··4242</a>
+    <div class="small muted" style="text-align:center; font-size:11px;">Payment held until Danielle's check-in is complete</div>
+  </div>
+</div></div>
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Checkout.</strong> The Turo-parity money screen: protection tiers (selected tier gets the coral border), host-defined extras, and a server-computed itemized breakdown ending in a Fraunces coral total. Payment via saved card / Stripe Payment Sheet — no separate payment screens.</p>
+</body>
+</html>

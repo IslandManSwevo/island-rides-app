@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Design Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  body { display:block; max-width:840px; margin:0 auto; background:var(--paper); padding:48px 24px 80px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; margin-top:24px; }
+  .tile { display:block; text-decoration:none; color:inherit; padding:20px; }
+  .tile:hover { border-color:var(--coral); }
+  .tile .num { font-size:12px; font-weight:700; color:var(--coral); }
+  .tile h3 { font-family:var(--font-display); font-size:18px; margin:6px 0 4px; }
+  .swatches { display:flex; gap:8px; margin-top:20px; }
+  .sw { width:44px; height:44px; border-radius:10px; border:1px solid var(--sand); }
+</style>
+</head>
+<body>
+  <div class="display" style="font-size:34px;">Key<span style="color:var(--coral)">Lo</span></div>
+  <p style="margin-top:8px; font-size:17px; color:var(--stone); max-width:56ch;">Design package mockups — <strong style="color:var(--ink);">"Coastal Modern / Junkanoo Night."</strong> Warm limestone base, ink typography, one Junkanoo-coral accent used like a badge. Functions like Turo; looks like nothing else in the marina.</p>
+
+  <div class="swatches">
+    <div class="sw" style="background:#141C24;" title="Ink"></div>
+    <div class="sw" style="background:#FAF7F2;" title="Paper"></div>
+    <div class="sw" style="background:#E8E0D4;" title="Sand"></div>
+    <div class="sw" style="background:#FF5A3C;" title="Junkanoo Coral"></div>
+    <div class="sw" style="background:#0E7C7B;" title="Harbour Teal"></div>
+    <div class="sw" style="background:#E8B44C;" title="Goombay Gold"></div>
+    <div class="sw" style="background:#10161D;" title="Night Drive"></div>
+  </div>
+
+  <div class="grid">
+    <a class="tile card" href="01-home-search.html"><span class="num">01</span><h3>Explore / Home</h3><span class="small muted">Island pills, search card, featured fleet</span></a>
+    <a class="tile card" href="02-search-results.html"><span class="num">02</span><h3>Search results</h3><span class="small muted">List/map toggle, filter chips, Instant Book badges</span></a>
+    <a class="tile card" href="03-vehicle-detail.html"><span class="num">03</span><h3>Vehicle detail</h3><span class="small muted">Gallery, host card, pickup options, sticky price bar</span></a>
+    <a class="tile card" href="04-checkout.html"><span class="num">04</span><h3>Checkout</h3><span class="small muted">Protection tiers, extras, itemized total</span></a>
+    <a class="tile card" href="05-trips.html"><span class="num">05</span><h3>Trips</h3><span class="small muted">Active / pending / past lifecycle states</span></a>
+    <a class="tile card" href="06-host-dashboard.html"><span class="num">06</span><h3>Host · Today</h3><span class="small muted">Requests queue, earnings strip, schedule</span></a>
+    <a class="tile card" href="07-dark-mode.html"><span class="num">07</span><h3>Night Drive</h3><span class="small muted">Dark mode as a brand moment</span></a>
+    <a class="tile card" href="08-trip-checkin.html"><span class="num">08</span><h3>Trip check-in</h3><span class="small muted">Guided condition photos, odometer, fuel</span></a>
+  </div>
+
+  <p style="margin-top:32px;" class="small muted">Docs: brand identity · user flows · screen inventory · backend architecture · API spec · data model — see the <code>design/</code> directory in the repo.</p>
+</body>
+</html>
