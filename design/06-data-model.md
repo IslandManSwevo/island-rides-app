@@ -73,6 +73,13 @@ model AuthProvider {                       // reserved for social login
 model HostProfile {
   id                String  @id @default(cuid())
   userId            String  @unique
+  // storefront (public, shareable at keylo.bs/@handle)
+  handle            String? @unique             // claimable; old handles kept in HandleRedirect
+  displayName       String?                     // "Danielle's Island Fleet"
+  tagline           String?
+  bannerKey         String?                     // R2 key
+  featuredVehicleId String?
+  fleetOrder        String[]                    // vehicle ids, storefront display order
   bio               String?
   responseTimeMins  Int?
   planTier          String  @default("standard")  // sets earnings split 75/80/90
@@ -303,6 +310,18 @@ model PushToken {
   userId   String
   token    String @unique                 // Expo push token
   platform String                         // ios | android | web
+}
+
+model HandleRedirect {                    // old storefront handles 301 to the current one
+  oldHandle String @id
+  hostId    String
+}
+
+model StorefrontVisit {                   // share attribution (privacy-light: counts, not identities)
+  id        String   @id @default(cuid())
+  hostId    String
+  source    String?                       // share_sheet | qr | direct
+  visitedAt DateTime @default(now())
 }
 
 model RefreshToken {

@@ -12,7 +12,7 @@ A complete reimagining of KeyLo (peer-to-peer car rental for the Bahamas) that k
 | [04 · Backend architecture](04-backend-architecture.md) | Railway topology (Fastify + Postgres + Redis + R2), auth, Stripe, jobs |
 | [05 · API spec](05-api-spec.md) | REST surface by domain, mirrors the app's existing service layer |
 | [06 · Data model](06-data-model.md) | ER diagram + Prisma schema sketch |
-| [mockups/index.html](mockups/index.html) | 8 HTML mockups on the shared token sheet — **start here** |
+| [mockups/index.html](mockups/index.html) | 9 HTML mockups on the shared token sheet — **start here** |
 
 ## How to review
 
@@ -26,6 +26,7 @@ Open `design/mockups/index.html` in any browser (no build, no dependencies — G
 | Platform | One Expo codebase (iOS/Android/web) | Separate Next.js site — doubles the design system for a v1 |
 | Brand | Keep KeyLo · "Coastal Modern / Junkanoo Night" | "Regatta" (reads corporate-ferry) · "Pink Sand Editorial" (too fashion for a utility app) |
 | Functional model | Turo parity: Instant Book/request, check-in/out, protection tiers, host tools | Simple rental-desk flow — the host marketplace is the product |
+| Host storefronts | Shareable branded pages at `keylo.bs/@handle` with editor + share attribution | Bare host profile page — hosts marketing their own fleets is a growth loop |
 | Backend host | Railway (api + Postgres + Redis) | — (user's choice) |
 | Framework | Fastify + TS + Zod | NestJS (heavier), Express (unvalidated) |
 | ORM | Prisma | Drizzle — Prisma's migration story wins for a rebuild |

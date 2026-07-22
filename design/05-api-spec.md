@@ -86,7 +86,9 @@ State transitions are validated server-side against the machine in 02; illegal t
 | GET | `/hosts/me/dashboard` | 🚗 | Today feed: pending requests, pickups/returns, alerts |
 | GET | `/hosts/me/earnings` | 🚗 | balance, payout schedule, `period=week|month|year` |
 | GET | `/hosts/me/performance` | 🚗 | per-vehicle occupancy, revenue, rating |
-| GET | `/hosts/:id/storefront` | 🌐 | public host page: listings, rating, response time |
+| GET | `/hosts/@:handle` | 🌐 | public storefront by handle: banner, bio, stats, fleet (ordered), review highlights. Old handles 301 to current |
+| GET/PATCH | `/hosts/me/storefront` | 🚗 | storefront editor: handle (unique, validated), bannerKey, tagline, featuredVehicleId, fleet ordering |
+| GET | `/hosts/me/storefront/stats` | 🚗 | share attribution: storefront views, bookings `via storefront` |
 | POST | `/hosts/me/payouts` | 🚗 | manual payout request (if balance policy allows) |
 
 ## Conversations — `/v1/conversations` (+ Socket.IO `/chat`)

@@ -107,6 +107,25 @@ flowchart TD
 
 Host calendar per vehicle: blocked dates, trip holds, seasonal price overrides (existing `VehicleAvailability.priceOverride`). Bulk rate update becomes an action sheet on Fleet (multi-select), not a screen.
 
+### Host storefronts (shareable)
+
+Every host gets a public, branded **storefront** — their marketing page inside and outside KeyLo:
+
+- **Claimable handle** → a canonical URL: `keylo.bs/@daniellesfleet`. The same link opens the web build or deep-links into the app (Expo universal links; `linking.ts` already exists).
+- **Contents:** banner image, avatar/monogram, display name, bio/tagline, stats (rating, trips, response time, All-Star tier), filterable fleet grid, and review highlights. Guests can message the host or jump into any listing.
+- **Share:** a share button on the storefront (and in the host's own Today/Profile) opens the native share sheet — hosts drop their link on Instagram, WhatsApp, business cards. Booking pages attribute `via storefront` for host analytics.
+- **Editing:** hosts manage it from a **My storefront** editor in host mode: handle (unique, changeable with old-handle redirect), banner, bio, featured vehicle, fleet ordering.
+- **SEO:** on web, storefronts render with OpenGraph tags (banner, name, rating) so shared links unfurl nicely in chats and socials.
+
+```mermaid
+flowchart LR
+    A[Host: My storefront editor] -->|handle, banner, bio, ordering| B[Public storefront<br/>keylo.bs/@handle]
+    B -->|share sheet| C[Instagram · WhatsApp · QR]
+    C -->|universal link| B
+    B --> D[Vehicle detail] --> E[Checkout]
+    B --> F[Message host]
+```
+
 ## Onboarding (3 steps, down from 5)
 
 1. **Welcome** — one screen, brand moment, sign in / create account / browse first.

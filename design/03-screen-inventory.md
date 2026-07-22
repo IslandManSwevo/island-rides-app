@@ -57,7 +57,8 @@ Every route in `src/navigation/routes.ts` accounted for. Verdicts: **Keep** (red
 | `VehicleConditionTracker` | Merge | Condition section of Vehicle Manager (fed by trip check-in/out photos). |
 | — (new) | New | **Booking settings** section of Vehicle Manager: Instant Book toggle, advance notice, min/max trip length, extras. |
 | `BulkRateUpdate` | Merge | Multi-select action sheet on Fleet. |
-| `HostStorefront` | Keep | Public host page: all listings, rating, response time. |
+| `HostStorefront` | Keep (upgraded) | Public **shareable storefront** at `keylo.bs/@handle`: banner, bio, stats, filterable fleet grid, review highlights, share sheet. Mockup 09. |
+| — (new) | New | **My storefront editor** (host mode): claim handle, banner, bio, featured vehicle, fleet ordering. |
 | `FinancialReports`, `VehiclePerformance` | Merge | One **Earnings** tab: balance, payout schedule, per-vehicle table, exportable report. |
 | — (new) | New | **List a vehicle** wizard (6 steps, see 02). |
 
@@ -71,6 +72,6 @@ Every route in `src/navigation/routes.ts` accounted for. Verdicts: **Keep** (red
 
 ## Net result
 
-**~40 routes → 24 surfaces** (8 tabs across two modes, 12 stack screens, 4 sheets/modals). Every cut is either a dedupe, a deferral with a stated fallback, or replaced by a Turo-parity surface (check-in, vehicle manager, list-a-vehicle) the old app was missing.
+**~40 routes → 25 surfaces** (8 tabs across two modes, 13 stack screens, 4 sheets/modals). Every cut is either a dedupe, a deferral with a stated fallback, or replaced by a Turo-parity surface (check-in, vehicle manager, list-a-vehicle) the old app was missing.
 
 Screens without mockups follow the mockup component language: cards from `tokens.css`, ink-on-limestone, coral only on the primary action, section headers as 11px uppercase labels, Fraunces for titles.
