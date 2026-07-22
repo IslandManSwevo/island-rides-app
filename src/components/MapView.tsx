@@ -178,7 +178,7 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
                 longitude: vehicle.longitude || -77.3963,
               }}
               onPress={() => handleMarkerPress(vehicleRec)}
-              pinColor={(vehicle.available ? '#007AFF' : '#FF3B30') as string}
+              pinColor={(vehicle.available ? '#FF5A3C' : '#D6453D') as string}
             >
               <Callout>
                 <View style={styles.calloutContainer}>
@@ -206,10 +206,10 @@ export const InteractiveVehicleMap: React.FC<MapViewProps> = ({
         {userLocation && showUserLocation && (
           <Marker
             coordinate={userLocation}
-            pinColor="#34C759"
+            pinColor="#1E8E5A"
             title="Your Location"
           >
-            <Ionicons name="location" size={24} color="#34C759" />
+            <Ionicons name="location" size={24} color="#1E8E5A" />
           </Marker>
         )}
       </MapView>
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   vehiclePrice: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#FF5A3C',
     marginBottom: 2,
   },
   vehicleLocation: {
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   calloutButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF5A3C',
     padding: 8,
     borderRadius: 4,
     alignItems: 'center',
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   },
   vehiclePriceText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#FF5A3C',
     marginBottom: 2,
   },
   vehicleLocationText: {

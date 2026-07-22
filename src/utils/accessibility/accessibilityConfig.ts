@@ -43,7 +43,7 @@ export const accessibilityConfig = {
 
   // Focus management
   focus: {
-    highlightColor: '#007AFF',
+    highlightColor: '#FF5A3C',
     highlightWidth: 2,
     borderRadius: 4,
   },

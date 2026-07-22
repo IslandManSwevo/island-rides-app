@@ -235,15 +235,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   primaryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF5A3C',
   },
   secondaryButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: '#FF5A3C',
   },
   signOutButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#D6453D',
     marginTop: 20,
   },
   buttonText: {
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   secondaryButtonText: {
-    color: '#007AFF',
+    color: '#FF5A3C',
     fontSize: 16,
     fontWeight: '600',
   },

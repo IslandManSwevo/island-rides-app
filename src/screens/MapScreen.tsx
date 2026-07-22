@@ -283,7 +283,7 @@ const MapScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color="#FF5A3C" />
           <Text style={styles.loadingText}>Loading vehicles on map...</Text>
         </View>
       </SafeAreaView>
@@ -297,14 +297,14 @@ const MapScreen: React.FC = () => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#007AFF" />
+          <Ionicons name="arrow-back" size={24} color="#FF5A3C" />
         </TouchableOpacity>
         <Text style={styles.title}>Vehicle Map</Text>
         <View style={styles.clusterToggle}>
           <Switch
             value={enableClustering}
             onValueChange={setEnableClustering}
-            trackColor={{ false: '#767577', true: '#007AFF' }}
+            trackColor={{ false: '#767577', true: '#FF5A3C' }}
             thumbColor={enableClustering ? '#f5dd4b' : '#f4f3f4'}
           />
           <Text style={styles.toggleLabel}>Cluster</Text>
@@ -329,20 +329,20 @@ const MapScreen: React.FC = () => {
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#007AFF' }]} />
+          <View style={[styles.legendDot, { backgroundColor: '#FF5A3C' }]} />
           <Text style={styles.legendText}>Available</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#34C759' }]} />
+          <View style={[styles.legendDot, { backgroundColor: '#1E8E5A' }]} />
           <Text style={styles.legendText}>Instant Book</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#FF3B30' }]} />
+          <View style={[styles.legendDot, { backgroundColor: '#D6453D' }]} />
           <Text style={styles.legendText}>Unavailable</Text>
         </View>
         {enableClustering && (
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#FF9500' }]} />
+            <View style={[styles.legendDot, { backgroundColor: '#E8B44C' }]} />
             <Text style={styles.legendText}>Cluster</Text>
           </View>
         )}
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#FF5A3C',
     fontWeight: '600',
   },
   loadingContainer: {
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 100,
     right: 20,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF5A3C',
     borderRadius: 25,
     width: 50,
     height: 50,

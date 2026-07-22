@@ -1,7 +1,7 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors as lightColors, typography, spacing, borderRadius, shadows, elevationStyles } from '../styles/theme';
+import { colors as lightColors, darkColors, typography, spacing, borderRadius, shadows, elevationStyles } from '../styles/theme';
 import { loggingService } from '../services/LoggingService';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
@@ -19,49 +19,6 @@ interface ThemeContextType {
   setMode: (mode: ThemeMode) => Promise<void>;
   toggleTheme: () => Promise<void>;
 }
-
-const darkColors = {
-  ...lightColors,
-  primary: '#4A9EFF',
-  primaryLight: '#70B7FF',
-  primaryDark: '#2980FF',
-  secondary: '#7B7AF7',
-  secondaryLight: '#9B9BFF',
-  secondaryDark: '#5856D6',
-  accent: '#FF9F0A',
-  background: '#000000',
-  surface: '#1C1C1E',
-  surfaceVariant: '#2C2C2E',
-  sectionBackground: '#1C1C1E',
-  error: '#FF453A',
-  warning: '#FF9F0A',
-  success: '#32D74B',
-  info: '#4A9EFF',
-  text: '#FFFFFF',
-  textSecondary: '#8E8E93',
-  textDisabled: '#48484A',
-  border: '#38383A',
-  divider: '#38383A',
-  shadow: '#000000',
-  overlay: 'rgba(0, 0, 0, 0.7)',
-  white: '#FFFFFF',
-  offWhite: '#F2F2F7',
-  lightGrey: '#8E8E93',
-  darkGrey: '#EBEBF5',
-  black: '#000000',
-  star: '#FFD60A',
-  verified: '#32D74B',
-  grey: '#8E8E93',
-  lightBorder: '#38383A',
-  inputBackground: '#2C2C2E',
-  premium: '#FFD60A',
-  partial: '#FF9F0A',
-  gradient: {
-    primary: ['#4A9EFF', '#7B7AF7'],
-    secondary: ['#7B7AF7', '#AF52DE'],
-    accent: ['#FF9F0A', '#FF453A']
-  }
-} as const;
 
 const THEME_STORAGE_KEY = '@keylo_theme_mode';
 

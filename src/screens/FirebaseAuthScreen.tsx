@@ -139,7 +139,7 @@ const FirebaseAuthScreen: React.FC = () => {
   if (initializing) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#FF5A3C" />
         <Text style={styles.loadingText}>Initializing Firebase Auth...</Text>
       </View>
     );
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: '600',
-    color: '#007AFF',
+    color: '#FF5A3C',
   },
   form: {
     width: '100%',
@@ -355,15 +355,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   signInButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF5A3C',
     flex: 1,
   },
   signUpButton: {
-    backgroundColor: '#34C759',
+    backgroundColor: '#1E8E5A',
     flex: 1,
   },
   signOutButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#D6453D',
   },
   buttonText: {
     color: 'white',
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#007AFF',
+    color: '#FF5A3C',
     marginBottom: 10,
   },
   infoText: {
