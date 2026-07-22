@@ -350,16 +350,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                   <Text style={styles.actionButtonText}>My Bookings</Text>
                 </TouchableOpacity>
                 
-                {profileData?.user.role === 'owner' && (
-                  <TouchableOpacity 
-                    style={[styles.actionButton, { backgroundColor: colors.warning }]}
-                    onPress={() => navigation.navigate(ROUTES.OWNER_DASHBOARD)}
-                  >
-                    <Ionicons name="analytics-outline" size={20} color={colors.white} />
-                    <Text style={styles.actionButtonText}>Owner Dashboard</Text>
-                  </TouchableOpacity>
-                )}
-                
                 {profileData?.user.role === 'host' && (
                   <TouchableOpacity 
                     style={[styles.actionButton, { backgroundColor: colors.success }]}

@@ -1,7 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { HostDashboardScreen } from '../../screens/HostDashboardScreen';
-import { OwnerDashboardScreen } from '../../screens/OwnerDashboardScreen';
 import { HostStorefrontScreen } from '../../screens/HostStorefrontScreen';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { ROUTES } from '../routes';
@@ -33,28 +32,11 @@ export const HostDashboardStack: React.FC = () => {
     >
       <Stack.Screen
         name={ROUTES.HOST_DASHBOARD}
-        options={{
-          title: 'Host Dashboard',
-          headerShown: true,
-        }}
+        options={{ headerShown: false }}
       >
         {(props) => (
           <ProtectedRoute requiredRole="host">
             <HostDashboardScreen {...props} />
-          </ProtectedRoute>
-        )}
-      </Stack.Screen>
-      
-      <Stack.Screen
-        name={ROUTES.OWNER_DASHBOARD}
-        options={{
-          title: 'Owner Dashboard',
-          headerShown: true,
-        }}
-      >
-        {(props) => (
-          <ProtectedRoute requiredRole="owner">
-            <OwnerDashboardScreen {...props} />
           </ProtectedRoute>
         )}
       </Stack.Screen>

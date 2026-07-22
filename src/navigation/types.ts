@@ -161,7 +161,8 @@ export type HostDashboardStackParamList = {
   [ROUTES.HOST_DASHBOARD]: undefined;
   [ROUTES.OWNER_DASHBOARD]: undefined;
   [ROUTES.HOST_STOREFRONT]: {
-    hostId: number;
+    hostId?: number;
+    handle?: string;
   };
 };
 
