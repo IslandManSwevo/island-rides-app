@@ -40,6 +40,8 @@ export interface ApiVehicle {
   instantBook: boolean;
   islandId: string;
   address?: string | null;
+  verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
+  unlistedAt?: string | null;
   photos: ApiVehiclePhoto[];
   extras?: { id: string; name: string; priceCents: number; perTrip: boolean }[];
   host?: {
@@ -197,5 +199,71 @@ export const keyloApi = {
     }),
 
   storefront: (handle: string, source?: string) =>
-    request<{ storefront: unknown }>(`/v1/hosts/@${handle}${source ? `?source=${source}` : ''}`),
+    request<{ storefront: ApiStorefront }>(`/v1/hosts/@${handle}${source ? `?source=${source}` : ''}`),
+
+  hostStorefront: (accessToken: string) =>
+    request<{ storefront: { handle: string | null; displayName: string | null } }>('/v1/hosts/me/storefront', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  // ---- Host mode ----
+
+  hostDashboard: (accessToken: string) =>
+    request<{ dashboard: ApiHostDashboard }>('/v1/hosts/me/dashboard', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  hostVehicles: (accessToken: string) =>
+    request<{ vehicles: (ApiVehicle & { _count?: { bookings: number } })[] }>('/v1/hosts/me/vehicles', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  hostEarnings: (accessToken: string) =>
+    request<{ earnings: ApiHostEarnings }>('/v1/hosts/me/earnings', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  approveBooking: (bookingId: string, accessToken: string) =>
+    request<{ booking: ApiBooking }>(`/v1/bookings/${bookingId}/approve`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  declineBooking: (bookingId: string, reason: string | undefined, accessToken: string) =>
+    request<{ booking: ApiBooking }>(`/v1/bookings/${bookingId}/decline`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
 };
+
+export interface ApiStorefront {
+  handle: string | null;
+  displayName: string | null;
+  tagline: string | null;
+  bannerKey: string | null;
+  bio: string | null;
+  responseTimeMins: number | null;
+  vehicles: ApiVehicle[];
+}
+
+export interface ApiHostBookingSummary extends ApiBooking {
+  guest?: { firstName: string; lastName: string; verificationStatus: string };
+  vehicle?: ApiVehicle & { make: string; model: string };
+}
+
+export interface ApiHostDashboard {
+  pendingRequests: ApiHostBookingSummary[];
+  todayPickups: ApiHostBookingSummary[];
+  todayReturns: ApiHostBookingSummary[];
+  monthEarningsCents: number;
+  activeTrips: number;
+  fleetSize: number;
+}
+
+export interface ApiHostEarnings {
+  perVehicle: { vehicleId: string; name: string; trips: number; earningsCents: number }[];
+  payouts: { id: string; amountCents: number; status: string; scheduledFor: string }[];
+  splitBps: number;
+  payoutEnabled: boolean;
+}

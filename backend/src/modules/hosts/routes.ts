@@ -94,6 +94,111 @@ export async function hostRoutes(app: FastifyInstance) {
     return { storefront: updated };
   });
 
+  // 🚗 GET /v1/hosts/me/dashboard — the Today feed (mockup 06)
+  app.get('/me/dashboard', { preHandler: [app.requireHost] }, async (request, reply) => {
+    const host = await prisma.hostProfile.findUnique({ where: { userId: request.auth!.sub } });
+    if (!host) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'No host profile' } });
+
+    const now = new Date();
+    const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(now); dayEnd.setHours(23, 59, 59, 999);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const guestSelect = { select: { firstName: true, lastName: true, verificationStatus: true } };
+    const vehicleFilter = { hostId: host.id };
+
+    const [pendingRequests, todayPickups, todayReturns, monthBookings, activeCount, vehicleCount] =
+      await Promise.all([
+        prisma.booking.findMany({
+          where: { vehicle: vehicleFilter, status: 'pending' },
+          include: { guest: guestSelect, vehicle: { select: { make: true, model: true } } },
+          orderBy: { approvalDeadline: 'asc' },
+        }),
+        prisma.booking.findMany({
+          where: { vehicle: vehicleFilter, status: 'confirmed', startAt: { gte: dayStart, lte: dayEnd } },
+          include: { guest: guestSelect, vehicle: { select: { make: true, model: true } } },
+          orderBy: { startAt: 'asc' },
+        }),
+        prisma.booking.findMany({
+          where: { vehicle: vehicleFilter, status: 'active', endAt: { gte: dayStart, lte: dayEnd } },
+          include: { guest: guestSelect, vehicle: { select: { make: true, model: true } } },
+          orderBy: { endAt: 'asc' },
+        }),
+        prisma.booking.aggregate({
+          where: {
+            vehicle: vehicleFilter,
+            status: { in: ['confirmed', 'active', 'completed', 'reviewed'] },
+            startAt: { gte: monthStart },
+          },
+          _sum: { hostEarningsCents: true },
+        }),
+        prisma.booking.count({ where: { vehicle: vehicleFilter, status: 'active' } }),
+        prisma.vehicle.count({ where: { ...vehicleFilter, unlistedAt: null } }),
+      ]);
+
+    return {
+      dashboard: {
+        pendingRequests,
+        todayPickups,
+        todayReturns,
+        monthEarningsCents: monthBookings._sum.hostEarningsCents ?? 0,
+        activeTrips: activeCount,
+        fleetSize: vehicleCount,
+      },
+    };
+  });
+
+  // 🚗 GET /v1/hosts/me/vehicles — Fleet tab
+  app.get('/me/vehicles', { preHandler: [app.requireHost] }, async (request, reply) => {
+    const host = await prisma.hostProfile.findUnique({ where: { userId: request.auth!.sub } });
+    if (!host) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'No host profile' } });
+    const vehicles = await prisma.vehicle.findMany({
+      where: { hostId: host.id },
+      include: {
+        photos: { where: { isPrimary: true }, take: 1 },
+        _count: { select: { bookings: { where: { status: { in: ['confirmed', 'active'] } } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { vehicles };
+  });
+
+  // 🚗 GET /v1/hosts/me/earnings — Earnings tab
+  app.get('/me/earnings', { preHandler: [app.requireHost] }, async (request, reply) => {
+    const host = await prisma.hostProfile.findUnique({ where: { userId: request.auth!.sub } });
+    if (!host) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'No host profile' } });
+
+    const [byVehicle, payouts] = await Promise.all([
+      prisma.booking.groupBy({
+        by: ['vehicleId'],
+        where: { vehicle: { hostId: host.id }, status: { in: ['completed', 'reviewed', 'active', 'confirmed'] } },
+        _sum: { hostEarningsCents: true },
+        _count: true,
+      }),
+      prisma.payout.findMany({ where: { hostId: host.id }, orderBy: { scheduledFor: 'desc' }, take: 20 }),
+    ]);
+
+    const vehicles = await prisma.vehicle.findMany({
+      where: { id: { in: byVehicle.map((v) => v.vehicleId) } },
+      select: { id: true, make: true, model: true, year: true },
+    });
+    const vehicleName = new Map(vehicles.map((v) => [v.id, `${v.make} ${v.model} ${v.year}`]));
+
+    return {
+      earnings: {
+        perVehicle: byVehicle.map((v) => ({
+          vehicleId: v.vehicleId,
+          name: vehicleName.get(v.vehicleId) ?? 'Vehicle',
+          trips: v._count,
+          earningsCents: v._sum.hostEarningsCents ?? 0,
+        })),
+        payouts,
+        splitBps: host.earningsSplitBps,
+        payoutEnabled: host.payoutEnabled,
+      },
+    };
+  });
+
   // 🚗 storefront stats: share attribution
   app.get('/me/storefront/stats', { preHandler: [app.requireHost] }, async (request, reply) => {
     const host = await prisma.hostProfile.findUnique({ where: { userId: request.auth!.sub } });

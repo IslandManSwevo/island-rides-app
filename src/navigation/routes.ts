@@ -149,7 +149,8 @@ export type RootStackParamList = {
   };
   [ROUTES.MY_BOOKINGS]: undefined;
   [ROUTES.HOST_STOREFRONT]: {
-    hostId: number;
+    hostId?: number;
+    handle?: string;
   };
   [ROUTES.PAYMENT_HISTORY]: undefined;
   [ROUTES.CHAT]: {
@@ -230,7 +231,8 @@ export type RootStackParamList = {
   [ROUTES.OWNER_DASHBOARD]: undefined;
   [ROUTES.HOST_DASHBOARD]: undefined;
   [ROUTES.HOST_STOREFRONT]: {
-    hostId: number;
+    hostId?: number;
+    handle?: string;
   };
   [ROUTES.VEHICLE_PERFORMANCE]: undefined;
   [ROUTES.FINANCIAL_REPORTS]: undefined;
