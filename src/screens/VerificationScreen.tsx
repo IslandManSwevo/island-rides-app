@@ -252,9 +252,9 @@ export const VerificationScreen: React.FC<VerificationScreenProps> = ({ navigati
                 disabled={uploadingDocument === 'identity'}
               >
                 {uploadingDocument === 'identity' ? (
-                  <ActivityIndicator size="small" color="#007AFF" />
+                  <ActivityIndicator size="small" color="#FF5A3C" />
                 ) : (
-                  <Ionicons name="cloud-upload-outline" size={20} color="#007AFF" />
+                  <Ionicons name="cloud-upload-outline" size={20} color="#FF5A3C" />
                 )}
               </TouchableOpacity>
             </View>
@@ -286,9 +286,9 @@ export const VerificationScreen: React.FC<VerificationScreenProps> = ({ navigati
                 disabled={uploadingDocument === 'driving_license'}
               >
                 {uploadingDocument === 'driving_license' ? (
-                  <ActivityIndicator size="small" color="#007AFF" />
+                  <ActivityIndicator size="small" color="#FF5A3C" />
                 ) : (
-                  <Ionicons name="cloud-upload-outline" size={20} color="#007AFF" />
+                  <Ionicons name="cloud-upload-outline" size={20} color="#FF5A3C" />
                 )}
               </TouchableOpacity>
             </View>
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   scoreValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#FF5A3C',
   },
   verificationList: {
     backgroundColor: '#fff',

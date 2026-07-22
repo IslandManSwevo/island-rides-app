@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF5A3C',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   specialButton: {
-    backgroundColor: '#34C759',
+    backgroundColor: '#1E8E5A',
   },
   disabledButton: {
     backgroundColor: '#E5E5EA',

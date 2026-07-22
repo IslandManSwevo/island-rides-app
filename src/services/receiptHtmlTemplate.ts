@@ -113,7 +113,7 @@ const getStyles = () => `
     }
     .total-amount .detail-value {
         font-size: 20px;
-        color: #007AFF;
+        color: #FF5A3C;
     }
     .vehicle-info {
         background: #f8f9fa;

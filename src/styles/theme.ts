@@ -1,88 +1,134 @@
+/**
+ * KeyLo design tokens — "Coastal Modern / Junkanoo Night"
+ * Source of truth: design/01-brand-identity.md (mirrors design/mockups/tokens.css)
+ *
+ * Base is warm-neutral (Paper/Sand/Ink); Junkanoo Coral is the only primary
+ * accent and should stay scarce — color is punctuation, not decoration.
+ */
+
 export const colors = {
-  primary: '#007AFF',
-  primaryLight: '#5AC8FA',
-  primaryDark: '#0051D5',
-  secondary: '#5856D6',
-  secondaryLight: '#7B7AF7',
-  secondaryDark: '#3F3EB3',
-  accent: '#FF9500',
-  background: '#F2F2F7',
+  primary: '#FF5A3C',        // Junkanoo Coral — CTAs, prices, favorites
+  primaryLight: '#FF7A5C',
+  primaryDark: '#E04326',
+  secondary: '#0E7C7B',      // Harbour Teal — links, verified, info
+  secondaryLight: '#2AA198',
+  secondaryDark: '#095958',
+  accent: '#E8B44C',         // Goombay Gold — ratings, host tier
+  background: '#FAF7F2',     // Paper — warm limestone, not clinical white
   surface: '#FFFFFF',
-  surfaceVariant: '#F8F8F8',
-  sectionBackground: '#F2F2F7',
-  error: '#FF3B30',
-  warning: '#FF9500',
-  success: '#34C759',
-  info: '#007AFF',
-  text: '#000000',
-  textSecondary: '#8E8E93',
-  textDisabled: '#C7C7CC',
-  border: '#E5E5EA',
-  divider: '#C6C6C8',
-  shadow: '#000000',
-  overlay: 'rgba(0, 0, 0, 0.5)',
+  surfaceVariant: '#F1EBE1', // Sand Soft — pressed states, secondary fills
+  sectionBackground: '#FAF7F2',
+  error: '#D6453D',
+  warning: '#E8B44C',
+  success: '#1E8E5A',
+  info: '#0E7C7B',
+  text: '#141C24',           // Ink
+  textSecondary: '#8C8578',  // Stone
+  textDisabled: '#C9C2B6',
+  border: '#E8E0D4',         // Sand — hairlines over heavy shadows
+  divider: '#E8E0D4',
+  shadow: '#141C24',
+  overlay: 'rgba(20, 28, 36, 0.5)',
   white: '#FFFFFF',
-  offWhite: '#F8F8F8',
-  lightGrey: '#8E8E93',
-  darkGrey: '#3A3A3C',
-  black: '#000000',
-  star: '#FFD700',
-  verified: '#4CAF50',
-  grey: '#8E8E93',
-  lightBorder: '#E5E5EA',
-  inputBackground: '#F8F8F8',
-  premium: '#FFD700',
-  partial: '#FF9500',
-  successLight: '#E8F5E8',
+  offWhite: '#FAF7F2',
+  lightGrey: '#8C8578',
+  darkGrey: '#3E4650',
+  black: '#141C24',
+  star: '#E8B44C',
+  verified: '#0E7C7B',
+  grey: '#8C8578',
+  lightBorder: '#E8E0D4',
+  inputBackground: '#FFFFFF',
+  premium: '#E8B44C',
+  partial: '#E8B44C',
+  successLight: '#E6F2EC',
   gradient: {
-    primary: ['#007AFF', '#5856D6'],
-    secondary: ['#5856D6', '#AF52DE'],
-    accent: ['#FF9500', '#FF2D92']
+    primary: ['#FF5A3C', '#E04326'],
+    secondary: ['#0E7C7B', '#2AA198'],
+    accent: ['#141C24', '#3D4C5C']
   }
 } as const;
 
+/**
+ * "Night Drive" dark palette. Not yet wired (app.json pins light mode);
+ * exported so dark-mode work consumes the same token names as `colors`.
+ */
+export const darkColors = {
+  ...colors,
+  primary: '#FF7A5C',
+  primaryLight: '#FF9C82',
+  primaryDark: '#FF5A3C',
+  secondary: '#2AA198',
+  secondaryLight: '#69BFBD',
+  secondaryDark: '#0E7C7B',
+  accent: '#F0C468',
+  background: '#10161D',
+  surface: '#1A222C',
+  surfaceVariant: '#232D38',
+  sectionBackground: '#10161D',
+  text: '#F2EFE9',
+  textSecondary: '#94A0AD',
+  textDisabled: '#5A6673',
+  border: '#2A3441',
+  divider: '#2A3441',
+  overlay: 'rgba(0, 0, 0, 0.6)',
+  offWhite: '#F2EFE9',
+  black: '#0B0F14',
+  star: '#F0C468',
+  verified: '#2AA198',
+  inputBackground: '#1A222C',
+  successLight: '#16302A',
+  gradient: {
+    primary: ['#FF7A5C', '#FF5A3C'],
+    secondary: ['#2AA198', '#0E7C7B'],
+    accent: ['#10161D', '#2E3A47']
+  }
+} as const;
+
+// Display sizes (heading1/2) are Fraunces once fonts land; UI text stays Inter/system.
+// Font family wiring ships with the font-loading pass — tokens here are family-agnostic.
 export const typography = {
   heading1: {
     fontSize: 28,
-    fontWeight: '700' as const,
-    lineHeight: 34,
-    letterSpacing: 0.36,
+    fontWeight: '600' as const,
+    lineHeight: 33,
+    letterSpacing: -0.56, // display: tight -2%
   },
   heading2: {
     fontSize: 22,
-    fontWeight: '700' as const,
-    lineHeight: 28,
-    letterSpacing: 0.35,
+    fontWeight: '600' as const,
+    lineHeight: 26,
+    letterSpacing: -0.44,
   },
   heading3: {
     fontSize: 20,
     fontWeight: '600' as const,
     lineHeight: 25,
-    letterSpacing: 0.38,
+    letterSpacing: -0.3,
   },
   heading4: {
     fontSize: 18,
     fontWeight: '600' as const,
     lineHeight: 23,
-    letterSpacing: 0.35,
+    letterSpacing: -0.2,
   },
   subheading: {
     fontSize: 18,
     fontWeight: '600' as const,
     lineHeight: 23,
-    letterSpacing: -0.45,
+    letterSpacing: -0.2,
   },
   body: {
     fontSize: 16,
     fontWeight: '400' as const,
-    lineHeight: 21,
-    letterSpacing: -0.32,
+    lineHeight: 22,
+    letterSpacing: 0,
   },
   bodySmall: {
     fontSize: 14,
     fontWeight: '400' as const,
     lineHeight: 19,
-    letterSpacing: -0.15,
+    letterSpacing: 0,
   },
   caption: {
     fontSize: 12,
@@ -94,7 +140,7 @@ export const typography = {
     fontSize: 16,
     fontWeight: '600' as const,
     lineHeight: 21,
-    letterSpacing: -0.32,
+    letterSpacing: 0,
   },
 };
 
@@ -113,40 +159,41 @@ export const borderRadius = {
   sm: 8,
   md: 12,
   lg: 16,
-  xl: 24,
+  xl: 20,   // hero cards, sheets — rounded but not bubbly
   xxl: 32,
   full: 9999,
 } as const;
 
+// Brand rule: hairline Sand borders define cards; shadows are soft and rare.
 export const shadows = {
   small: {
-    shadowColor: '#000',
+    shadowColor: '#141C24',
     shadowOffset: {
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.18,
-    shadowRadius: 1.00,
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
     elevation: 1,
   },
   medium: {
-    shadowColor: '#000',
+    shadowColor: '#141C24',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.20,
-    shadowRadius: 1.41,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
     elevation: 2,
   },
   large: {
-    shadowColor: '#000',
+    shadowColor: '#141C24',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
-    shadowOpacity: 0.30,
-    shadowRadius: 4.65,
+    shadowOpacity: 0.10,
+    shadowRadius: 24,
     elevation: 8,
   },
 };
@@ -155,36 +202,36 @@ export const elevationStyles = {
   1: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.18,
-    shadowRadius: 1.0,
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
     elevation: 1,
   },
   2: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.20,
-    shadowRadius: 1.41,
+    shadowOpacity: 0.07,
+    shadowRadius: 3,
     elevation: 2,
   },
   3: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
     elevation: 3,
   },
   4: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.23,
-    shadowRadius: 2.62,
+    shadowOpacity: 0.09,
+    shadowRadius: 6,
     elevation: 4,
   },
   5: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
     elevation: 5,
   },
 };
@@ -192,13 +239,15 @@ export const elevationStyles = {
 export const vehicleCardStyles = {
   card: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
     marginBottom: spacing.md,
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
   },
   premiumBadge: {
     backgroundColor: colors.premium,
@@ -246,6 +295,7 @@ export const VehicleCardStyles = vehicleCardStyles;
 
 export default {
   colors,
+  darkColors,
   typography,
   spacing,
   borderRadius,

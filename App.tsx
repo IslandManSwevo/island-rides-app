@@ -18,6 +18,15 @@ import { navigationRef } from './src/navigation/navigationRef';
 import Constants from 'expo-constants';
 import { GluestackUIProvider } from '@gluestack-ui/themed';
 import { gluestackUIConfig } from './src/config/gluestackTheme';
+import { useFonts } from 'expo-font';
+import { Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
+import './global.css';
 
 // Debug component that has access to UnifiedAuthContext
 const DebugClearButton = () => {
@@ -108,6 +117,16 @@ const App: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const [initProgress, setInitProgress] = useState('Starting...');
+  // Brand fonts: Fraunces (display) + Inter (UI). The app renders on system
+  // fonts until these resolve, so a font failure never blocks startup.
+  const [fontsLoaded] = useFonts({
+    Fraunces_500Medium,
+    Fraunces_600SemiBold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
 
   const initializeApp = async () => {
     try {
@@ -193,9 +212,9 @@ const App: React.FC = () => {
       <GluestackUIProvider config={gluestackUIConfig}>
         <ReduxProvider>
           <ErrorBoundary onError={handleError}>
-            {!isInitialized ? (
+            {!isInitialized || !fontsLoaded ? (
               <SafeAreaView style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
+                <ActivityIndicator size="large" color="#FF5A3C" />
                 <Text style={styles.loadingText}>Loading KeyLo...</Text>
                 <Text style={styles.progressText}>{initProgress}</Text>
               </SafeAreaView>
@@ -235,45 +254,45 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FAF7F2',
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: '#8C8578',
   },
   progressText: {
     marginTop: 8,
     fontSize: 14,
-    color: '#999',
+    color: '#8C8578',
     fontStyle: 'italic',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FAF7F2',
     padding: 20,
   },
   errorTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#d32f2f',
+    color: '#D6453D',
     marginBottom: 10,
   },
   errorMessage: {
     fontSize: 14,
-    color: '#666',
+    color: '#8C8578',
     textAlign: 'center',
     marginBottom: 20,
   },
   retryButton: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#FF5A3C',
     fontWeight: '600',
     padding: 10,
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: '#FF5A3C',
     borderRadius: 8,
   },
 
