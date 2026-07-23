@@ -11,3 +11,4 @@ export { SectionLabel } from './SectionLabel';
 export { DisplayText } from './DisplayText';
 export { Field } from './Field';
 export { VehicleImage } from './VehicleImage';
+export { Stars } from './Stars';

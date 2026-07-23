@@ -163,6 +163,35 @@ export async function hostRoutes(app: FastifyInstance) {
     return { vehicles };
   });
 
+  // 🚗 GET /v1/hosts/me/reviews — published reviews across the host's cars
+  app.get('/me/reviews', { preHandler: [app.requireHost] }, async (request, reply) => {
+    const host = await prisma.hostProfile.findUnique({ where: { userId: request.auth!.sub } });
+    if (!host) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'No host profile' } });
+    const reviews = await prisma.review.findMany({
+      where: { targetKind: 'vehicle', publishedAt: { not: null }, booking: { vehicle: { hostId: host.id } } },
+      include: {
+        author: { select: { firstName: true } },
+        booking: { select: { vehicle: { select: { make: true, model: true } } } },
+      },
+      orderBy: { publishedAt: 'desc' },
+      take: 50,
+    });
+    const count = reviews.length;
+    const average = count ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / count) * 10) / 10 : null;
+    return {
+      average,
+      count,
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        body: r.body,
+        authorName: r.author.firstName,
+        vehicle: `${r.booking.vehicle.make} ${r.booking.vehicle.model}`,
+        publishedAt: r.publishedAt,
+      })),
+    };
+  });
+
   // 🚗 GET /v1/hosts/me/earnings — Earnings tab
   app.get('/me/earnings', { preHandler: [app.requireHost] }, async (request, reply) => {
     const host = await prisma.hostProfile.findUnique({ where: { userId: request.auth!.sub } });

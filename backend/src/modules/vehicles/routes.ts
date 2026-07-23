@@ -88,7 +88,39 @@ export async function vehicleRoutes(app: FastifyInstance) {
     if (!vehicle) {
       return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Vehicle not found' } });
     }
-    return { vehicle };
+
+    // Published review summary for this vehicle (renter-facing trust signal).
+    const published = await prisma.review.findMany({
+      where: { targetKind: 'vehicle', publishedAt: { not: null }, booking: { vehicleId: id } },
+      select: { rating: true },
+    });
+    const reviewCount = published.length;
+    const averageRating = reviewCount
+      ? Math.round((published.reduce((s, r) => s + r.rating, 0) / reviewCount) * 10) / 10
+      : null;
+
+    return { vehicle: { ...vehicle, reviewCount, averageRating } };
+  });
+
+  // 🌐 GET /v1/vehicles/:id/reviews — published reviews for a car
+  app.get('/:id/reviews', async (request) => {
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const reviews = await prisma.review.findMany({
+      where: { targetKind: 'vehicle', publishedAt: { not: null }, booking: { vehicleId: id } },
+      include: { author: { select: { firstName: true, avatarKey: true } } },
+      orderBy: { publishedAt: 'desc' },
+      take: 50,
+    });
+    return {
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        body: r.body,
+        hostResponse: r.hostResponse,
+        publishedAt: r.publishedAt,
+        authorName: r.author.firstName,
+      })),
+    };
   });
 
   // 🚗 POST /v1/vehicles — create listing (wizard step 1)

@@ -1,458 +1,88 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Image,
-  SafeAreaView
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { StackScreenProps } from '@react-navigation/stack';
-import * as ImagePicker from 'expo-image-picker';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button, Card, DisplayText, SectionLabel } from '../components/ui';
+import { keyloApi, KeyloApiError } from '../services/keyloApi';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
-import { reviewPromptService } from '../services/reviewPromptService';
-import { colors, typography, spacing, borderRadius } from '../styles/theme';
-import { RootStackParamList, ROUTES } from '../navigation/routes';
-import { StandardInput } from '../components/templates/StandardInput';
 
-type WriteReviewScreenProps = StackScreenProps<RootStackParamList, typeof ROUTES.WRITE_REVIEW>;
+/**
+ * Two-sided review — guests review the car, hosts review the guest. On the kit.
+ * Accepts { bookingId } or a legacy { booking: { id } } param so all callers work.
+ */
+export const WriteReviewScreen: React.FC<{ navigation: any; route: any }> = ({ navigation, route }) => {
+  const params = route.params ?? {};
+  const bookingId = String(params.bookingId ?? params.booking?.id ?? '');
+  const vehicleName: string | undefined = params.vehicleName
+    ? params.vehicleName
+    : params.booking?.vehicle
+      ? `${params.booking.vehicle.make ?? ''} ${params.booking.vehicle.model ?? ''}`.trim()
+      : undefined;
 
-interface UploadResponse {
-  url: string;
-}
-
-export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({ navigation, route }) => {
-  const { booking } = route.params;
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [body, setBody] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleStarPress = (starRating: number) => {
-    setRating(starRating);
-  };
-
-  const pickImage = async () => {
-    if (photos.length >= 3) {
-      notificationService.warning('You can add up to 3 photos', { duration: 3000 });
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-      base64: true, // Request base64 for size validation
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      const asset = result.assets[0];
-      // Validate image format
-      const fileExtension = asset.uri.split('.').pop()?.toLowerCase();
-      if (fileExtension !== 'jpeg' && fileExtension !== 'jpg' && fileExtension !== 'png') {
-        notificationService.warning('Unsupported image format. Please use JPEG or PNG.', { duration: 4000 });
-        return;
-      }
-
-      // Validate image size (e.g., max 5MB)
-      if (asset.base64 && (asset.base64.length * 0.75) > 5 * 1024 * 1024) {
-        notificationService.warning('Image size exceeds 5MB limit.', { duration: 4000 });
-        return;
-      }
-
-      setPhotos([...photos, asset.uri]);
-    }
-  };
-
-  const removePhoto = (index: number) => {
-    setPhotos(photos.filter((_, i) => i !== index));
-  };
-
-  const uploadPhoto = async (uri: string): Promise<string> => {
-    const formData = new FormData();
-    const fileType = uri.split('.').pop();
-    formData.append('photo', {
-      uri,
-      name: `photo.${fileType}`,
-      type: `image/${fileType}`,
-    } as unknown as Blob); // React Native file object for FormData
-
-    const response = await apiService.uploadFile<UploadResponse>('/upload', formData);
-
-    return response.url; // Assuming the API returns the URL of the uploaded photo
-  };
-
-  const submitReview = async () => {
-    if (rating === 0) {
-      notificationService.warning('Please select a rating of at least 1 star.', { duration: 4000 });
-      return;
-    }
-
-    const trimmedComment = comment.trim();
-    if (trimmedComment.length < 10) {
-      notificationService.warning(`Your comment has ${trimmedComment.length} characters. A minimum of 10 is required.`, { duration: 4000 });
-      return;
-    }
-
-    setLoading(true);
+  const submit = async () => {
+    if (rating < 1) return;
+    setSubmitting(true);
     try {
-      const uploadedPhotoUrls = await Promise.all(photos.map(uploadPhoto));
-
-      const reviewData = {
-        bookingId: booking.id,
-        rating,
-        comment: comment.trim(),
-        photos: uploadedPhotoUrls,
-      };
-
-      await apiService.post('/reviews', reviewData);
-
-      // Mark review as completed in the prompt service
-      await reviewPromptService.markReviewCompleted(booking.id);
-
-      notificationService.success('Review submitted successfully!', {
-        duration: 4000,
-        action: {
-          label: 'View Booking',
-          handler: () => navigation.navigate('Profile'),
-        },
-      });
-
-      navigation.goBack();
-    } catch (error: unknown) {
-      console.error('Review submission error:', String(error));
-
-      const err = error as any;
-      if (err?.response?.status === 400) {
-        notificationService.error(err.response.data.error || 'Invalid review data', {
-          duration: 4000,
-        });
-      } else {
-        notificationService.error('Failed to submit review', {
-          duration: 4000,
-        });
+      const token = await apiService.getToken();
+      if (!token) {
+        notificationService.error('Sign in to leave a review');
+        return;
       }
+      await keyloApi.submitReview(bookingId, { rating, body: body.trim() || undefined }, token);
+      notificationService.success('Thanks — your review is in.', { title: 'Review submitted' });
+      navigation.goBack();
+    } catch (e) {
+      notificationService.error(
+        e instanceof KeyloApiError ? e.message : "Couldn't submit your review — try again.",
+        { title: 'Review failed' }
+      );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
-  };
-
-  const renderStars = () => {
-    return (
-      <View style={styles.starsContainer}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <TouchableOpacity
-            key={star}
-            onPress={() => handleStarPress(star)}
-            style={styles.starButton}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={star <= rating ? 'star' : 'star-outline'}
-              size={40}
-              color={star <= rating ? colors.warning : colors.lightGrey}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
-  };
-
-  const renderRatingText = () => {
-    const ratingTexts = [
-      '',
-      'Poor',
-      'Fair', 
-      'Good',
-      'Very Good',
-      'Excellent'
-    ];
-    
-    return rating > 0 ? (
-      <Text style={styles.ratingText}>{ratingTexts[rating]}</Text>
-    ) : null;
-  };
-
-  const renderPhotos = () => {
-    return (
-      <View style={styles.photosSection}>
-        <Text style={styles.sectionTitle}>Add Photos (Optional)</Text>
-        <Text style={styles.sectionSubtitle}>Share your experience with photos</Text>
-        
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosScroll}>
-          {photos.map((photo, index) => (
-            <View key={index} style={styles.photoContainer}>
-              <Image source={{ uri: photo }} style={styles.photo} />
-              <TouchableOpacity
-                style={styles.removePhotoButton}
-                onPress={() => removePhoto(index)}
-              >
-                <Ionicons name="close-circle" size={24} color={colors.error} />
-              </TouchableOpacity>
-            </View>
-          ))}
-          
-          {photos.length < 3 && (
-            <TouchableOpacity style={styles.addPhotoButton} onPress={pickImage}>
-              <Ionicons name="camera" size={32} color={colors.primary} />
-              <Text style={styles.addPhotoText}>Add Photo</Text>
-            </TouchableOpacity>
-          )}
-        </ScrollView>
-      </View>
-    );
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.white}}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Write a Review</Text>
-        <Text style={styles.subtitle}>
-          How was your experience with the {booking.vehicle.year} {booking.vehicle.make} {booking.vehicle.model}?
-        </Text>
-      </View>
+    <SafeAreaView className="flex-1 bg-paper dark:bg-night" edges={['bottom']}>
+      <ScrollView className="flex-1 px-gutter" showsVerticalScrollIndicator={false} contentContainerClassName="pt-5">
+        <DisplayText size="title">How was the trip?</DisplayText>
+        {vehicleName ? (
+          <Text className="mt-1 font-ui text-body text-stone dark:text-night-muted">{vehicleName}</Text>
+        ) : null}
 
-      <View style={styles.vehicleInfo}>
-        <View style={styles.vehicleDetails}>
-          <Text style={styles.vehicleName}>
-            {booking.vehicle.year} {booking.vehicle.make} {booking.vehicle.model}
+        <Card className="mt-5 items-center p-6">
+          <View className="flex-row gap-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Pressable key={i} onPress={() => setRating(i)} accessibilityLabel={`${i} star${i > 1 ? 's' : ''}`}>
+                <Text style={{ fontSize: 40, color: i <= rating ? '#E8B44C' : '#E8E0D4' }}>★</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text className="mt-3 font-ui text-meta text-stone dark:text-night-muted">
+            {['Tap to rate', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'][rating]}
           </Text>
-          <Text style={styles.rentalDates}>
-            {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
-          </Text>
-        </View>
-      </View>
+        </Card>
 
-      <View style={styles.ratingSection}>
-        <Text style={styles.sectionTitle}>Rate Your Experience</Text>
-        {renderStars()}
-        {renderRatingText()}
-      </View>
-
-      <View style={styles.commentSection}>
-        <StandardInput
-          label="Write Your Review"
-          placeholder="Share your experience with this vehicle. What did you like? What could be improved?"
-          value={comment}
-          onChangeText={setComment}
+        <SectionLabel className="mt-6">Your review (optional)</SectionLabel>
+        <TextInput
+          value={body}
+          onChangeText={setBody}
           multiline
-          maxLength={1000}
-          accessibilityLabel="Write review comment"
-          accessibilityHint="Enter your detailed review of the vehicle"
+          placeholder="How was the car, the host, the handoff?"
+          placeholderTextColor="#C9C2B6"
+          className="mt-2 min-h-[120px] rounded-card border border-sand bg-white px-4 py-3 font-ui text-body text-ink dark:border-night-line dark:bg-night-raised dark:text-night-text"
+          textAlignVertical="top"
         />
-      </View>
+      </ScrollView>
 
-      {renderPhotos()}
-
-      <View style={styles.submitSection}>
-        <TouchableOpacity
-          style={[styles.submitButton, (!rating || comment.length < 10) && styles.submitButtonDisabled]}
-          onPress={submitReview}
-          disabled={loading || !rating || comment.length < 10}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <>
-              <Ionicons name="send" size={20} color={colors.white} style={styles.buttonIcon} />
-              <Text style={styles.submitButtonText}>Submit Review</Text>
-            </>
-          )}
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={() => navigation.goBack()}
-          disabled={loading}
-        >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
+      <View className="border-t border-sand px-gutter py-3 dark:border-night-line">
+        <Button label="Submit review" disabled={rating < 1} loading={submitting} onPress={submit} />
       </View>
-    </ScrollView>
-   </SafeAreaView>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.offWhite,
-  },
-  header: {
-    backgroundColor: colors.white,
-    padding: spacing.lg,
-    paddingTop: spacing.xl,
-  },
-  title: {
-    ...typography.heading1,
-    marginBottom: spacing.sm,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.lightGrey,
-    lineHeight: 22,
-  },
-  vehicleInfo: {
-    backgroundColor: colors.white,
-    marginTop: spacing.md,
-    marginHorizontal: spacing.md,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  vehicleDetails: {
-    alignItems: 'center',
-  },
-  vehicleName: {
-    ...typography.heading1,
-    fontSize: 20,
-    marginBottom: spacing.sm,
-  },
-  rentalDates: {
-    ...typography.body,
-    color: colors.lightGrey,
-  },
-  ratingSection: {
-    backgroundColor: colors.white,
-    marginTop: spacing.md,
-    marginHorizontal: spacing.md,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-  },
-  sectionTitle: {
-    ...typography.subheading,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  sectionSubtitle: {
-    ...typography.body,
-    color: colors.lightGrey,
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
-  starsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  starButton: {
-    padding: spacing.sm,
-  },
-  ratingText: {
-    ...typography.subheading,
-    color: colors.primary,
-    fontSize: 18,
-  },
-  commentSection: {
-    backgroundColor: colors.white,
-    marginTop: spacing.md,
-    marginHorizontal: spacing.md,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-  },
-  commentInput: {
-    borderWidth: 1,
-    borderColor: colors.lightGrey,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    fontSize: 16,
-    lineHeight: 22,
-    minHeight: 120,
-    backgroundColor: colors.offWhite,
-  },
-  characterCount: {
-    ...typography.body,
-    fontSize: 12,
-    color: colors.lightGrey,
-    textAlign: 'right',
-    marginTop: spacing.sm,
-  },
-  photosSection: {
-    backgroundColor: colors.white,
-    marginTop: spacing.md,
-    marginHorizontal: spacing.md,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-  },
-  photosScroll: {
-    marginTop: spacing.md,
-  },
-  photoContainer: {
-    position: 'relative',
-    marginRight: spacing.md,
-  },
-  photo: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.md,
-  },
-  removePhotoButton: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: colors.white,
-    borderRadius: 12,
-  },
-  addPhotoButton: {
-    width: 80,
-    height: 80,
-    backgroundColor: colors.offWhite,
-    borderRadius: borderRadius.md,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addPhotoText: {
-    ...typography.body,
-    fontSize: 12,
-    color: colors.primary,
-    marginTop: spacing.xs,
-  },
-  submitSection: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-  submitButton: {
-    backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.md,
-  },
-  submitButtonDisabled: {
-    backgroundColor: colors.lightGrey,
-  },
-  submitButtonText: {
-    ...typography.subheading,
-    color: colors.white,
-    fontSize: 16,
-  },
-  buttonIcon: {
-    marginRight: spacing.sm,
-  },
-  cancelButton: {
-    alignItems: 'center',
-    padding: spacing.md,
-  },
-  cancelButtonText: {
-    ...typography.body,
-    color: colors.lightGrey,
-    fontSize: 16,
-  },
-});
+export default WriteReviewScreen;

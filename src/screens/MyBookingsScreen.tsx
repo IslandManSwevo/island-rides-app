@@ -103,7 +103,19 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
                 className="mt-1.5"
               />
             )}
-            {item.status === 'completed' && <Badge label="Leave a review" tone="coral" className="mt-1.5" />}
+            {item.status === 'completed' && (
+              <Pressable
+                onPress={() =>
+                  (navigation as { navigate: (r: string, p: object) => void }).navigate(ROUTES.WRITE_REVIEW, {
+                    bookingId: item.id,
+                    vehicleName,
+                  })
+                }
+                className="mt-1.5 self-start"
+              >
+                <Badge label="Leave a review" tone="coral" />
+              </Pressable>
+            )}
             {item.status === 'cancelled' && <Badge label="Cancelled" tone="danger" className="mt-1.5" />}
             {item.status === 'declined' && <Badge label="Declined by host" tone="danger" className="mt-1.5" />}
           </View>
