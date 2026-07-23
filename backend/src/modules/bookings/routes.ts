@@ -4,6 +4,7 @@ import { prisma } from '../../lib/prisma.js';
 import { quote } from './pricing.js';
 import { assertTransition, IllegalTransitionError } from './stateMachine.js';
 import { paypalGateway } from '../payments/paypal.js';
+import { scheduleExpiry, scheduleTripLifecycle } from '../../jobs/index.js';
 
 const quoteSchema = z.object({
   vehicleId: z.string(),
@@ -122,6 +123,13 @@ export async function bookingRoutes(app: FastifyInstance) {
       },
     });
 
+    // Schedule the lifecycle jobs (no-op without Redis).
+    if (instant) {
+      await scheduleTripLifecycle(booking.id, booking.startAt, booking.endAt);
+    } else if (booking.approvalDeadline) {
+      await scheduleExpiry(booking.id, booking.approvalDeadline);
+    }
+
     return reply.code(201).send({ booking, approveUrl: order.approveUrl });
   });
 
@@ -171,6 +179,8 @@ export async function bookingRoutes(app: FastifyInstance) {
     const payment = booking.payments.find((p) => p.kind === 'trip');
     if (payment?.gatewayRef) await paypalGateway.captureOrder(payment.gatewayRef);
     const updated = await prisma.booking.update({ where: { id }, data: { status: 'confirmed' } });
+    // Approval confirms the trip → schedule payout + auto-complete.
+    await scheduleTripLifecycle(updated.id, updated.startAt, updated.endAt);
     return { booking: updated };
   });
 
