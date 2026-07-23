@@ -149,6 +149,7 @@ export type ProfileStackParamList = {
   [ROUTES.SAVED_SEARCHES]: {
     filters?: unknown;
   } | undefined;
+  [ROUTES.ADMIN_REVIEW]: undefined;
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
     vehicleId?: number | string;

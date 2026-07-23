@@ -74,6 +74,7 @@ export const ROUTES = {
   COMPARE_VEHICLES: 'CompareVehicles',
   VEHICLE_DOCUMENT_MANAGEMENT: 'VehicleDocumentManagement',
   LIST_VEHICLE: 'ListVehicle',
+  ADMIN_REVIEW: 'AdminReview',
   
   // Saved Searches
   SAVED_SEARCHES: 'SavedSearches',
@@ -259,4 +260,5 @@ export type RootStackParamList = {
   [ROUTES.SAVED_SEARCHES]: {
     filters?: SearchFilters;
   };
+  [ROUTES.ADMIN_REVIEW]: undefined;
 };

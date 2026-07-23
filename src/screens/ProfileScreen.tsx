@@ -351,12 +351,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 </TouchableOpacity>
                 
                 {profileData?.user.role === 'host' && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.actionButton, { backgroundColor: colors.success }]}
                     onPress={() => navigation.navigate(ROUTES.HOST_DASHBOARD)}
                   >
                     <Ionicons name="home-outline" size={20} color={colors.white} />
                     <Text style={styles.actionButtonText}>Host Dashboard</Text>
+                  </TouchableOpacity>
+                )}
+
+                {profileData?.user.role === 'admin' && (
+                  <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: colors.text }]}
+                    onPress={() => navigation.navigate(ROUTES.ADMIN_REVIEW)}
+                  >
+                    <Ionicons name="shield-checkmark-outline" size={20} color={colors.white} />
+                    <Text style={styles.actionButtonText}>Insurance Review</Text>
                   </TouchableOpacity>
                 )}
               </View>

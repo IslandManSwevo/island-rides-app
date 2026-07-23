@@ -36,6 +36,8 @@ export const ListVehicleScreen: React.FC<ListVehicleScreenProps> = ({ navigation
   const [publishing, setPublishing] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]); // R2 keys
   const [uploading, setUploading] = useState(false);
+  const [insuranceKey, setInsuranceKey] = useState<string | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   // Form state
   const [islandId, setIslandId] = useState('nassau');
@@ -101,6 +103,18 @@ export const ListVehicleScreen: React.FC<ListVehicleScreenProps> = ({ navigation
       notificationService.error('Photo upload failed — try again.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const uploadInsurance = async () => {
+    setUploadingDoc(true);
+    try {
+      const uploaded = await pickAndUpload('document');
+      if (uploaded) setInsuranceKey(uploaded.key);
+    } catch {
+      notificationService.error('Upload failed — try again.');
+    } finally {
+      setUploadingDoc(false);
     }
   };
 
@@ -171,11 +185,15 @@ export const ListVehicleScreen: React.FC<ListVehicleScreenProps> = ({ navigation
         { instantBook, minTripDays: Number(minTrip) || 1, maxTripDays: Number(maxTrip) || 30 },
         token
       );
-      if (!editingId) await keyloApi.submitVehicle(vehicleId, token);
+      if (!editingId) {
+        // Insurance is mandatory and human-reviewed before the car goes live.
+        if (insuranceKey) await keyloApi.addVehicleDocument(vehicleId, { kind: 'insurance', key: insuranceKey }, token);
+        await keyloApi.submitVehicle(vehicleId, token);
+      }
 
       notificationService.success(
-        editingId ? 'Listing updated.' : 'Your car is live on KeyLo.',
-        { title: editingId ? 'Saved' : "You're hosting" }
+        editingId ? 'Listing updated.' : 'Submitted for review — we’ll verify your insurance and email you when it’s live.',
+        { title: editingId ? 'Saved' : 'Submitted' }
       );
       navigation.navigate(ROUTES.FLEET_MANAGEMENT);
     } catch (e) {
@@ -339,8 +357,38 @@ export const ListVehicleScreen: React.FC<ListVehicleScreenProps> = ({ navigation
                 </Text>
               </View>
             </Card>
+
+            {!editingId && (
+              <>
+                <SectionLabel>Proof of insurance</SectionLabel>
+                <Pressable
+                  onPress={uploadInsurance}
+                  disabled={uploadingDoc}
+                  className={`flex-row items-center gap-3 rounded-card border p-card-pad ${
+                    insuranceKey ? 'border-teal bg-teal-tint dark:bg-night-raised' : 'border-2 border-dashed border-coral'
+                  }`}
+                >
+                  <Ionicons
+                    name={uploadingDoc ? 'cloud-upload-outline' : insuranceKey ? 'shield-checkmark' : 'document-attach-outline'}
+                    size={24}
+                    color={insuranceKey ? '#0E7C7B' : '#E04326'}
+                  />
+                  <View className="flex-1">
+                    <Text className="font-ui-semibold text-body text-ink dark:text-night-text">
+                      {insuranceKey ? 'Insurance uploaded' : 'Upload proof of insurance'}
+                    </Text>
+                    <Text className="font-ui text-meta text-stone dark:text-night-muted">
+                      {insuranceKey ? 'Tap to replace' : 'Required — a person reviews this before your car goes live'}
+                    </Text>
+                  </View>
+                </Pressable>
+              </>
+            )}
+
             <Text className="font-ui text-meta text-stone dark:text-night-muted">
-              Publishing lists your car in search right away. You can edit or unlist anytime from Fleet.
+              {editingId
+                ? 'Saving updates your listing right away.'
+                : 'We verify your insurance before the car appears in search — usually within a day. You can edit anytime from Fleet.'}
             </Text>
           </View>
         )}
@@ -352,7 +400,13 @@ export const ListVehicleScreen: React.FC<ListVehicleScreenProps> = ({ navigation
         {step < STEPS.length - 1 ? (
           <Button label="Continue" className="flex-1" disabled={!canAdvance()} onPress={() => setStep((s) => s + 1)} />
         ) : (
-          <Button label={editingId ? 'Save changes' : 'Publish listing'} className="flex-1" loading={publishing} onPress={publish} />
+          <Button
+            label={editingId ? 'Save changes' : 'Submit for review'}
+            className="flex-1"
+            disabled={!editingId && !insuranceKey}
+            loading={publishing}
+            onPress={publish}
+          />
         )}
       </View>
     </SafeAreaView>

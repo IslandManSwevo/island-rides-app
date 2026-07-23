@@ -283,7 +283,9 @@ export async function vehicleRoutes(app: FastifyInstance) {
     return reply.code(201).send({ document });
   });
 
-  // 🚗 POST /v1/vehicles/:id/submit — publish the listing (auto-list; needs ≥1 photo)
+  // 🚗 POST /v1/vehicles/:id/submit — send the listing for review.
+  // Requires ≥1 photo AND an insurance document; the car does NOT go live until
+  // a human admin approves the insurance (POST /v1/admin/vehicles/:id/insurance).
   app.post('/:id/submit', { preHandler: [app.requireHost] }, async (request, reply) => {
     const { id } = z.object({ id: z.string() }).parse(request.params);
     if (!(await ownVehicle(request.auth!.sub, id))) {
@@ -291,13 +293,23 @@ export async function vehicleRoutes(app: FastifyInstance) {
     }
     const photoCount = await prisma.vehiclePhoto.count({ where: { vehicleId: id } });
     if (photoCount === 0) {
-      return reply.code(409).send({ error: { code: 'VALIDATION_ERROR', message: 'Add at least one photo before publishing' } });
+      return reply.code(409).send({ error: { code: 'VALIDATION_ERROR', message: 'Add at least one photo before submitting' } });
     }
-    // No admin reviewer in v1 → auto-verify + list so the car appears in search.
+    const insurance = await prisma.vehicleDocument.findFirst({ where: { vehicleId: id, kind: 'insurance' } });
+    if (!insurance) {
+      return reply.code(409).send({
+        error: { code: 'VALIDATION_ERROR', message: 'Upload proof of insurance before submitting' },
+      });
+    }
+    // Enter the human review queue — not live yet.
     const vehicle = await prisma.vehicle.update({
       where: { id },
-      data: { verificationStatus: 'verified', listedAt: new Date(), unlistedAt: null },
+      data: { verificationStatus: 'pending', listedAt: null },
     });
-    return { vehicle };
+    await prisma.vehicleDocument.updateMany({
+      where: { vehicleId: id, kind: 'insurance', status: 'rejected' },
+      data: { status: 'pending' }, // re-submitting a previously rejected doc reopens review
+    });
+    return { vehicle, status: 'pending_review' };
   });
 }
