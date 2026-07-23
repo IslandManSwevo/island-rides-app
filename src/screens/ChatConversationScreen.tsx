@@ -1,998 +1,186 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-// Alert is already imported in the react-native imports below
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
-  StatusBar,
+  FlatList,
+  KeyboardAvoidingView,
   Platform,
-  TouchableOpacity,
-  Modal,
-  Image,
-  Dimensions,
-  ScrollView,
-  Alert,
+  Pressable,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { notificationService } from '../services/notificationService';
-import { 
-  GiftedChat, 
-  IMessage, 
-  User as GiftedChatUser, 
-  Actions, 
-  Send, 
-  MessageImage,
-  Bubble,
-  InputToolbar,
-  ActionsProps,
-  SendProps,
-  BubbleProps,
-  InputToolbarProps,
-  MessageImageProps
-} from 'react-native-gifted-chat';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { Audio } from 'expo-av';
-// Removed unused imports from @react-navigation/native
-import { StackNavigationProp, StackScreenProps } from '@react-navigation/stack';
-
-import { ChatContext, ChatMessage, ConversationResponse } from '../types';
+import { StackScreenProps } from '@react-navigation/stack';
+import { DisplayText } from '../components/ui';
 import { RootStackParamList } from '../navigation/routes';
-import { conversationService } from '../services/conversationService';
-import chatService from '../services/chatService';
-import { mediaUploadService } from '../services/mediaUploadService';
-import { AppHeader } from '../components/AppHeader';
 import { useUnifiedAuth } from '../context/UnifiedAuthContext';
-import { colors, spacing, borderRadius } from '../styles/theme';
+import { chatSocket, ChatMessage } from '../services/chatSocket';
+import { keyloApi } from '../services/keyloApi';
+import { apiService } from '../services/apiService';
 
-const { width: screenWidth } = Dimensions.get('window');
-
-// Quick reply templates for car rental context - memoized to prevent recreation
-const QUICK_REPLIES = [
-  { id: 1, text: "👋 Hello! I'm interested in this vehicle", category: 'greeting' },
-  { id: 2, text: "📅 What dates is it available?", category: 'availability' },
-  { id: 3, text: "💰 Is the price negotiable?", category: 'pricing' },
-  { id: 4, text: "🚗 Can I see more photos?", category: 'details' },
-  { id: 5, text: "📍 Where can I pick it up?", category: 'logistics' },
-  { id: 6, text: "🆔 What documents do I need?", category: 'requirements' },
-  { id: 7, text: "✅ Looks good! How do we proceed?", category: 'confirmation' },
-  { id: 8, text: "🙏 Thank you for your time!", category: 'closing' },
-] as const;
-
-// Navigation types
 type ChatConversationScreenProps = StackScreenProps<RootStackParamList, 'Chat'>;
 
-const ChatConversationScreen: React.FC<ChatConversationScreenProps> = React.memo(({ route, navigation }) => {
-  const { user: authUser } = useUnifiedAuth();
-  const { context, title: initialTitle } = route.params;
+const timeOf = (iso: string) =>
+  new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
-  // State management
-  const [messages, setMessages] = useState<IMessage[]>([]);
-  const [conversationData, setConversationData] = useState<ConversationResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
-  const [error, setError] = useState<string | null>(null);
-  
-  // Enhanced chat features
-  const [showQuickReplies, setShowQuickReplies] = useState(false);
-  const [showImageViewer, setShowImageViewer] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [audioPermission, setAudioPermission] = useState<boolean | null>(null);
+/**
+ * Realtime chat thread on the KeyLo kit (design mockup language), replacing
+ * GiftedChat. Loads history over REST, then streams live via chatSocket.
+ */
+const ChatConversationScreen: React.FC<ChatConversationScreenProps> = ({ route, navigation }) => {
+  const { user } = useUnifiedAuth();
+  const conversationId = String((route.params as { conversationId?: string | number })?.conversationId ?? '');
+  const title = (route.params as { title?: string })?.title ?? 'Chat';
+  const myId = String(user?.id ?? '');
 
-  // Refs for cleanup
-  const isMountedRef = useRef(true);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [draft, setDraft] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  // Memoized current user to prevent recreation
-  const currentUser = useMemo(() => ({
-    _id: authUser?.id || 'anonymous',
-    name: authUser ? `${authUser.firstName} ${authUser.lastName}` : 'Anonymous',
-  }), [authUser?.id, authUser?.firstName, authUser?.lastName]);
-
-  // Memoized header title
-  const headerTitle = useMemo(() => {
-    if (!conversationData || !context) return initialTitle || 'Chat';
-    
-    return initialTitle || 
-      conversationService.getConversationTitle(
-        context,
-        conversationData.participant,
-        conversationData.vehicle
-      );
-  }, [conversationData, initialTitle, context]);
-
-  /**
-   * Request necessary permissions - memoized
-   */
-  const requestPermissions = useCallback(async () => {
-    try {
-      // Request microphone permission for voice messages
-      const { status } = await Audio.requestPermissionsAsync();
-      setAudioPermission(status === 'granted');
-
-      // Request camera/photo library permissions
-      const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-      const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (cameraStatus !== 'granted' || libraryStatus !== 'granted') {
-        Alert.alert(
-          'Permissions Denied',
-          'Camera and/or media library permissions are required to share photos. Please enable them in your device settings.',
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error: unknown) {
-      console.error('Error requesting permissions:', String(error));
-    }
-  }, []);
-
-  /**
-   * Load message history from API - memoized
-   */
-  const loadMessageHistory = useCallback(async (conversationId: number) => {
-    try {
-      console.log('📚 Loading message history...');
-      
-      const chatMessages = await chatService.loadMessageHistory(conversationId);
-      
-      if (!isMountedRef.current) return;
-
-      // Transform to GiftedChat format
-      const giftedMessages: IMessage[] = chatMessages.map(transformToGiftedMessage);
-      
-      setMessages(giftedMessages);
-      console.log(`✅ Loaded ${giftedMessages.length} messages`);
-
-    } catch (error: unknown) {
-      console.error('❌ Failed to load message history:', String(error));
-      // Continue without history - not a critical error
-    }
-  }, []);
-
-  /**
-   * Transform ChatMessage to GiftedChat IMessage format - memoized
-   */
-  const transformToGiftedMessage = useCallback((chatMessage: ChatMessage): IMessage => {
-    const baseMessage: IMessage = {
-      _id: chatMessage._id,
-      text: chatMessage.text,
-      createdAt: new Date(chatMessage.createdAt),
-      user: {
-        _id: chatMessage.user._id,
-        name: chatMessage.user.name,
-        avatar: chatMessage.user.avatar,
-      },
-    };
-
-    // Add image if present
-    if (chatMessage.image) {
-      baseMessage.image = chatMessage.image;
-    }
-
-    // Add audio if present
-    if (chatMessage.audio) {
-      baseMessage.audio = chatMessage.audio;
-    }
-
-    return baseMessage;
-  }, []);
-
-  /**
-   * Handle new incoming messages - optimized
-   */
-  const handleNewMessage = useCallback((message: ChatMessage) => {
-    if (!isMountedRef.current) return;
-
-    console.log('📨 New message received:', message);
-    
-    // Show notification if message is from other user and app is not focused
-    if (message.user._id !== currentUser._id) {
-      notificationService.info(`${message.user.name}: ${message.text}`, {
-        title: 'New Message',
-        duration: 3000,
-        action: {
-          label: 'Reply',
-          handler: () => {} // Already in chat screen
-        }
-      });
-    }
-    
-    const giftedMessage = transformToGiftedMessage(message);
-    
-    setMessages(previousMessages => 
-      GiftedChat.append(previousMessages, [giftedMessage])
-    );
-  }, [currentUser._id, transformToGiftedMessage]);
-
-  /**
-   * Handle sending messages
-   */
-  const onSend = useCallback(async (newMessages: IMessage[] = []) => {
-    if (!chatService.isConnected()) {
-      notificationService.error('Not connected to chat server. Please check your connection and try again.', {
-        title: 'Connection Error',
-        duration: 5000,
-        action: {
-          label: 'Retry',
-          handler: () => onSend(newMessages)
-        }
-      });
-      return;
-    }
-
-    const message = newMessages[0];
-    if (!message) return;
-    // Do not send empty messages
-    if (!message.text?.trim() && !message.image && !message.audio) return;
-
-    try {
-      // Optimistically update UI
-      setMessages(previousMessages =>
-        GiftedChat.append(previousMessages, newMessages)
-      );
-
-      // Send via WebSocket
-      await chatService.sendMessage({
-        text: message.text || '',
-        image: message.image || undefined,
-        audio: message.audio || undefined,
-      });
-      
-      console.log('✅ Message sent successfully');
-
-    } catch (error) {
-      console.error('❌ Failed to send message:', error);
-      
-      // Remove optimistic message on failure
-      setMessages(previousMessages =>
-        previousMessages.filter(msg => msg._id !== message._id)
-      );
-
-      notificationService.error('Failed to send message', {
-        title: 'Send Failed',
-        duration: 4000,
-        action: {
-          label: 'Retry',
-          handler: () => onSend(newMessages)
-        }
-      });
-    }
-  }, []);
-
-  /**
-   * Handle quick reply selection
-   */
-  const handleQuickReply = (reply: { id: number; text: string; category: string }) => {
-    const message: IMessage = {
-      _id: Math.round(Math.random() * 1000000),
-      text: reply.text,
-      createdAt: new Date(),
-      user: getCurrentUser(),
-    };
-    
-    onSend([message]);
-    setShowQuickReplies(false);
-  };
-
-  /**
-   * Handle image picking
-   */
-  const pickImage = async (useCamera: boolean = false) => {
-    try {
-      const result = useCamera 
-        ? await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.8,
-          })
-        : await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.8,
-          });
-
-            if (!result.canceled && result.assets[0]) {
-           };
-      if (!result.canceled && result.assets[0]) {
-         const imageUri = result.assets[0].uri;        // Show a loading indicator while uploading
-        notificationService.info('Uploading image...', { duration: 0 });
-
-        try {
-          const imageUrl = await mediaUploadService.uploadImage(imageUri);
-          notificationService.clear();
-
-          const message: IMessage = {
-            _id: Math.round(Math.random() * 1000000),
-            text: '',
-            createdAt: new Date(),
-            user: getCurrentUser(),
-            image: imageUrl,
-          };
-          
-          onSend([message]);
-        } catch (uploadError) {
-          console.error('Image upload failed:', uploadError);
-          notificationService.error('Failed to upload image. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      notificationService.error('Failed to select image', { duration: 3000 });
-    }
-  };
-
-  /**
-   * Handle voice recording
-   */
-  const startRecording = async () => {
-    if (!audioPermission) {
-      Alert.alert(
-        'Permission Required',
-        'Please enable microphone permission in settings to send voice messages.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      
-      setRecording(recording);
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      notificationService.error('Failed to start recording', { duration: 3000 });
-    }
-  };
-
-  const stopRecording = async () => {
-    if (!recording) return;
-
-    try {
-      setIsRecording(false);
-      await recording.stopAndUnloadAsync();
-      
-      const uri = recording.getURI();
-      setRecording(null);
-      
-      if (uri) {
-        // Show a loading indicator while uploading
-        notificationService.info('Uploading audio...', { duration: 0 });
-
-        try {
-          const audioUrl = await mediaUploadService.uploadAudio(uri);
-          notificationService.clear();
-
-          const message: IMessage = {
-            _id: Math.round(Math.random() * 1000000),
-            text: '',
-            createdAt: new Date(),
-            user: getCurrentUser(),
-            audio: audioUrl,
-          };
-          
-          onSend([message]);
-        } catch (uploadError) {
-          console.error('Audio upload failed:', uploadError);
-          notificationService.error('Failed to upload audio. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Failed to stop recording:', error);
-      notificationService.error('Failed to save voice message', { duration: 3000 });
-    }
-  };
-
-  /**
-   * Get current user for GiftedChat
-   */
-  const getCurrentUser = (): GiftedChatUser => {
-    if (!authUser) {
-      // Fallback if user is not available
-      return {
-        _id: 1,
-        name: 'You',
-      };
-    }
-
-    return {
-      _id: authUser.id,
-      name: `${authUser.firstName} ${authUser.lastName}`,
-    };
-  };
-
-  /**
-   * Initialize chat connection and load conversation
-   */
-  const initializeChat = useCallback(async () => {
-    if (!context) {
-      setError('Invalid conversation context');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setIsConnecting(true);
-      setError(null);
-
-      console.log('🚀 Initializing chat...', context);
-
-      // Load or create conversation
-      const conversation = await conversationService.resolveConversation(context);
-      
-      if (!isMountedRef.current) return;
-      
-      setConversationData(conversation);
-
-      // Load message history
-      if (conversation.conversationId) {
-        await loadMessageHistory(conversation.conversationId);
-      }
-
-      // Connect to chat service
-      await chatService.connect();
-      
-      // Join the conversation
-      if (conversation.conversationId) {
-        await chatService.joinConversation(conversation.conversationId);
-      }
-
-      // Set up message callback
-      chatService.onMessage(handleNewMessage);
-      chatService.onConnect(() => {
-        if (isMountedRef.current) {
-          setConnectionStatus('connected');
-          setIsConnecting(false);
-        }
-      });
-      chatService.onDisconnect(() => {
-        if (isMountedRef.current) {
-          setConnectionStatus('disconnected');
-          setIsConnecting(false);
-        }
-      });
-      chatService.onError((error: string) => {
-        if (isMountedRef.current) {
-          console.error('❌ Chat connection error:', error);
-          setError('Connection failed. Please check your internet connection.');
-          setConnectionStatus('disconnected');
-          setIsConnecting(false);
-        }
-      });
-
-      setIsLoading(false);
-      console.log('✅ Chat initialized successfully');
-
-    } catch (error: Error | unknown) {
-      console.error('❌ Failed to initialize chat:', error);
-      
-      if (isMountedRef.current) {
-        setError(error instanceof Error ? error.message : 'Failed to initialize chat');
-        setIsLoading(false);
-        setIsConnecting(false);
-        setConnectionStatus('disconnected');
-      }
-    }
-  }, [context, loadMessageHistory, handleNewMessage]);
-
-  /**
-   * Initialize chat on mount
-   */
   useEffect(() => {
-    initializeChat();
-    requestPermissions();
+    if (!conversationId) {
+      setLoading(false);
+      return;
+    }
+    let offMessage: (() => void) | undefined;
+
+    (async () => {
+      try {
+        const token = await apiService.getToken();
+        if (token) {
+          const res = await keyloApi.conversationMessages(conversationId, token);
+          setMessages(res.messages);
+        }
+      } catch {
+        // Empty thread / offline — start clean.
+      } finally {
+        setLoading(false);
+      }
+
+      await chatSocket.join(conversationId);
+      chatSocket.markRead(conversationId);
+      offMessage = chatSocket.onMessage((m) => {
+        if (m.conversationId !== conversationId) return;
+        setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+      });
+    })();
 
     return () => {
-      isMountedRef.current = false;
-      cleanup();
+      offMessage?.();
+      chatSocket.leave(conversationId);
     };
-  }, [initializeChat, requestPermissions]);
+  }, [conversationId]);
 
-  /**
-   * Cleanup function
-   */
-    const cleanup = async () => {
-    console.log('🧹 Cleaning up chat screen...');
-    
-    try {
-      chatService.disconnect();
-      if (recording) {
-        await recording.stopAndUnloadAsync();
-      }
-    } catch (error) {
-      console.error('❌ Error during cleanup:', error);
+  useEffect(() => {
+    if (messages.length) listRef.current?.scrollToEnd({ animated: true });
+  }, [messages.length]);
+
+  const send = useCallback(async () => {
+    const body = draft.trim();
+    if (!body || sending) return;
+    setSending(true);
+    setDraft('');
+    const saved = await chatSocket.send(conversationId, body);
+    if (!saved) {
+      // Socket unavailable — restore the draft so nothing is lost.
+      setDraft(body);
     }
-  };
+    setSending(false);
+  }, [draft, sending, conversationId]);
 
-  /**
-   * Retry connection
-   */
-  const retryConnection = () => {
-    setError(null);
-    initializeChat();
-  };
-
-  /**
-   * Custom Actions component
-   */
-  const renderActions = (props: ActionsProps) => (
-    <Actions
-      {...props}
-      options={{
-        'Camera': () => pickImage(true),
-        'Photo Library': () => pickImage(false),
-        'Voice Message': isRecording ? stopRecording : startRecording,
-        'Quick Replies': () => setShowQuickReplies(true),
-        'Cancel': () => {},
-      }}
-      icon={() => (
-        <View style={styles.actionsButton}>
-          <Ionicons name="add" size={24} color={colors.primary} />
-        </View>
-      )}
-    />
-  );
-
-  /**
-   * Custom Send component
-   */
-  const renderSend = (props: SendProps<IMessage>) => (
-    <Send {...props}>
-      <View style={styles.sendButton}>
-        <Ionicons name="send" size={20} color={colors.primary} />
-      </View>
-    </Send>
-  );
-
-  /**
-   * Custom Bubble component
-   */
-  const renderBubble = (props: BubbleProps<IMessage>) => (
-    <Bubble
-      {...props}
-      wrapperStyle={{
-        right: {
-          backgroundColor: colors.primary,
-        },
-        left: {
-          backgroundColor: colors.offWhite,
-        },
-      }}
-      textStyle={{
-        right: {
-          color: colors.white,
-        },
-        left: {
-          color: colors.black,
-        },
-      }}
-    />
-  );
-
-  /**
-   * Custom Input Toolbar
-   */
-  const renderInputToolbar = (props: InputToolbarProps<IMessage>) => (
-    <InputToolbar
-      {...props}
-      containerStyle={styles.inputToolbar}
-      primaryStyle={{ alignItems: 'center' }}
-    />
-  );
-
-  /**
-   * Custom Message Image component
-   */
-  const renderMessageImage = (props: MessageImageProps<IMessage>) => (
-    <TouchableOpacity
-      onPress={() => {
-        setSelectedImage(props.currentMessage?.image || null);
-        setShowImageViewer(true);
-      }}
-    >
-      <MessageImage
-        {...props}
-        imageStyle={{
-          width: 200,
-          height: 200,
-          borderRadius: borderRadius.md,
-        }}
-      />
-    </TouchableOpacity>
-  );
-
-  /**
-   * Custom Message Audio component (simplified - no built-in audio player)
-   */
-  const renderMessageAudio = (props: { currentMessage: IMessage }) => (
-    <View style={styles.audioMessage}>
-      <Ionicons name="play-circle" size={40} color={colors.primary} />
-      <Text style={styles.audioText}>Voice Message</Text>
-    </View>
-  );
-
-  /**
-   * Render Quick Replies Modal
-   */
-  const renderQuickRepliesModal = () => (
-    <Modal
-      visible={showQuickReplies}
-      transparent
-      animationType="slide"
-      onRequestClose={() => setShowQuickReplies(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.quickRepliesModal}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Quick Replies</Text>
-            <TouchableOpacity onPress={() => setShowQuickReplies(false)}>
-              <Ionicons name="close" size={24} color={colors.lightGrey} />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {QUICK_REPLIES.map((reply) => (
-              <TouchableOpacity
-                key={reply.id}
-                style={styles.quickReplyItem}
-                onPress={() => handleQuickReply(reply)}
-              >
-                <Text style={styles.quickReplyText}>{reply.text}</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.lightGrey} />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  /**
-   * Render Image Viewer Modal
-   */
-  const renderImageViewer = () => (
-    <Modal
-      visible={showImageViewer}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setShowImageViewer(false)}
-    >
-      <View style={styles.imageViewerOverlay}>
-        <TouchableOpacity
-          style={styles.imageViewerClose}
-          onPress={() => setShowImageViewer(false)}
-        >
-          <Ionicons name="close" size={30} color={colors.white} />
-        </TouchableOpacity>
-        
-        {selectedImage && (
-          <Image 
-            source={{ uri: selectedImage }} 
-            style={styles.fullScreenImage}
-            resizeMode="contain"
-          />
-        )}
-      </View>
-    </Modal>
-  );
-
-  /**
-   * Render loading state
-   */
-  if (isLoading) {
+  const renderMessage = ({ item }: { item: ChatMessage }) => {
+    const mine = String(item.senderId) === myId;
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
-        <AppHeader 
-          title="Loading Chat..." 
-          navigation={navigation}
-          showBackButton={true}
-          onBackPress={() => navigation.goBack()}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>
-            {isConnecting ? 'Connecting to chat...' : 'Setting up conversation...'}
+      <View className={`mb-2 max-w-[78%] ${mine ? 'self-end' : 'self-start'}`}>
+        <View
+          className={`rounded-hero px-3.5 py-2.5 ${
+            mine
+              ? 'rounded-br-field bg-coral'
+              : 'rounded-bl-field border border-sand bg-white dark:border-night-line dark:bg-night-raised'
+          }`}
+        >
+          <Text className={`font-ui text-body ${mine ? 'text-white' : 'text-ink dark:text-night-text'}`}>
+            {item.body}
           </Text>
         </View>
-      </SafeAreaView>
-    );
-  }
-
-  /**
-   * Render error state
-   */
-  if (error) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
-        <AppHeader 
-          title="Chat Error" 
-          navigation={navigation}
-          showBackButton={true}
-          onBackPress={() => navigation.goBack()}
-        />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Unable to start chat</Text>
-          <Text style={styles.errorMessage}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={retryConnection}>
-            <Text style={styles.retryButtonText}>Tap to retry</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  /**
-   * Render connection status indicator
-   */
-  const renderConnectionStatus = () => {
-    if (connectionStatus === 'connected') return null;
-
-    return (
-      <View style={styles.connectionStatus}>
-        <Text style={styles.connectionStatusText}>
-          {connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
+        <Text
+          className={`mt-1 font-ui text-overline normal-case tracking-normal text-stone dark:text-night-muted ${
+            mine ? 'text-right' : ''
+          }`}
+        >
+          {timeOf(item.createdAt)}
+          {mine && item.readAt ? ' · Read' : ''}
         </Text>
-        {connectionStatus === 'connecting' && (
-          <ActivityIndicator size="small" color={colors.white} style={styles.connectionIndicator} />
-        )}
       </View>
     );
   };
 
-  /**
-   * Main render
-   */
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
-      
-      <AppHeader 
-        title={conversationData && context ? 
-          conversationService.getConversationTitle(
-            context,
-            conversationData.participant,
-            conversationData.vehicle
-          ) : 'Chat'
-        }
-        navigation={navigation}
-        showBackButton={true}
-        onBackPress={() => navigation.goBack()}
-      />
+    <SafeAreaView className="flex-1 bg-paper dark:bg-night" edges={['top', 'bottom']}>
+      {/* Header */}
+      <View className="flex-row items-center gap-3 border-b border-sand px-gutter py-3 dark:border-night-line">
+        <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back">
+          <Ionicons name="arrow-back" size={24} color="#141C24" />
+        </Pressable>
+        <DisplayText size="title" numberOfLines={1} className="flex-1">
+          {title}
+        </DisplayText>
+      </View>
 
-      {renderConnectionStatus()}
-
-      <GiftedChat
-        messages={messages}
-        onSend={onSend}
-        user={getCurrentUser()}
-        placeholder="Type a message..."
-        alwaysShowSend
-        renderActions={renderActions}
-        renderSend={renderSend}
-        renderBubble={renderBubble}
-        renderInputToolbar={renderInputToolbar}
-        renderMessageImage={renderMessageImage}
-        renderMessageAudio={renderMessageAudio}
-        isKeyboardInternallyHandled={false}
-        bottomOffset={Platform.select({ ios: 34, android: 0 })}
-        minInputToolbarHeight={60}
-      />
-
-      {/* Quick Replies Modal */}
-      {renderQuickRepliesModal()}
-      
-      {/* Image Viewer Modal */}
-      {renderImageViewer()}
-
-      {/* Recording Indicator */}
-      {isRecording && (
-        <View style={styles.recordingIndicator}>
-          <View style={styles.recordingDot} />
-          <Text style={styles.recordingText}>Recording... Tap Actions to stop</Text>
+      {loading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator color="#FF5A3C" />
         </View>
+      ) : (
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={8}
+        >
+          <FlatList
+            ref={listRef}
+            data={messages}
+            keyExtractor={(m) => m.id}
+            renderItem={renderMessage}
+            contentContainerClassName="px-gutter py-4"
+            ListEmptyComponent={
+              <View className="mt-16 items-center">
+                <Text className="font-ui text-body text-stone dark:text-night-muted">
+                  Say hello — messages are private to this booking.
+                </Text>
+              </View>
+            }
+          />
+          <View className="flex-row items-end gap-2 border-t border-sand px-gutter py-2.5 dark:border-night-line">
+            <TextInput
+              value={draft}
+              onChangeText={(t) => {
+                setDraft(t);
+                if (conversationId) chatSocket.sendTyping(conversationId);
+              }}
+              placeholder="Message"
+              placeholderTextColor="#C9C2B6"
+              multiline
+              className="max-h-28 flex-1 rounded-hero border border-sand bg-white px-4 py-2.5 font-ui text-body text-ink dark:border-night-line dark:bg-night-raised dark:text-night-text"
+            />
+            <Pressable
+              onPress={send}
+              disabled={!draft.trim() || sending}
+              className={`h-11 w-11 items-center justify-center rounded-pill ${
+                draft.trim() ? 'bg-coral' : 'bg-sand dark:bg-night-line'
+              }`}
+              accessibilityLabel="Send message"
+            >
+              <Ionicons name="arrow-up" size={20} color="#fff" />
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
       )}
     </SafeAreaView>
   );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: 16,
-    color: colors.lightGrey,
-    textAlign: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.error,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  errorMessage: {
-    fontSize: 14,
-    color: colors.lightGrey,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  retryButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-  },
-  retryButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  connectionStatus: {
-    backgroundColor: colors.warning,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  connectionStatusText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  connectionIndicator: {
-    marginLeft: spacing.sm,
-  },
-  // Enhanced chat components
-  actionsButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.offWhite,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: spacing.sm,
-  },
-  sendButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  inputToolbar: {
-    backgroundColor: colors.white,
-    borderTopWidth: 1,
-    borderTopColor: colors.offWhite,
-    paddingVertical: spacing.xs,
-  },
-  // Quick Replies Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  quickRepliesModal: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: borderRadius.lg,
-    borderTopRightRadius: borderRadius.lg,
-    maxHeight: '70%',
-    paddingBottom: spacing.xl,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.offWhite,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.darkGrey,
-  },
-  quickReplyItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.offWhite,
-  },
-  quickReplyText: {
-    fontSize: 16,
-    color: colors.darkGrey,
-    flex: 1,
-  },
-  // Image Viewer Modal
-  imageViewerOverlay: {
-    flex: 1,
-    backgroundColor: colors.overlay + 'E6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageViewerClose: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 1,
-  },
-  fullScreenImage: {
-    width: screenWidth,
-    height: '80%',
-  },
-  // Recording Indicator
-  recordingIndicator: {
-    position: 'absolute',
-    top: 100,
-    left: spacing.lg,
-    right: spacing.lg,
-    backgroundColor: colors.error,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.white,
-    marginRight: spacing.sm,
-  },
-  recordingText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  // Audio Message Styles
-  audioMessage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    backgroundColor: colors.offWhite,
-    borderRadius: borderRadius.md,
-    margin: spacing.sm,
-  },
-  audioText: {
-    marginLeft: spacing.sm,
-    fontSize: 16,
-    color: colors.darkGrey,
-    fontWeight: '500',
-  },
-});
+};
 
 export default ChatConversationScreen;
