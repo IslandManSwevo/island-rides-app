@@ -39,3 +39,5 @@ the plugins. Point the app's `EXPO_PUBLIC_API_BASE_URL` at the service domain.
 | BullMQ scheduled jobs (request expiry, payout, auto-complete, review reveal) | ✅ working (needs Redis; no-ops without it) |
 | Socket.IO realtime chat (JWT auth, room authz, DB persistence, Redis adapter) | ✅ working |
 | Trip lifecycle: check-out, cancel + refund policy, extensions, two-sided reviews | ✅ working |
+| Listing management (create, PATCH details, extras, documents, submit-to-list) | ✅ working |
+| Expo push notifications (booking request/approve/decline, new message) | ✅ working (needs device tokens; no-ops without them) |

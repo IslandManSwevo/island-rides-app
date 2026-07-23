@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 import { CommonActions, useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Card, DisplayText } from '../../components/ui';
+import { keyloApi } from '../../services/keyloApi';
+import { apiService } from '../../services/apiService';
 
 const REASONS: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string }[] = [
   { icon: 'calendar-outline', title: 'Booking updates', body: 'Approvals, pickup reminders, trip changes.' },
@@ -30,9 +33,20 @@ export const PermissionsScreen: React.FC = () => {
   const enable = async () => {
     setWorking(true);
     try {
-      await Notifications.requestPermissionsAsync();
+      const { granted } = await Notifications.requestPermissionsAsync();
+      if (granted) {
+        // Register this device's Expo push token with the API (best-effort).
+        const [{ data: expoToken }, apiToken] = await Promise.all([
+          Notifications.getExpoPushTokenAsync(),
+          apiService.getToken(),
+        ]);
+        if (expoToken && apiToken) {
+          const platform = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
+          await keyloApi.registerPushToken(expoToken, platform, apiToken).catch(() => undefined);
+        }
+      }
     } catch {
-      // Permission denial is fine — the app still works without push.
+      // Permission denial / token failure is fine — the app still works without push.
     } finally {
       setWorking(false);
       enterApp();

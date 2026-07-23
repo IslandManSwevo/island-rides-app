@@ -5,6 +5,7 @@ import { quote, SERVICE_FEE_BPS } from './pricing.js';
 import { assertTransition, IllegalTransitionError } from './stateMachine.js';
 import { paypalGateway } from '../payments/paypal.js';
 import { scheduleExpiry, scheduleTripLifecycle, scheduleAutoComplete, scheduleReviewReveal } from '../../jobs/index.js';
+import { sendToUser } from '../../lib/push.js';
 
 const quoteSchema = z.object({
   vehicleId: z.string(),
@@ -130,6 +131,13 @@ export async function bookingRoutes(app: FastifyInstance) {
       await scheduleExpiry(booking.id, booking.approvalDeadline);
     }
 
+    // Notify the host: a new request to approve, or an Instant Book confirmed.
+    await sendToUser(vehicle.host.userId, {
+      title: instant ? 'New booking confirmed' : 'New booking request',
+      body: `${vehicle.make} ${vehicle.model} · ${nights} day${nights === 1 ? '' : 's'}`,
+      data: { bookingId: booking.id },
+    });
+
     return reply.code(201).send({ booking, approveUrl: order.approveUrl });
   });
 
@@ -181,6 +189,11 @@ export async function bookingRoutes(app: FastifyInstance) {
     const updated = await prisma.booking.update({ where: { id }, data: { status: 'confirmed' } });
     // Approval confirms the trip → schedule payout + auto-complete.
     await scheduleTripLifecycle(updated.id, updated.startAt, updated.endAt);
+    await sendToUser(booking.guestId, {
+      title: 'Booking confirmed 🎉',
+      body: 'Your host approved the trip. You’ve got the keys.',
+      data: { bookingId: id },
+    });
     return { booking: updated };
   });
 
@@ -208,6 +221,11 @@ export async function bookingRoutes(app: FastifyInstance) {
     const updated = await prisma.booking.update({
       where: { id },
       data: { status: 'declined', declineReason: body.reason },
+    });
+    await sendToUser(booking.guestId, {
+      title: 'Booking not available',
+      body: 'Your host couldn’t take this trip — your hold was released.',
+      data: { bookingId: id },
     });
     return { booking: updated };
   });

@@ -374,6 +374,13 @@ export const keyloApi = {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
+
+  registerPushToken: (token: string, platform: 'ios' | 'android' | 'web', accessToken: string) =>
+    request<{ success: boolean }>('/v1/users/me/push-tokens', {
+      method: 'POST',
+      body: JSON.stringify({ token, platform }),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
 };
 
 export interface ApiStorefront {

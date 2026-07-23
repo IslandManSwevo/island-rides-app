@@ -5,6 +5,7 @@ import { Redis } from 'ioredis';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
+import { sendToUser } from '../lib/push.js';
 import type { AccessTokenPayload } from '../plugins/auth.js';
 
 /**
@@ -78,6 +79,16 @@ export function attachSocket(httpServer: HttpServer, log: (msg: string) => void)
         // Broadcast to everyone in the room, including the sender (single source of truth).
         io.to(room(payload.conversationId)).emit('message:new', message);
         ack?.({ ok: true, message });
+
+        // Push the other participant (resolve the host's user id from their profile).
+        const convo = await prisma.conversation.findUnique({ where: { id: payload.conversationId } });
+        if (convo) {
+          const hostUser = await prisma.hostProfile.findUnique({ where: { id: convo.hostId }, select: { userId: true } });
+          const recipient = convo.guestId === user.userId ? hostUser?.userId : convo.guestId;
+          if (recipient && recipient !== user.userId) {
+            await sendToUser(recipient, { title: 'New message', body, data: { conversationId: convo.id } });
+          }
+        }
       } catch {
         ack?.({ error: 'send failed' });
       }
