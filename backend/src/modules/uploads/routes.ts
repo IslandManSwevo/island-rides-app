@@ -1,17 +1,22 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { randomBytes } from 'node:crypto';
-import { env } from '../../config/env.js';
+import { presignPut, resolveUrl, r2Configured } from '../../lib/r2.js';
 
 const KINDS = ['vehicle_photo', 'document', 'avatar', 'checkin_photo', 'banner'] as const;
 
+const EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/heic': 'heic',
+  'application/pdf': 'pdf',
+};
+
 /**
  * Presigned R2 uploads (design/05-api-spec.md): the API hands out a presigned
- * PUT URL and the final key; file bytes never transit the API.
- *
- * Scaffold note: real presigning needs @aws-sdk/client-s3 +
- * @aws-sdk/s3-request-presigner against the R2 endpoint. Until R2 creds are
- * configured this returns 501 so the client contract is visible and typed.
+ * PUT URL and the final key; file bytes never transit the API. The client PUTs
+ * the bytes straight to R2, then sends the key back on the relevant resource.
  */
 export async function uploadRoutes(app: FastifyInstance) {
   app.post('/presign', { preHandler: [app.requireAuth] }, async (request, reply) => {
@@ -19,19 +24,18 @@ export async function uploadRoutes(app: FastifyInstance) {
       .object({ kind: z.enum(KINDS), contentType: z.string().regex(/^(image|application)\//) })
       .parse(request.body);
 
-    const key = `${body.kind}/${request.auth!.sub}/${Date.now()}-${randomBytes(8).toString('hex')}`;
+    const ext = EXT[body.contentType] ?? 'bin';
+    const key = `${body.kind}/${request.auth!.sub}/${Date.now()}-${randomBytes(8).toString('hex')}.${ext}`;
 
-    if (!env.R2_BUCKET || !env.R2_ACCESS_KEY_ID) {
+    if (!r2Configured) {
       return reply.code(501).send({
         error: { code: 'SERVER_ERROR', message: 'Object storage not configured (R2_* env vars)' },
         key,
       });
     }
 
-    // TODO(R2): return presigned PUT URL for `key` with body.contentType
-    return reply.code(501).send({
-      error: { code: 'SERVER_ERROR', message: 'Presigning not yet implemented' },
-      key,
-    });
+    const uploadUrl = await presignPut(key, body.contentType);
+    const publicUrl = await resolveUrl(key);
+    return { key, uploadUrl, publicUrl };
   });
 }

@@ -105,6 +105,22 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const formatDollars = (cents: number): string =>
   `$${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: cents % 100 === 0 ? 0 : 2 })}`;
 
+const R2_PUBLIC_URL = process.env.EXPO_PUBLIC_R2_PUBLIC_URL ?? '';
+
+/** Resolve an R2 object key to a display URL (empty when storage isn't configured). */
+export const photoUrl = (key?: string | null): string | undefined => {
+  if (!key) return undefined;
+  if (/^https?:\/\//.test(key)) return key; // already absolute
+  return R2_PUBLIC_URL ? `${R2_PUBLIC_URL.replace(/\/$/, '')}/${key}` : undefined;
+};
+
+/** First/primary photo of a vehicle as a display URL, if any. */
+export const primaryPhotoUrl = (vehicle: { photos?: { key: string; isPrimary?: boolean }[] }): string | undefined => {
+  const photos = vehicle.photos ?? [];
+  const primary = photos.find((p) => p.isPrimary) ?? photos[0];
+  return photoUrl(primary?.key);
+};
+
 export type ApiBookingStatus =
   | 'pending'
   | 'confirmed'
@@ -231,6 +247,24 @@ export const keyloApi = {
     request<{ review: unknown }>(`/v1/bookings/${bookingId}/review`, {
       method: 'POST',
       body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  presignUpload: (
+    kind: 'vehicle_photo' | 'document' | 'avatar' | 'checkin_photo' | 'banner',
+    contentType: string,
+    accessToken: string
+  ) =>
+    request<{ key: string; uploadUrl: string; publicUrl: string }>('/v1/uploads/presign', {
+      method: 'POST',
+      body: JSON.stringify({ kind, contentType }),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  saveVehiclePhotos: (vehicleId: string, photos: { key: string; kind?: string }[], accessToken: string) =>
+    request<{ photos: unknown[] }>(`/v1/vehicles/${vehicleId}/photos`, {
+      method: 'PUT',
+      body: JSON.stringify({ photos }),
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
 

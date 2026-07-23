@@ -3,8 +3,8 @@ import { FlatList, Pressable, RefreshControl, Share, Text, View } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackScreenProps } from '@react-navigation/stack';
-import { Badge, Button, Card, Chip, DisplayText, SectionLabel } from '../components/ui';
-import { keyloApi, ApiStorefront, ApiVehicle, formatDollars } from '../services/keyloApi';
+import { Badge, Button, Card, Chip, DisplayText, SectionLabel, VehicleImage } from '../components/ui';
+import { keyloApi, ApiStorefront, ApiVehicle, formatDollars, primaryPhotoUrl } from '../services/keyloApi';
 import { apiService } from '../services/apiService';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
@@ -75,9 +75,7 @@ export const HostStorefrontScreen: React.FC<HostStorefrontScreenProps> = ({ navi
 
   const renderVehicle = ({ item }: { item: ApiVehicle }) => (
     <Card className="mb-3 flex-1 overflow-hidden" style={{ maxWidth: '48%' }}>
-      <View className="h-20 items-center justify-center bg-ink dark:bg-night-raised">
-        <Ionicons name="car-sport" size={30} color="#F2EFE9" />
-      </View>
+      <VehicleImage url={primaryPhotoUrl(item)} iconSize={30} className="h-20 w-full" />
       <View className="p-3">
         <Text className="font-ui-bold text-meta text-ink dark:text-night-text" numberOfLines={1}>
           {item.make} {item.model}
