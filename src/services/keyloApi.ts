@@ -42,6 +42,8 @@ export interface ApiVehicle {
   address?: string | null;
   verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
   unlistedAt?: string | null;
+  averageRating?: number | null;
+  reviewCount?: number;
   photos: ApiVehiclePhoto[];
   extras?: { id: string; name: string; priceCents: number; perTrip: boolean }[];
   host?: {
@@ -143,6 +145,19 @@ export interface ApiBooking {
   vehicle?: ApiVehicle;
 }
 
+export interface ApiReview {
+  id: string;
+  rating: number;
+  body?: string | null;
+  hostResponse?: string | null;
+  publishedAt?: string | null;
+  authorName: string;
+}
+
+export interface ApiHostReview extends ApiReview {
+  vehicle: string;
+}
+
 export interface ApiProtectionPlan {
   id: string;
   name: string;
@@ -169,6 +184,14 @@ export const keyloApi = {
   },
 
   vehicle: (id: string) => request<{ vehicle: ApiVehicle }>(`/v1/vehicles/${id}`),
+
+  vehicleReviews: (id: string) =>
+    request<{ reviews: ApiReview[] }>(`/v1/vehicles/${id}/reviews`),
+
+  hostReviews: (accessToken: string) =>
+    request<{ average: number | null; count: number; reviews: ApiHostReview[] }>('/v1/hosts/me/reviews', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
 
   quote: (input: {
     vehicleId: string;

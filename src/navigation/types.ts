@@ -121,9 +121,8 @@ export type BookingsStackParamList = {
     recipientName: string;
   };
   [ROUTES.WRITE_REVIEW]: {
-    bookingId: number;
-    vehicleId: number;
-    hostId: number;
+    bookingId: string;
+    vehicleName?: string;
   };
   [ROUTES.TRIP_CHECK_IN]: {
     bookingId: string;

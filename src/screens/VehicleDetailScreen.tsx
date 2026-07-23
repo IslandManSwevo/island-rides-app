@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { Badge, Button, Card, Chip, DisplayText, SectionLabel, VehicleImage } from '../components/ui';
-import { keyloApi, ApiVehicle, formatDollars, primaryPhotoUrl } from '../services/keyloApi';
+import { Badge, Button, Card, Chip, DisplayText, SectionLabel, Stars, VehicleImage } from '../components/ui';
+import { keyloApi, ApiVehicle, ApiReview, formatDollars, primaryPhotoUrl } from '../services/keyloApi';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 import type { Vehicle } from '../types';
 
@@ -50,6 +50,7 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
   );
   const [loading, setLoading] = useState(!params.vehicle && params.vehicleId !== undefined);
   const [error, setError] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<ApiReview[]>([]);
 
   useEffect(() => {
     if (vehicle || params.vehicleId === undefined) return;
@@ -59,6 +60,16 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
       .catch(() => setError("Couldn't load this vehicle."))
       .finally(() => setLoading(false));
   }, [params.vehicleId, vehicle]);
+
+  // Reviews are the renter's trust signal — load them once we know the id.
+  const vehicleId = vehicle?.id ?? (params.vehicleId !== undefined ? String(params.vehicleId) : undefined);
+  useEffect(() => {
+    if (!vehicleId) return;
+    keyloApi
+      .vehicleReviews(vehicleId)
+      .then((res) => setReviews(res.reviews))
+      .catch(() => setReviews([]));
+  }, [vehicleId]);
 
   const specs = useMemo(() => {
     if (!vehicle) return [];
@@ -112,9 +123,21 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
               <DisplayText size="headline">
                 {vehicle.make} {vehicle.model} {vehicle.year}
               </DisplayText>
-              <Text className="mt-1 font-ui text-meta text-stone dark:text-night-muted">
-                {vehicle.address ?? vehicle.islandId}
-              </Text>
+              <View className="mt-1 flex-row items-center gap-1.5">
+                {vehicle.averageRating != null ? (
+                  <>
+                    <Stars rating={vehicle.averageRating} size={13} />
+                    <Text className="font-ui-bold text-meta text-ink dark:text-night-text">{vehicle.averageRating}</Text>
+                    <Text className="font-ui text-meta text-stone dark:text-night-muted">
+                      ({vehicle.reviewCount}) · {vehicle.address ?? vehicle.islandId}
+                    </Text>
+                  </>
+                ) : (
+                  <Text className="font-ui text-meta text-stone dark:text-night-muted">
+                    New listing · {vehicle.address ?? vehicle.islandId}
+                  </Text>
+                )}
+              </View>
             </View>
             {vehicle.instantBook && <Badge label="⚡ Instant Book" tone="teal" className="mt-1" />}
           </View>
@@ -175,11 +198,37 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
           {vehicle.description ? (
             <>
               <SectionLabel>About this car</SectionLabel>
-              <Text className="mb-8 mt-2 font-ui text-body leading-6 text-ink dark:text-night-text">
+              <Text className="mb-6 mt-2 font-ui text-body leading-6 text-ink dark:text-night-text">
                 {vehicle.description}
               </Text>
             </>
           ) : null}
+
+          {/* Reviews */}
+          {reviews.length > 0 && (
+            <View className="mb-8">
+              <SectionLabel>{`Reviews · ${reviews.length}`}</SectionLabel>
+              <View className="mt-2 gap-3">
+                {reviews.slice(0, 6).map((r) => (
+                  <Card key={r.id} className="p-card-pad">
+                    <View className="flex-row items-center justify-between">
+                      <Text className="font-ui-bold text-body text-ink dark:text-night-text">{r.authorName}</Text>
+                      <Stars rating={r.rating} size={13} />
+                    </View>
+                    {r.body ? (
+                      <Text className="mt-1.5 font-ui text-meta leading-5 text-stone dark:text-night-muted">{r.body}</Text>
+                    ) : null}
+                    {r.hostResponse ? (
+                      <View className="mt-2 rounded-field bg-sand-soft p-2.5 dark:bg-night-raised">
+                        <Text className="font-ui text-overline uppercase tracking-wide text-stone">Host replied</Text>
+                        <Text className="mt-0.5 font-ui text-meta text-ink dark:text-night-text">{r.hostResponse}</Text>
+                      </View>
+                    ) : null}
+                  </Card>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
       </ScrollView>
 
