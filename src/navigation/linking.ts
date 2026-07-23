@@ -14,10 +14,8 @@ export const linking: LinkingOptions<RootStackParamList> = {
           [ROUTES.ONBOARDING]: {
             screens: {
               [ROUTES.ONBOARDING_WELCOME]: 'onboarding/welcome',
-              [ROUTES.ONBOARDING_ROLE_SELECTION]: 'onboarding/role',
               [ROUTES.ONBOARDING_ISLAND_SELECTION]: 'onboarding/island',
               [ROUTES.ONBOARDING_PERMISSIONS]: 'onboarding/permissions',
-              [ROUTES.ONBOARDING_COMPLETE]: 'onboarding/complete',
             },
           },
         },

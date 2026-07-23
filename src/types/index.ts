@@ -67,7 +67,7 @@ export interface ErrorMeta {
 export type UserRole = 'user' | 'host' | 'owner' | 'admin';
 
 export interface User {
-  id: number;
+  id: number; // NOTE: KeyLo API issues string cuids; a full string-id migration is tracked separately (design/06)
   email: string;
   firstName: string;
   lastName: string;

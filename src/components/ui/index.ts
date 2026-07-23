@@ -9,3 +9,4 @@ export { Chip } from './Chip';
 export { Badge } from './Badge';
 export { SectionLabel } from './SectionLabel';
 export { DisplayText } from './DisplayText';
+export { Field } from './Field';

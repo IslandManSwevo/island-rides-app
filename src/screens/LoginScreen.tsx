@@ -1,167 +1,153 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { notificationService } from '../services/notificationService';
-import { GluestackButton, GluestackInput } from '../components/templates';
+import { Button, DisplayText, Field } from '../components/ui';
 import { useUnifiedAuth } from '../context/UnifiedAuthContext';
-import { colors, typography, spacing } from '../styles/theme';
-import { RootStackParamList, ROUTES } from '../navigation/routes';
-import { validateLoginCredentials, sanitizeFormData } from '../utils/validation';
-
-type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, typeof ROUTES.LOGIN>;
+import { notificationService } from '../services/notificationService';
+import { ROUTES } from '../navigation/routes';
 
 interface LoginScreenProps {
-  navigation: LoginScreenNavigationProp;
+  navigation: StackNavigationProp<Record<string, object | undefined>>;
+  /** RegistrationScreen renders this same component in create mode. */
+  initialMode?: 'signIn' | 'create';
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
-  const { login, isLoading } = useUnifiedAuth();
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * KeyLo auth — one screen, sign in / create account toggle, guest browse.
+ * design/02-user-flows.md. Wired to the existing useUnifiedAuth() contract.
+ */
+export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, initialMode = 'signIn' }) => {
+  const { login, register } = useUnifiedAuth();
+  const [mode, setMode] = useState<'signIn' | 'create'>(initialMode);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [formErrors, setFormErrors] = useState<{ email?: string; password?: string }>({});
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const validateForm = () => {
-    // Sanitize form data before validation
-    const sanitizedData = sanitizeFormData({ email, password });
+  const creating = mode === 'create';
 
-    // Use the shared validation utility
-    const validation = validateLoginCredentials({
-      email: sanitizedData.email,
-      password: sanitizedData.password,
-    });
-
-    setFormErrors(validation.errors);
-    return validation.isValid;
+  const validate = () => {
+    const next: Record<string, string> = {};
+    if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email';
+    if (password.length < 8) next.password = 'At least 8 characters';
+    if (creating && !firstName.trim()) next.firstName = 'Required';
+    if (creating && !lastName.trim()) next.lastName = 'Required';
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
 
-  const handleLogin = async () => {
-    Keyboard.dismiss();
-    const isValid = validateForm();
-    if (!isValid) return;
-
-    // Clear any previous errors
-    setAuthError(null);
-
+  const submit = async () => {
+    if (!validate()) return;
+    setSubmitting(true);
     try {
-      await login({ email: email.trim(), password });
-      notificationService.success('Login successful!', { duration: 3000 });
-      // UnifiedAuthContext will automatically handle navigation via App.tsx
-    } catch (error) {
-      console.error('Login error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
-      setAuthError(errorMessage);
-      notificationService.error(errorMessage, { duration: 5000 });
+      if (creating) {
+        await register({ email: email.trim(), password, firstName: firstName.trim(), lastName: lastName.trim() });
+        // New accounts land in onboarding; auth-state routing takes over from there.
+        navigation.navigate(ROUTES.ONBOARDING);
+      } else {
+        await login({ email: email.trim(), password });
+      }
+    } catch (e) {
+      notificationService.error(
+        e instanceof Error ? e.message : 'Check your details and try again.',
+        { title: creating ? "Couldn't create account" : "Couldn't sign in" }
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const browseAsGuest = () => navigation.navigate('CustomerApp');
+
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.content}>
-        <Text style={styles.title}>🏝️ Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
-        
-        {authError && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{authError}</Text>
+    <SafeAreaView className="flex-1 bg-paper dark:bg-night">
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerClassName="flex-grow px-gutter pb-8"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="pt-10">
+            <Text className="font-display text-hero text-ink dark:text-night-text">
+              Key<Text className="text-coral">Lo</Text>
+            </Text>
+            <DisplayText size="title" className="mt-3">
+              {creating ? 'Create your account' : 'Keys to the island.'}
+            </DisplayText>
+            <Text className="mt-1 font-ui text-body text-stone dark:text-night-muted">
+              {creating ? 'A minute to set up. Then you can book.' : 'Sign in to book cars across the Bahamas.'}
+            </Text>
           </View>
-        )}
-        
-        <View style={styles.form}>
-          <GluestackInput
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            error={formErrors.email}
-            leftIcon="mail"
-            size="md"
-            required
-            accessibilityLabel="Email address"
-            accessibilityHint="Enter your registered email address"
+
+          <View className="mt-8 gap-3.5">
+            {creating && (
+              <View className="flex-row gap-3">
+                <Field
+                  label="First name"
+                  className="flex-1"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  autoCapitalize="words"
+                  error={errors.firstName}
+                />
+                <Field
+                  label="Last name"
+                  className="flex-1"
+                  value={lastName}
+                  onChangeText={setLastName}
+                  autoCapitalize="words"
+                  error={errors.lastName}
+                />
+              </View>
+            )}
+            <Field
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              error={errors.email}
+            />
+            <Field
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete={creating ? 'new-password' : 'current-password'}
+              error={errors.password}
+            />
+          </View>
+
+          <Button
+            label={creating ? 'Create account' : 'Sign in'}
+            className="mt-6"
+            loading={submitting}
+            onPress={submit}
           />
-          
-          <GluestackInput
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Enter your password"
-            secureTextEntry
-            error={formErrors.password}
-            leftIcon="lock-closed"
-            size="md"
-            required
-            accessibilityLabel="Password"
-            accessibilityHint="Enter your account password"
-          />
-          
-          <GluestackButton
-            title="Login"
-            onPress={handleLogin}
-            variant="solid"
-            action="primary"
-            icon="log-in"
-            size="lg"
-            loading={isLoading}
-            fullWidth
-            accessibilityLabel="Login to your account"
-            accessibilityHint="Logs you into your KeyLo account"
-          />
-          
-          <GluestackButton
-            title="Don't have an account? Sign up"
-            onPress={() => navigation.navigate('Registration')}
-            variant="outline"
-            action="secondary"
-            icon="person-add"
-            size="md"
-            fullWidth
-            accessibilityLabel="Create new account"
-            accessibilityHint="Navigate to registration screen to create a new account"
-          />
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+
+          <Pressable className="mt-4 self-center" onPress={() => setMode(creating ? 'signIn' : 'create')}>
+            <Text className="font-ui text-body text-stone dark:text-night-muted">
+              {creating ? 'Already have an account? ' : 'New to KeyLo? '}
+              <Text className="font-ui-semibold text-teal">{creating ? 'Sign in' : 'Create one'}</Text>
+            </Text>
+          </Pressable>
+
+          <View className="mt-auto pt-8">
+            <Button label="Browse cars first" variant="ghost" onPress={browseAsGuest} />
+            <Text className="mt-3 text-center font-ui text-overline normal-case tracking-normal text-stone dark:text-night-muted">
+              You can look around without an account · booking needs sign-in
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.offWhite,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  title: {
-    ...typography.heading1,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  subtitle: {
-    ...typography.body,
-    textAlign: 'center',
-    marginBottom: spacing.xxl,
-  },
-  errorContainer: {
-    backgroundColor: colors.error + '20',
-    padding: spacing.md,
-    borderRadius: 8,
-    marginBottom: spacing.md,
-  },
-  errorText: {
-    color: colors.error,
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  form: {
-    gap: spacing.md,
-  },
-});
+export default LoginScreen;
