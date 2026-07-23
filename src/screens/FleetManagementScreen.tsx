@@ -69,6 +69,7 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
           </View>
         }
         renderItem={({ item }) => (
+          <Pressable onPress={() => navigation.navigate(ROUTES.LIST_VEHICLE, { vehicleId: item.id })}>
           <Card className="mb-3.5 overflow-hidden">
             <View className="flex-row items-center gap-3 p-card-pad">
               <View className="h-14 w-[72px] items-center justify-center rounded-field bg-ink dark:bg-night-raised">
@@ -84,8 +85,10 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
                 </Text>
               </View>
               {statusBadge(item)}
+              <Ionicons name="chevron-forward" size={18} color="#8C8578" />
             </View>
           </Card>
+          </Pressable>
         )}
         ListEmptyComponent={
           loading ? null : (
