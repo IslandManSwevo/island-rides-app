@@ -20,6 +20,7 @@ const envSchema = z.object({
   R2_ACCESS_KEY_ID: z.string().optional(),
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET: z.string().optional(),
+  R2_PUBLIC_BASE: z.string().optional(), // public bucket/CDN base for reads, e.g. https://cdn.keylo.bs
 
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),

@@ -3,8 +3,8 @@ import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { Badge, Card, Chip, DisplayText } from '../components/ui';
-import { keyloApi, ApiBooking, formatDollars } from '../services/keyloApi';
+import { Badge, Card, Chip, DisplayText, VehicleImage } from '../components/ui';
+import { keyloApi, ApiBooking, formatDollars, primaryPhotoUrl } from '../services/keyloApi';
 import { apiService } from '../services/apiService';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 
@@ -87,9 +87,7 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
           </View>
         )}
         <View className="flex-row items-center gap-3 p-card-pad">
-          <View className="h-14 w-[72px] items-center justify-center rounded-field bg-ink dark:bg-night-raised">
-            <Ionicons name="car-sport" size={30} color="#F2EFE9" />
-          </View>
+          <VehicleImage url={primaryPhotoUrl(item.vehicle ?? {})} iconSize={30} className="h-14 w-[72px] rounded-field" />
           <View className="flex-1">
             <DisplayText size="title" numberOfLines={1}>
               {vehicleName}

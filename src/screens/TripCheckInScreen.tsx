@@ -8,6 +8,7 @@ import { Badge, Button, Card, DisplayText, SectionLabel } from '../components/ui
 import { keyloApi } from '../services/keyloApi';
 import { apiService } from '../services/apiService';
 import { notificationService } from '../services/notificationService';
+import { pickAndUpload } from '../services/uploadService';
 
 interface CheckInParams {
   bookingId: string;
@@ -33,17 +34,25 @@ export const TripCheckInScreen: React.FC<TripCheckInScreenProps> = ({ navigation
   const isCheckIn = phase === 'check_in';
 
   const [primerDismissed, setPrimerDismissed] = useState(false);
-  const [captured, setCaptured] = useState<Set<number>>(new Set());
+  const [photos, setPhotos] = useState<Record<number, string>>({}); // slot index → R2 key
+  const [uploading, setUploading] = useState<number | null>(null);
   const [odometer, setOdometer] = useState('');
   const [fuel, setFuel] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const toggleShot = (index: number) =>
-    setCaptured((prev) => {
-      const next = new Set(prev);
-      next.has(index) ? next.delete(index) : next.add(index);
-      return next;
-    });
+  const captured = new Set(Object.keys(photos).map(Number));
+
+  const captureShot = async (index: number) => {
+    setUploading(index);
+    try {
+      const uploaded = await pickAndUpload('checkin_photo');
+      if (uploaded) setPhotos((prev) => ({ ...prev, [index]: uploaded.key }));
+    } catch {
+      notificationService.error('Photo upload failed — check your connection and try again.');
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const submit = async () => {
     setSubmitting(true);
@@ -56,7 +65,7 @@ export const TripCheckInScreen: React.FC<TripCheckInScreenProps> = ({ navigation
       const payload = {
         odometer: odometer ? Number(odometer) : undefined,
         fuelLevel: fuel ? Number(fuel) : undefined,
-        photoKeys: [] as string[], // queued locally until R2 upload wiring; syncs later
+        photoKeys: Object.values(photos), // R2 keys captured above
       };
       const done = isCheckIn
         ? (await keyloApi.checkIn(bookingId, payload, token)).tripActive
@@ -122,11 +131,13 @@ export const TripCheckInScreen: React.FC<TripCheckInScreenProps> = ({ navigation
         <View className="mt-3.5 flex-row flex-wrap gap-2.5">
           {SHOTS.map((label, i) => {
             const done = captured.has(i);
+            const busy = uploading === i;
             const next = !done && i === Math.min(...SHOTS.map((_, j) => j).filter((j) => !captured.has(j)));
             return (
               <Pressable
                 key={label}
-                onPress={() => toggleShot(i)}
+                onPress={() => captureShot(i)}
+                disabled={busy}
                 accessibilityRole="button"
                 accessibilityLabel={`${label} photo${done ? ', captured' : ''}`}
                 className={`h-[104px] w-[31%] items-center justify-center gap-1 rounded-card border-2 ${
@@ -138,7 +149,7 @@ export const TripCheckInScreen: React.FC<TripCheckInScreenProps> = ({ navigation
                 }`}
               >
                 <Ionicons
-                  name={done ? 'checkmark-circle' : 'camera'}
+                  name={busy ? 'cloud-upload-outline' : done ? 'checkmark-circle' : 'camera'}
                   size={22}
                   color={done ? '#0E7C7B' : next ? '#E04326' : '#8C8578'}
                 />

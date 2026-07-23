@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { Badge, Button, Card, Chip, DisplayText, SectionLabel } from '../components/ui';
-import { keyloApi, ApiVehicle, formatDollars } from '../services/keyloApi';
+import { Badge, Button, Card, Chip, DisplayText, SectionLabel, VehicleImage } from '../components/ui';
+import { keyloApi, ApiVehicle, formatDollars, primaryPhotoUrl } from '../services/keyloApi';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 import type { Vehicle } from '../types';
 
@@ -93,9 +93,9 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
   return (
     <SafeAreaView className="flex-1 bg-paper dark:bg-night" edges={['bottom']}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Gallery placeholder until R2 photo delivery is wired */}
-        <View className="h-64 items-center justify-center bg-ink dark:bg-night-raised">
-          <Ionicons name="car-sport" size={96} color="#F2EFE9" />
+        {/* Gallery: real primary photo when available, else the ink placeholder */}
+        <View className="h-64">
+          <VehicleImage url={primaryPhotoUrl(vehicle)} iconSize={96} className="h-64 w-full" />
           <Pressable
             onPress={() => navigation.goBack()}
             className="absolute left-4 top-4 h-9 w-9 items-center justify-center rounded-pill bg-paper/90"

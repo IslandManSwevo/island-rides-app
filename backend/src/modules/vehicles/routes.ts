@@ -136,4 +136,37 @@ export async function vehicleRoutes(app: FastifyInstance) {
     const updated = await prisma.vehicle.update({ where: { id }, data: body });
     return { vehicle: updated };
   });
+
+  // 🚗 PUT /v1/vehicles/:id/photos — replace the ordered photo set (R2 keys)
+  app.put('/:id/photos', { preHandler: [app.requireHost] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const body = z
+      .object({
+        photos: z
+          .array(z.object({ key: z.string(), kind: z.string().default('exterior') }))
+          .min(1)
+          .max(20),
+      })
+      .parse(request.body);
+
+    const host = await prisma.hostProfile.findUnique({ where: { userId: request.auth!.sub } });
+    const vehicle = await prisma.vehicle.findUnique({ where: { id } });
+    if (!vehicle || !host || vehicle.hostId !== host.id) {
+      return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Vehicle not found' } });
+    }
+
+    // Replace the whole set so ordering + primary stay consistent.
+    await prisma.vehiclePhoto.deleteMany({ where: { vehicleId: id } });
+    await prisma.vehiclePhoto.createMany({
+      data: body.photos.map((p, i) => ({
+        vehicleId: id,
+        key: p.key,
+        kind: p.kind,
+        position: i,
+        isPrimary: i === 0,
+      })),
+    });
+    const photos = await prisma.vehiclePhoto.findMany({ where: { vehicleId: id }, orderBy: { position: 'asc' } });
+    return { photos };
+  });
 }

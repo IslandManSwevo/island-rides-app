@@ -3,8 +3,8 @@ import { FlatList, Pressable, RefreshControl, ScrollView, Text, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { Badge, Card, Chip, DisplayText, SectionLabel } from '../components/ui';
-import { keyloApi, ApiIsland, ApiVehicle, formatDollars } from '../services/keyloApi';
+import { Badge, Card, Chip, DisplayText, SectionLabel, VehicleImage } from '../components/ui';
+import { keyloApi, ApiIsland, ApiVehicle, formatDollars, primaryPhotoUrl } from '../services/keyloApi';
 import { ROUTES } from '../navigation/routes';
 import type { SearchStackParamList } from '../navigation/types';
 
@@ -55,8 +55,8 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ navigation }) => {
   const renderVehicle = ({ item }: { item: ApiVehicle }) => (
     <Pressable onPress={() => openVehicle(item)} className="mb-4">
       <Card hero className="overflow-hidden">
-        <View className="h-44 items-center justify-center bg-ink dark:bg-night-raised">
-          <Ionicons name="car-sport" size={72} color="#F2EFE9" />
+        <View className="h-44">
+          <VehicleImage url={primaryPhotoUrl(item)} className="h-44 w-full" />
           {item.instantBook && (
             <View className="absolute left-3 top-3">
               <Badge label="⚡ Instant Book" tone="coral" />
