@@ -65,6 +65,33 @@ export const ListVehicleScreen: React.FC<ListVehicleScreenProps> = ({ navigation
       .catch(() => setIslands([{ id: 'nassau', name: 'Nassau', features: [] }]));
   }, []);
 
+  // Edit mode: prefill from the existing listing.
+  React.useEffect(() => {
+    if (!editingId) return;
+    keyloApi
+      .vehicle(editingId)
+      .then(({ vehicle: v }) => {
+        setIslandId(v.islandId);
+        setMake(v.make);
+        setModel(v.model);
+        setYear(String(v.year));
+        setVehicleType(v.vehicleType);
+        setDriveSide(v.driveSide);
+        setSeats(String(v.seats));
+        setDescription(v.description ?? '');
+        setAddress(v.address ?? '');
+        setAirportPickup(v.airportPickup);
+        setAirportFee(String((v.airportFeeCents ?? 0) / 100));
+        setDelivery(v.deliveryAvailable);
+        setDeliveryFee(String((v.deliveryFeeCents ?? 0) / 100));
+        setDailyRate(String(v.dailyRateCents / 100));
+        setDeposit(String((v.securityDepositCents ?? 0) / 100));
+        setInstantBook(v.instantBook);
+        setPhotos((v.photos ?? []).map((p) => p.key));
+      })
+      .catch(() => notificationService.error("Couldn't load this listing."));
+  }, [editingId]);
+
   const addPhoto = async () => {
     setUploading(true);
     try {
@@ -92,32 +119,43 @@ export const ListVehicleScreen: React.FC<ListVehicleScreenProps> = ({ navigation
         notificationService.error('Sign in to list a car');
         return;
       }
-      if (user?.role !== 'host') {
-        await keyloApi.becomeHost(
-          { displayName: `${user?.firstName ?? 'KeyLo'} ${user?.lastName ?? 'Host'}`.trim() },
+      let vehicleId = editingId;
+      if (!vehicleId) {
+        if (user?.role !== 'host') {
+          await keyloApi.becomeHost(
+            { displayName: `${user?.firstName ?? 'KeyLo'} ${user?.lastName ?? 'Host'}`.trim() },
+            token
+          );
+        }
+        const { vehicle } = await keyloApi.createVehicle(
+          {
+            islandId,
+            make: make.trim(),
+            model: model.trim(),
+            year: Number(year),
+            vehicleType,
+            driveSide,
+            seats: Number(seats) || 5,
+            dailyRateCents: toCents(dailyRate),
+            description: description.trim() || undefined,
+          },
           token
         );
+        vehicleId = vehicle.id;
       }
 
-      const { vehicle } = await keyloApi.createVehicle(
+      await keyloApi.saveVehiclePhotos(vehicleId, photos.map((key) => ({ key })), token);
+      await keyloApi.updateVehicle(
+        vehicleId,
         {
-          islandId,
+          // Edit mode also pushes basics that create() already set on first list.
           make: make.trim(),
           model: model.trim(),
           year: Number(year),
           vehicleType,
-          driveSide,
           seats: Number(seats) || 5,
           dailyRateCents: toCents(dailyRate),
           description: description.trim() || undefined,
-        },
-        token
-      );
-
-      await keyloApi.saveVehiclePhotos(vehicle.id, photos.map((key) => ({ key })), token);
-      await keyloApi.updateVehicle(
-        vehicle.id,
-        {
           securityDepositCents: toCents(deposit),
           weeklyDiscountBps: (parseInt(weeklyDiscount, 10) || 0) * 100,
           address: address.trim() || undefined,
@@ -129,13 +167,16 @@ export const ListVehicleScreen: React.FC<ListVehicleScreenProps> = ({ navigation
         token
       );
       await keyloApi.vehicleSettings(
-        vehicle.id,
+        vehicleId,
         { instantBook, minTripDays: Number(minTrip) || 1, maxTripDays: Number(maxTrip) || 30 },
         token
       );
-      await keyloApi.submitVehicle(vehicle.id, token);
+      if (!editingId) await keyloApi.submitVehicle(vehicleId, token);
 
-      notificationService.success('Your car is live on KeyLo.', { title: "You're hosting" });
+      notificationService.success(
+        editingId ? 'Listing updated.' : 'Your car is live on KeyLo.',
+        { title: editingId ? 'Saved' : "You're hosting" }
+      );
       navigation.navigate(ROUTES.FLEET_MANAGEMENT);
     } catch (e) {
       notificationService.error(e instanceof Error ? e.message : 'Could not publish — try again.', {
@@ -311,7 +352,7 @@ export const ListVehicleScreen: React.FC<ListVehicleScreenProps> = ({ navigation
         {step < STEPS.length - 1 ? (
           <Button label="Continue" className="flex-1" disabled={!canAdvance()} onPress={() => setStep((s) => s + 1)} />
         ) : (
-          <Button label="Publish listing" className="flex-1" loading={publishing} onPress={publish} />
+          <Button label={editingId ? 'Save changes' : 'Publish listing'} className="flex-1" loading={publishing} onPress={publish} />
         )}
       </View>
     </SafeAreaView>
