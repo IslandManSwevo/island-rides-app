@@ -40,6 +40,8 @@ export interface ApiVehicle {
   instantBook: boolean;
   islandId: string;
   address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
   unlistedAt?: string | null;
   averageRating?: number | null;
