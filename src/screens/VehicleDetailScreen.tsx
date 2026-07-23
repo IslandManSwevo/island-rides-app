@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { Badge, Button, Card, Chip, DisplayText, SectionLabel, Stars, VehicleImage } from '../components/ui';
+import { Badge, Button, Card, Chip, DisplayText, PickupMap, SectionLabel, Stars, VehicleImage } from '../components/ui';
 import { keyloApi, ApiVehicle, ApiReview, formatDollars, primaryPhotoUrl } from '../services/keyloApi';
 import { RootStackParamList, ROUTES } from '../navigation/routes';
 import type { Vehicle } from '../types';
@@ -166,9 +166,18 @@ export const VehicleDetailScreen = ({ navigation, route }: VehicleDetailScreenPr
             </View>
           </Card>
 
-          {/* Pickup options */}
+          {/* Pickup location + directions */}
           <SectionLabel className="mt-6">Pickup & return</SectionLabel>
-          <View className="mt-2 gap-1.5">
+          <View className="mt-2">
+            <PickupMap
+              latitude={vehicle.latitude}
+              longitude={vehicle.longitude}
+              address={vehicle.address}
+              islandName={vehicle.islandId}
+              note="Host location · free"
+            />
+          </View>
+          <View className="mt-3 gap-1.5">
             <Text className="font-ui text-body text-ink dark:text-night-text">
               ◉ Host location — {vehicle.address ?? 'on island'} · Free
             </Text>
