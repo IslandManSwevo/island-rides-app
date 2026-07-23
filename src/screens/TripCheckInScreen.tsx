@@ -53,17 +53,22 @@ export const TripCheckInScreen: React.FC<TripCheckInScreenProps> = ({ navigation
         notificationService.error('Sign in required');
         return;
       }
-      const result = await keyloApi.checkIn(
-        bookingId,
-        {
-          odometer: odometer ? Number(odometer) : undefined,
-          fuelLevel: fuel ? Number(fuel) : undefined,
-          photoKeys: [], // queued locally until R2 upload wiring; syncs later
-        },
-        token
-      );
+      const payload = {
+        odometer: odometer ? Number(odometer) : undefined,
+        fuelLevel: fuel ? Number(fuel) : undefined,
+        photoKeys: [] as string[], // queued locally until R2 upload wiring; syncs later
+      };
+      const done = isCheckIn
+        ? (await keyloApi.checkIn(bookingId, payload, token)).tripActive
+        : (await keyloApi.checkOut(bookingId, payload, token)).tripCompleted;
       notificationService.success(
-        result.tripActive ? "You've got the keys — trip started." : 'Check-in saved. Waiting on the other party.',
+        isCheckIn
+          ? done
+            ? "You've got the keys — trip started."
+            : 'Check-in saved. Waiting on the other party.'
+          : done
+            ? 'Trip complete. Leave a review when you\'re ready.'
+            : 'Check-out saved. Waiting on the other party.',
         { title: isCheckIn ? 'Checked in' : 'Checked out' }
       );
       navigation.goBack();

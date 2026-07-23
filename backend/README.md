@@ -38,4 +38,4 @@ the plugins. Point the app's `EXPO_PUBLIC_API_BASE_URL` at the service domain.
 | R2 presigned uploads | 🔶 typed contract, returns 501 until R2 creds + SDK wiring |
 | BullMQ scheduled jobs (request expiry, payout, auto-complete, review reveal) | ✅ working (needs Redis; no-ops without it) |
 | Socket.IO realtime chat (JWT auth, room authz, DB persistence, Redis adapter) | ✅ working |
-| Check-out, cancel/refund policy math, extensions, reviews | 🔶 next pass |
+| Trip lifecycle: check-out, cancel + refund policy, extensions, two-sided reviews | ✅ working |
