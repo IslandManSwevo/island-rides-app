@@ -181,8 +181,20 @@ export class UnifiedAuthService extends BaseService {
       // Check rate limiting
       this.checkRateLimit(credentials.email);
       
-      const response = await apiService.postWithoutAuth<AuthResponse>('/api/auth/login', credentials);
-      
+      // KeyLo API (design/05-api-spec.md) returns { user, accessToken, refreshToken }.
+      // User carries a string cuid from the API; cast to the app's User shape
+      // (numeric-id migration is tracked separately — design/06-data-model.md).
+      const raw = await apiService.postWithoutAuth<{ user: User; accessToken?: string; token?: string; refreshToken: string }>(
+        '/v1/auth/login',
+        credentials
+      );
+      const response: AuthResponse = {
+        message: 'ok',
+        user: raw.user,
+        token: raw.accessToken ?? raw.token ?? '',
+        refreshToken: raw.refreshToken,
+      };
+
       if (!response.token || !response.refreshToken) {
         throw new AuthError('Invalid response from server', 'INVALID_RESPONSE', 500);
       }
@@ -224,8 +236,19 @@ export class UnifiedAuthService extends BaseService {
     try {
       this.setLoading(true);
       
-      const response = await apiService.postWithoutAuth<AuthResponse>('/api/auth/register', userData);
-      
+      // User carries a string cuid from the API; cast to the app's User shape
+      // (numeric-id migration is tracked separately — design/06-data-model.md).
+      const raw = await apiService.postWithoutAuth<{ user: User; accessToken?: string; token?: string; refreshToken: string }>(
+        '/v1/auth/register',
+        userData
+      );
+      const response: AuthResponse = {
+        message: 'ok',
+        user: raw.user,
+        token: raw.accessToken ?? raw.token ?? '',
+        refreshToken: raw.refreshToken,
+      };
+
       if (!response.token || !response.refreshToken) {
         throw new AuthError('Invalid response from server', 'INVALID_RESPONSE', 500);
       }
@@ -262,7 +285,7 @@ export class UnifiedAuthService extends BaseService {
       // Call logout endpoint if authenticated
       if (this.authState.isAuthenticated && this.authState.token) {
         try {
-          await apiService.post('/api/auth/logout', {});
+          await apiService.post('/v1/auth/logout', { refreshToken: this.authState.refreshToken });
         } catch (error) {
           // Continue with logout even if API call fails
           loggingService.warn('Logout API call failed', { error });

@@ -269,7 +269,7 @@ export class ApiService extends BaseService {
     }
 
     try {
-      const response = await this.axiosInstanceWithoutAuth.post('/api/auth/refresh', {
+      const response = await this.axiosInstanceWithoutAuth.post('/v1/auth/refresh', {
         refreshToken,
       });
       
