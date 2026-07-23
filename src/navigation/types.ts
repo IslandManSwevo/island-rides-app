@@ -168,6 +168,7 @@ export type HostDashboardStackParamList = {
 
 export type VehicleManagementStackParamList = {
   [ROUTES.FLEET_MANAGEMENT]: undefined;
+  [ROUTES.LIST_VEHICLE]: { vehicleId?: string } | undefined;
   [ROUTES.VEHICLE_CONDITION_TRACKER]: {
     vehicleId: number;
   };

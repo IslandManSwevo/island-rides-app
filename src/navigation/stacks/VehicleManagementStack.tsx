@@ -37,6 +37,7 @@ const CompareVehiclesScreen = createLazyScreen(
   () => import('../../screens/CompareVehiclesScreen'),
   'Compare Vehicles'
 );
+import { ListVehicleScreen } from '../../screens/ListVehicleScreen';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { ROUTES } from '../routes';
 import { VehicleManagementStackParamList } from '../types';
@@ -79,6 +80,13 @@ export const VehicleManagementStack: React.FC = () => {
         )}
       </Stack.Screen>
       
+      <Stack.Screen
+        name={ROUTES.LIST_VEHICLE}
+        options={{ title: 'List a car', headerShown: true }}
+      >
+        {(props) => <ListVehicleScreen {...(props as any)} />}
+      </Stack.Screen>
+
       <Stack.Screen
         name={ROUTES.VEHICLE_CONDITION_TRACKER}
         component={VehicleConditionTrackerScreen}
