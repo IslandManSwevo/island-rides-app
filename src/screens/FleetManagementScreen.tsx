@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Badge, Card, DisplayText, SectionLabel } from '../components/ui';
 import { keyloApi, ApiVehicle, formatDollars } from '../services/keyloApi';
 import { apiService } from '../services/apiService';
+import { ROUTES } from '../navigation/routes';
 
 interface FleetManagementScreenProps {
   navigation: StackNavigationProp<Record<string, object | undefined>>;
@@ -53,7 +54,17 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
         contentContainerClassName="px-gutter pb-8"
         ListHeaderComponent={
           <View className="pb-4 pt-2">
-            <DisplayText size="headline">Fleet</DisplayText>
+            <View className="flex-row items-center justify-between">
+              <DisplayText size="headline">Fleet</DisplayText>
+              <Pressable
+                onPress={() => navigation.navigate(ROUTES.LIST_VEHICLE, {})}
+                className="flex-row items-center gap-1 rounded-pill bg-coral px-3.5 py-2"
+                accessibilityLabel="List a car"
+              >
+                <Ionicons name="add" size={16} color="#fff" />
+                <Text className="font-ui-bold text-meta text-white">List a car</Text>
+              </Pressable>
+            </View>
             <SectionLabel className="mt-3">{`${vehicles.length} vehicles`}</SectionLabel>
           </View>
         }
@@ -85,7 +96,9 @@ export const FleetManagementScreen: React.FC<FleetManagementScreenProps> = ({ na
               <Text className="mt-2 text-center font-ui text-body text-stone dark:text-night-muted">
                 List your first car — photos, pricing, and booking settings take about ten minutes.
               </Text>
-              <Badge label="List a vehicle →" tone="coral" className="mt-4" />
+              <Pressable onPress={() => navigation.navigate(ROUTES.LIST_VEHICLE, {})} className="mt-4">
+                <Badge label="List a vehicle →" tone="coral" />
+              </Pressable>
             </Card>
           )
         }

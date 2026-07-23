@@ -311,6 +311,69 @@ export const keyloApi = {
       body: JSON.stringify({ reason }),
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
+
+  // ---- Listing management (host) ----
+
+  becomeHost: (
+    payload: { displayName: string; bio?: string; paypalPayerEmail?: string },
+    accessToken: string
+  ) =>
+    request<{ hostProfile: { id: string } }>('/v1/hosts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  createVehicle: (
+    basics: {
+      islandId: string;
+      make: string;
+      model: string;
+      year: number;
+      vehicleType: string;
+      driveSide: 'LHD' | 'RHD';
+      seats: number;
+      dailyRateCents: number;
+      description?: string;
+    },
+    accessToken: string
+  ) =>
+    request<{ vehicle: ApiVehicle }>('/v1/vehicles', {
+      method: 'POST',
+      body: JSON.stringify(basics),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  updateVehicle: (id: string, patch: Record<string, unknown>, accessToken: string) =>
+    request<{ vehicle: ApiVehicle }>(`/v1/vehicles/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  vehicleSettings: (
+    id: string,
+    settings: { instantBook?: boolean; advanceNoticeHrs?: number; minTripDays?: number; maxTripDays?: number },
+    accessToken: string
+  ) =>
+    request<{ vehicle: ApiVehicle }>(`/v1/vehicles/${id}/settings`, {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  addExtra: (id: string, extra: { name: string; priceCents: number; perTrip: boolean }, accessToken: string) =>
+    request<{ extra: unknown }>(`/v1/vehicles/${id}/extras`, {
+      method: 'POST',
+      body: JSON.stringify(extra),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  submitVehicle: (id: string, accessToken: string) =>
+    request<{ vehicle: ApiVehicle }>(`/v1/vehicles/${id}/submit`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
 };
 
 export interface ApiStorefront {

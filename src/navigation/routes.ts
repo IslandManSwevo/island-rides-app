@@ -73,6 +73,7 @@ export const ROUTES = {
   BULK_RATE_UPDATE: 'BulkRateUpdate',
   COMPARE_VEHICLES: 'CompareVehicles',
   VEHICLE_DOCUMENT_MANAGEMENT: 'VehicleDocumentManagement',
+  LIST_VEHICLE: 'ListVehicle',
   
   // Saved Searches
   SAVED_SEARCHES: 'SavedSearches',
