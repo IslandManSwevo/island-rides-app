@@ -12,7 +12,10 @@
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "setup": "prisma generate && prisma migrate deploy && npm run prisma:seed"
   },
   "engines": {
     "node": ">=20"
