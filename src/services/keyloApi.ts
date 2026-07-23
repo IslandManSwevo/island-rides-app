@@ -201,6 +201,12 @@ export const keyloApi = {
   storefront: (handle: string, source?: string) =>
     request<{ storefront: ApiStorefront }>(`/v1/hosts/@${handle}${source ? `?source=${source}` : ''}`),
 
+  conversationMessages: (conversationId: string, accessToken: string) =>
+    request<{ messages: { id: string; conversationId: string; senderId: string; body: string; readAt?: string | null; createdAt: string }[] }>(
+      `/v1/conversations/${conversationId}/messages`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    ),
+
   hostStorefront: (accessToken: string) =>
     request<{ storefront: { handle: string | null; displayName: string | null } }>('/v1/hosts/me/storefront', {
       headers: { Authorization: `Bearer ${accessToken}` },
