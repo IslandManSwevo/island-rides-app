@@ -71,9 +71,21 @@ export async function userRoutes(app: FastifyInstance) {
     return { success: true };
   });
 
-  // Verification: license + selfie keys (R2), reviewed by admin
-  app.post('/me/verification', { preHandler: [app.requireAuth] }, async (request) => {
-    const body = z.object({ licenseKey: z.string(), selfieKey: z.string() }).parse(request.body);
+  // Verification: license + selfie keys (R2) + date of birth, reviewed by admin.
+  // The Bahamas requires renters to be 21+ — dateOfBirth is what booking checks.
+  app.post('/me/verification', { preHandler: [app.requireAuth] }, async (request, reply) => {
+    const body = z
+      .object({ licenseKey: z.string(), selfieKey: z.string(), dateOfBirth: z.coerce.date() })
+      .parse(request.body);
+
+    const MIN_RENTAL_AGE = 21;
+    const ageYears = (Date.now() - body.dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    if (ageYears < MIN_RENTAL_AGE) {
+      return reply.code(400).send({
+        error: { code: 'VALIDATION_ERROR', message: 'You must be 21 or older to rent a vehicle in the Bahamas.' },
+      });
+    }
+
     await prisma.user.update({
       where: { id: request.auth!.sub },
       data: { ...body, verificationStatus: 'pending' },

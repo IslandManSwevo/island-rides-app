@@ -3,6 +3,12 @@ import type { Extra, ProtectionPlan, Vehicle } from '@prisma/client';
 /** KeyLo guest-side service fee, basis points of the trip subtotal. */
 export const SERVICE_FEE_BPS = 1200;
 export const YOUNG_DRIVER_AGE = 25;
+/** The Bahamas requires renters to be 21+ — enforced server-side at booking create. */
+export const MIN_RENTAL_AGE = 21;
+
+export function ageFromDob(dateOfBirth: Date): number {
+  return (Date.now() - dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+}
 
 export interface QuoteInput {
   vehicle: Vehicle;
