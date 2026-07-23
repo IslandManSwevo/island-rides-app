@@ -411,6 +411,16 @@ export const keyloApi = {
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
 
+  submitVerification: (
+    payload: { licenseKey: string; selfieKey: string; dateOfBirth: string },
+    accessToken: string
+  ) =>
+    request<{ status: string }>('/v1/users/me/verification', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
   addVehicleDocument: (
     vehicleId: string,
     doc: { kind: 'registration' | 'insurance' | 'inspection'; key: string; expiresAt?: string },

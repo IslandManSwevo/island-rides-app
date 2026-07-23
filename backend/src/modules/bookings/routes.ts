@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma.js';
-import { quote, SERVICE_FEE_BPS } from './pricing.js';
+import { quote, SERVICE_FEE_BPS, MIN_RENTAL_AGE, ageFromDob } from './pricing.js';
 import { assertTransition, IllegalTransitionError } from './stateMachine.js';
 import { paypalGateway } from '../payments/paypal.js';
 import { scheduleExpiry, scheduleTripLifecycle, scheduleAutoComplete, scheduleReviewReveal } from '../../jobs/index.js';
@@ -25,7 +25,7 @@ const createSchema = quoteSchema.extend({
 const nightsBetween = (start: Date, end: Date) =>
   Math.max(1, Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)));
 
-async function buildQuote(input: z.infer<typeof quoteSchema>) {
+async function buildQuote(input: z.infer<typeof quoteSchema>, guestAge?: number) {
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: input.vehicleId },
     include: { host: true, extras: { where: { id: { in: input.extraIds }, active: true } } },
@@ -40,7 +40,7 @@ async function buildQuote(input: z.infer<typeof quoteSchema>) {
     plan,
     nights,
     breakdown: quote(
-      { vehicle, plan, nights, pickupKind: input.pickupKind, extras: vehicle.extras },
+      { vehicle, plan, nights, pickupKind: input.pickupKind, extras: vehicle.extras, guestAge },
       vehicle.host.earningsSplitBps
     ),
   };
@@ -60,11 +60,6 @@ export async function bookingRoutes(app: FastifyInstance) {
   // 🔑 POST /v1/bookings — pending (request) or confirmed (Instant Book)
   app.post('/', { preHandler: [app.requireAuth] }, async (request, reply) => {
     const input = createSchema.parse(request.body);
-    const result = await buildQuote(input);
-    if (!result) {
-      return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Vehicle or plan not found' } });
-    }
-    const { vehicle, plan, nights, breakdown } = result;
 
     if (input.flightNumber && input.pickupKind !== 'airport') {
       return reply.code(400).send({ error: { code: 'VALIDATION_ERROR', message: 'flightNumber requires airport pickup' } });
@@ -76,6 +71,21 @@ export async function bookingRoutes(app: FastifyInstance) {
         error: { code: 'VALIDATION_ERROR', message: 'Driver verification required before booking' },
       });
     }
+
+    // The Bahamas requires renters to be 21+. Verification captures dateOfBirth,
+    // so a verified guest always has one; this is the hard, non-negotiable gate.
+    const guestAge = guest.dateOfBirth ? ageFromDob(guest.dateOfBirth) : undefined;
+    if (guestAge === undefined || guestAge < MIN_RENTAL_AGE) {
+      return reply.code(403).send({
+        error: { code: 'VALIDATION_ERROR', message: 'You must be 21 or older to rent a vehicle in the Bahamas.' },
+      });
+    }
+
+    const result = await buildQuote(input, guestAge);
+    if (!result) {
+      return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Vehicle or plan not found' } });
+    }
+    const { vehicle, plan, nights, breakdown } = result;
 
     const instant = vehicle.instantBook;
     const booking = await prisma.booking.create({
