@@ -85,7 +85,46 @@ async function seedDemoFleet() {
     });
   }
 
-  console.log('Seeded demo host (demo@keylo.bs / keylodemo123) and 4 vehicles');
+  // Admin account to work the insurance review queue.
+  await prisma.user.upsert({
+    where: { email: 'admin@keylo.bs' },
+    update: { role: 'admin' },
+    create: {
+      email: 'admin@keylo.bs',
+      passwordHash: await argon2.hash('keyloadmin123', { type: argon2.argon2id }),
+      firstName: 'KeyLo',
+      lastName: 'Admin',
+      role: 'admin',
+      verificationStatus: 'verified',
+    },
+  });
+
+  // One car pending insurance review so the admin queue isn't empty on first run.
+  const pending = await prisma.vehicle.findFirst({ where: { hostId: host.id, make: 'Nissan' } });
+  if (!pending) {
+    const v = await prisma.vehicle.create({
+      data: {
+        hostId: host.id,
+        islandId: 'nassau',
+        make: 'Nissan',
+        model: 'Note',
+        year: 2021,
+        vehicleType: 'hatchback',
+        driveSide: 'RHD',
+        seats: 5,
+        transmission: 'automatic',
+        fuelType: 'gasoline',
+        features: ['A/C', 'Bluetooth'],
+        dailyRateCents: 5200,
+        securityDepositCents: 40_000,
+        verificationStatus: 'pending', // awaiting insurance approval — not listed
+      },
+    });
+    await prisma.vehiclePhoto.create({ data: { vehicleId: v.id, key: 'vehicle_photo/seed/note.jpg', position: 0, isPrimary: true } });
+    await prisma.vehicleDocument.create({ data: { vehicleId: v.id, kind: 'insurance', key: 'document/seed/note-insurance.pdf', status: 'pending' } });
+  }
+
+  console.log('Seeded demo host (demo@keylo.bs / keylodemo123), admin (admin@keylo.bs / keyloadmin123), 4 live + 1 pending-review vehicle');
 }
 
 async function main() {

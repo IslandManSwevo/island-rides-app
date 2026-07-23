@@ -160,6 +160,17 @@ export interface ApiHostReview extends ApiReview {
   vehicle: string;
 }
 
+export interface ApiVerificationItem {
+  vehicleId: string;
+  make: string;
+  model: string;
+  year: number;
+  hostName: string;
+  hostEmail: string;
+  submittedAt: string;
+  insurance: { id: string; status: string; expiresAt?: string | null; url: string } | null;
+}
+
 export interface ApiProtectionPlan {
   id: string;
   name: string;
@@ -397,6 +408,36 @@ export const keyloApi = {
   submitVehicle: (id: string, accessToken: string) =>
     request<{ vehicle: ApiVehicle }>(`/v1/vehicles/${id}/submit`, {
       method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  addVehicleDocument: (
+    vehicleId: string,
+    doc: { kind: 'registration' | 'insurance' | 'inspection'; key: string; expiresAt?: string },
+    accessToken: string
+  ) =>
+    request<{ document: unknown }>(`/v1/vehicles/${vehicleId}/documents`, {
+      method: 'POST',
+      body: JSON.stringify(doc),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  // ---- Admin: insurance vetting ----
+
+  adminVerifications: (accessToken: string) =>
+    request<{ queue: ApiVerificationItem[] }>('/v1/admin/verifications', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  adminReviewInsurance: (
+    vehicleId: string,
+    decision: 'approve' | 'reject',
+    note: string | undefined,
+    accessToken: string
+  ) =>
+    request<{ vehicle: { id: string; verificationStatus: string } }>(`/v1/admin/vehicles/${vehicleId}/insurance`, {
+      method: 'POST',
+      body: JSON.stringify({ decision, note }),
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
 

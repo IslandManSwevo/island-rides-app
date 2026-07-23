@@ -6,6 +6,7 @@ import { NotificationPreferencesScreen } from '../../screens/NotificationPrefere
 import { FavoritesScreen } from '../../screens/FavoritesScreen';
 import { SavedSearchesScreen } from '../../screens/SavedSearchesScreen';
 import { VehicleDetailScreen } from '../../screens/VehicleDetailScreen';
+import { AdminReviewScreen } from '../../screens/AdminReviewScreen';
 import { ROUTES } from '../routes';
 import { ProfileStackParamList } from '../types';
 import { colors } from '../../styles/theme';
@@ -85,6 +86,12 @@ export const ProfileStack: React.FC = () => {
         options={{ title: 'Vehicle' }}
       >
         {(props) => <VehicleDetailScreen {...(props as any)} />}
+      </Stack.Screen>
+      <Stack.Screen
+        name={ROUTES.ADMIN_REVIEW}
+        options={{ title: 'Insurance review', headerShown: true }}
+      >
+        {(props) => <AdminReviewScreen {...(props as any)} />}
       </Stack.Screen>
     </Stack.Navigator>
   );

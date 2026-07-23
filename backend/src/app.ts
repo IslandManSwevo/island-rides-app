@@ -13,6 +13,7 @@ import { paymentRoutes } from './modules/payments/routes.js';
 import { hostRoutes } from './modules/hosts/routes.js';
 import { conversationRoutes } from './modules/conversations/routes.js';
 import { uploadRoutes } from './modules/uploads/routes.js';
+import { adminRoutes } from './modules/admin/routes.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -57,6 +58,7 @@ export async function buildApp() {
   await app.register(hostRoutes, { prefix: '/v1/hosts' });
   await app.register(conversationRoutes, { prefix: '/v1/conversations' });
   await app.register(uploadRoutes, { prefix: '/v1/uploads' });
+  await app.register(adminRoutes, { prefix: '/v1/admin' });
 
   return app;
 }
