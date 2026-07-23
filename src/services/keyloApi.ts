@@ -198,6 +198,42 @@ export const keyloApi = {
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
 
+  checkOut: (
+    bookingId: string,
+    payload: { odometer?: number; fuelLevel?: number; photoKeys?: string[]; notes?: string },
+    accessToken: string
+  ) =>
+    request<{ success: boolean; tripCompleted: boolean }>(`/v1/bookings/${bookingId}/check-out`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  cancelBooking: (bookingId: string, reason: string | undefined, accessToken: string) =>
+    request<{ booking: ApiBooking; refundCents: number }>(`/v1/bookings/${bookingId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  extendBooking: (bookingId: string, newEndAt: string, accessToken: string) =>
+    request<{ booking: ApiBooking; deltaCents: number; approveUrl: string }>(`/v1/bookings/${bookingId}/extend`, {
+      method: 'POST',
+      body: JSON.stringify({ newEndAt }),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  submitReview: (
+    bookingId: string,
+    payload: { rating: number; body?: string },
+    accessToken: string
+  ) =>
+    request<{ review: unknown }>(`/v1/bookings/${bookingId}/review`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
   storefront: (handle: string, source?: string) =>
     request<{ storefront: ApiStorefront }>(`/v1/hosts/@${handle}${source ? `?source=${source}` : ''}`),
 

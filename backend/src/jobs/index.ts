@@ -1,7 +1,7 @@
 import { startWorker, jobsEnabled } from './queue.js';
 import { processJob } from './bookingJobs.js';
 
-export { scheduleExpiry, scheduleTripLifecycle } from './bookingJobs.js';
+export { scheduleExpiry, scheduleTripLifecycle, scheduleAutoComplete, scheduleReviewReveal } from './bookingJobs.js';
 export { jobsEnabled, closeJobs as stopJobWorker } from './queue.js';
 
 /**

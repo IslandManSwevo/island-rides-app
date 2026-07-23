@@ -22,9 +22,19 @@ export async function scheduleTripLifecycle(bookingId: string, startAt: Date, en
   await enqueue('schedule-payout', { bookingId }, startAt.getTime() + PAYOUT_DELAY_AFTER_START - Date.now(), {
     jobId: `payout:${bookingId}`,
   });
+  await scheduleAutoComplete(bookingId, endAt);
+}
+
+/** Re-arm the auto-complete job (e.g. after a trip extension moves the end date). */
+export async function scheduleAutoComplete(bookingId: string, endAt: Date): Promise<void> {
   await enqueue('auto-complete-trip', { bookingId }, endAt.getTime() + AUTO_COMPLETE_GRACE - Date.now(), {
-    jobId: `autocomplete:${bookingId}`,
+    jobId: `autocomplete:${bookingId}:${endAt.getTime()}`,
   });
+}
+
+/** Arm the 14-day blind-review reveal (also armed by auto-complete). */
+export async function scheduleReviewReveal(bookingId: string): Promise<void> {
+  await enqueue('reveal-reviews', { bookingId }, REVIEW_REVEAL, { jobId: `reveal:${bookingId}` });
 }
 
 // ---- Processors ----

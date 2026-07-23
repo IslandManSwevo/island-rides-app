@@ -1,10 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma.js';
-import { quote } from './pricing.js';
+import { quote, SERVICE_FEE_BPS } from './pricing.js';
 import { assertTransition, IllegalTransitionError } from './stateMachine.js';
 import { paypalGateway } from '../payments/paypal.js';
-import { scheduleExpiry, scheduleTripLifecycle } from '../../jobs/index.js';
+import { scheduleExpiry, scheduleTripLifecycle, scheduleAutoComplete, scheduleReviewReveal } from '../../jobs/index.js';
 
 const quoteSchema = z.object({
   vehicleId: z.string(),
@@ -263,5 +263,225 @@ export async function bookingRoutes(app: FastifyInstance) {
     }
 
     return { success: true, tripActive: parties.has('guest') && parties.has('host') };
+  });
+
+  // 🔑 POST /v1/bookings/:id/check-out — mirror of check-in; active → completed
+  app.post('/:id/check-out', { preHandler: [app.requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const body = z
+      .object({
+        odometer: z.number().int().optional(),
+        fuelLevel: z.number().int().min(0).max(100).optional(),
+        photoKeys: z.array(z.string()).default([]),
+        notes: z.string().max(1000).optional(),
+      })
+      .parse(request.body);
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { vehicle: { include: { host: true } } },
+    });
+    if (!booking) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Booking not found' } });
+
+    const isGuest = booking.guestId === request.auth!.sub;
+    const isHost = booking.vehicle.host.userId === request.auth!.sub;
+    if (!isGuest && !isHost) {
+      return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Booking not found' } });
+    }
+    if (booking.status !== 'active') {
+      return reply.code(409).send({ error: { code: 'VALIDATION_ERROR', message: 'Trip is not active' } });
+    }
+
+    const party = isGuest ? 'guest' : 'host';
+    await prisma.tripInspection.upsert({
+      where: { bookingId_phase_party: { bookingId: id, phase: 'check_out', party } },
+      update: { ...body, syncedAt: body.photoKeys.length >= 6 ? new Date() : null },
+      create: {
+        bookingId: id,
+        phase: 'check_out',
+        party,
+        partyUserId: request.auth!.sub,
+        ...body,
+        syncedAt: body.photoKeys.length >= 6 ? new Date() : null,
+      },
+    });
+
+    const parties = new Set(
+      (await prisma.tripInspection.findMany({ where: { bookingId: id, phase: 'check_out' } })).map((i) => i.party)
+    );
+    const complete = parties.has('guest') && parties.has('host');
+    if (complete) {
+      assertTransition(booking.status, 'completed', 'system');
+      await prisma.booking.update({ where: { id }, data: { status: 'completed' } });
+      await scheduleReviewReveal(id); // start the 14-day blind-review clock
+    }
+
+    return { success: true, tripCompleted: complete };
+  });
+
+  // 🔑 POST /v1/bookings/:id/cancel — policy-based refund (design/02-user-flows.md)
+  app.post('/:id/cancel', { preHandler: [app.requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const { reason } = z.object({ reason: z.string().max(500).optional() }).parse(request.body ?? {});
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { vehicle: { include: { host: true } }, payments: true },
+    });
+    if (!booking) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Booking not found' } });
+
+    const isGuest = booking.guestId === request.auth!.sub;
+    const isHost = booking.vehicle.host.userId === request.auth!.sub;
+    if (!isGuest && !isHost) {
+      return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Booking not found' } });
+    }
+
+    const actor = isGuest ? 'guest' : 'host';
+    try {
+      assertTransition(booking.status, 'cancelled', actor);
+    } catch (e) {
+      if (e instanceof IllegalTransitionError) {
+        return reply.code(409).send({ error: { code: 'VALIDATION_ERROR', message: 'This booking can no longer be cancelled' } });
+      }
+      throw e;
+    }
+
+    // Refund policy: host cancel → 100%; guest → 100% if ≥24h before start,
+    // 50% inside 24h, 0% once the trip window has started.
+    const hoursToStart = (booking.startAt.getTime() - Date.now()) / 3_600_000;
+    let refundRatio = 0;
+    if (isHost) refundRatio = 1;
+    else if (hoursToStart >= 24) refundRatio = 1;
+    else if (hoursToStart > 0) refundRatio = 0.5;
+
+    const payment = booking.payments.find((p) => p.kind === 'trip');
+    let refundCents = 0;
+    if (payment?.gatewayRef) {
+      if (payment.status === 'authorized' || booking.status === 'pending') {
+        // Not captured yet — just release the hold.
+        await paypalGateway.voidAuthorization(payment.gatewayRef).catch(() => undefined);
+        await prisma.payment.update({ where: { id: payment.id }, data: { status: 'failed' } });
+      } else if (payment.status === 'captured') {
+        refundCents = Math.round(booking.totalCents * refundRatio);
+        if (refundCents > 0) {
+          await paypalGateway.refund(payment.gatewayRef, refundCents).catch(() => undefined);
+        }
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: refundCents >= booking.totalCents ? 'refunded' : refundCents > 0 ? 'partially_refunded' : 'captured',
+            refundedCents: refundCents,
+          },
+        });
+      }
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id },
+      data: { status: 'cancelled', cancelledBy: actor, declineReason: reason, cancellationRefundCents: refundCents },
+    });
+    return { booking: updated, refundCents };
+  });
+
+  // 🔑 POST /v1/bookings/:id/extend — reprice added days, authorize the delta
+  app.post('/:id/extend', { preHandler: [app.requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const { newEndAt } = z.object({ newEndAt: z.coerce.date() }).parse(request.body);
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { vehicle: true, protectionPlan: true },
+    });
+    if (!booking || booking.guestId !== request.auth!.sub) {
+      return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Booking not found' } });
+    }
+    if (!['confirmed', 'active'].includes(booking.status)) {
+      return reply.code(409).send({ error: { code: 'VALIDATION_ERROR', message: 'Only an upcoming or active trip can be extended' } });
+    }
+    if (newEndAt.getTime() <= booking.endAt.getTime()) {
+      return reply.code(400).send({ error: { code: 'VALIDATION_ERROR', message: 'New end must be after the current end' } });
+    }
+
+    // No overlapping booking on the vehicle for the added window.
+    const conflict = await prisma.booking.findFirst({
+      where: {
+        vehicleId: booking.vehicleId,
+        id: { not: booking.id },
+        status: { in: ['confirmed', 'active'] },
+        startAt: { lt: newEndAt },
+        endAt: { gt: booking.endAt },
+      },
+    });
+    if (conflict) {
+      return reply.code(409).send({ error: { code: 'VALIDATION_ERROR', message: 'The car is booked for those extra days' } });
+    }
+
+    const extraDays = Math.ceil((newEndAt.getTime() - booking.endAt.getTime()) / (24 * 60 * 60 * 1000));
+    const baseCents = booking.nightlyRateCents * extraDays;
+    const protectionCents = Math.round((baseCents * booking.protectionPlan.feeBps) / 10_000);
+    const serviceFeeCents = Math.round((baseCents * SERVICE_FEE_BPS) / 10_000);
+    const deltaCents = baseCents + protectionCents + serviceFeeCents;
+
+    const order = await paypalGateway.createOrder(deltaCents, 'AUTHORIZE', `${booking.id}-ext`);
+    const modification = await prisma.bookingModification.create({
+      data: { bookingId: id, newEndAt, deltaCents, status: 'approved' },
+    });
+    await prisma.payment.create({
+      data: { bookingId: id, amountCents: deltaCents, status: 'requires_payment', gatewayRef: order.gatewayRef, kind: 'extension' },
+    });
+    // Apply the new end and re-arm auto-complete for the later date.
+    const updated = await prisma.booking.update({
+      where: { id },
+      data: { endAt: newEndAt, nights: booking.nights + extraDays, totalCents: booking.totalCents + deltaCents },
+    });
+    await scheduleAutoComplete(id, newEndAt);
+
+    return reply.code(201).send({ booking: updated, modification, deltaCents, approveUrl: order.approveUrl });
+  });
+
+  // 🔑 POST /v1/bookings/:id/review — two-sided blind review
+  app.post('/:id/review', { preHandler: [app.requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const input = z.object({ rating: z.number().int().min(1).max(5), body: z.string().max(2000).optional() }).parse(request.body);
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { vehicle: { include: { host: true } }, reviews: true },
+    });
+    if (!booking) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Booking not found' } });
+
+    const isGuest = booking.guestId === request.auth!.sub;
+    const isHost = booking.vehicle.host.userId === request.auth!.sub;
+    if (!isGuest && !isHost) {
+      return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Booking not found' } });
+    }
+    if (!['completed', 'reviewed'].includes(booking.status)) {
+      return reply.code(409).send({ error: { code: 'VALIDATION_ERROR', message: 'You can review after the trip is complete' } });
+    }
+    if (booking.reviews.some((r) => r.authorId === request.auth!.sub)) {
+      return reply.code(409).send({ error: { code: 'VALIDATION_ERROR', message: 'You already reviewed this trip' } });
+    }
+
+    // Guest reviews the vehicle; host reviews the guest.
+    const review = await prisma.review.create({
+      data: {
+        bookingId: id,
+        authorId: request.auth!.sub,
+        targetKind: isGuest ? 'vehicle' : 'guest',
+        rating: input.rating,
+        body: input.body,
+      },
+    });
+
+    // Blind reveal: once both sides have submitted, publish both immediately.
+    const total = booking.reviews.length + 1;
+    if (total >= 2) {
+      await prisma.review.updateMany({ where: { bookingId: id, publishedAt: null }, data: { publishedAt: new Date() } });
+      if (booking.status === 'completed') {
+        await prisma.booking.update({ where: { id }, data: { status: 'reviewed' } });
+      }
+    }
+
+    return reply.code(201).send({ review: { ...review, publishedAt: total >= 2 ? new Date() : null } });
   });
 }
