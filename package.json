@@ -5,6 +5,7 @@
   "scripts": {
     "start": "expo start",
     "start:web": "expo start --web --host lan --port 8081",
+    "start:tailscale": "node scripts/start-tailscale.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",

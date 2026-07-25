@@ -202,39 +202,65 @@ class PortDetectionManager {
 
 const portManager = PortDetectionManager.getInstance();
 
+/**
+ * Derives a WebSocket URL from an API base URL (http→ws, https→wss).
+ * Used when EXPO_PUBLIC_API_BASE_URL is configured but EXPO_PUBLIC_WS_URL is not.
+ */
+const deriveWsUrl = (apiBaseUrl: string): string =>
+  apiBaseUrl.replace(/^http(s?):\/\//, (_match, secure: string) => `ws${secure}://`);
+
 const getEnvVars = async (env: string = process.env.NODE_ENV || 'development'): Promise<EnvironmentConfig> => {
   console.log('🔧 Starting environment configuration...');
   let apiBaseUrl: string;
   let wsUrl: string;
+  let didPortDetection = false;
 
-  if (env === 'production') {
-    apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.islandrides.com';
+  // An explicitly configured API URL always wins, regardless of NODE_ENV. Under
+  // `expo start` NODE_ENV is always 'development', so branching on it alone made
+  // the app ignore EXPO_PUBLIC_API_BASE_URL and port-scan localhost instead —
+  // every request then failed against a port nothing was listening on.
+  const configuredApiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+  if (configuredApiUrl) {
+    apiBaseUrl = configuredApiUrl;
+    wsUrl = process.env.EXPO_PUBLIC_WS_URL || deriveWsUrl(apiBaseUrl);
+    console.log(`📡 Using EXPO_PUBLIC_API_BASE_URL → API: ${apiBaseUrl}, WebSocket: ${wsUrl}`);
+  } else if (env === 'production') {
+    apiBaseUrl = 'https://api.islandrides.com';
     wsUrl = process.env.EXPO_PUBLIC_WS_URL || 'wss://api.islandrides.com';
-    console.log('🚀 Using production environment');
+    console.log('🚀 Using production environment defaults');
   } else if (env === 'staging') {
-    apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://staging-api.islandrides.com';
+    apiBaseUrl = 'https://staging-api.islandrides.com';
     wsUrl = process.env.EXPO_PUBLIC_WS_URL || 'wss://staging-api.islandrides.com';
-    console.log('🧪 Using staging environment');
+    console.log('🧪 Using staging environment defaults');
   } else {
-    console.log('🛠️ Using development environment, detecting servers...');
+    console.log('🛠️ No API URL configured, detecting local servers...');
+    didPortDetection = true;
     const serverDetection = await portManager.detectAvailableServer();
     apiBaseUrl = serverDetection?.url || 'http://localhost:3003';
-    
+
     const wsPort = await portManager.getWebSocketPort();
     wsUrl = `ws://localhost:${wsPort}`;
     console.log(`📡 API: ${apiBaseUrl}, WebSocket: ${wsUrl}`);
   }
 
+  // A remote API can be cold-starting, which the 5s development budget does not
+  // cover. Time out against the wall clock of the host we actually talk to.
+  const isRemoteApi = apiBaseUrl.startsWith('https://');
+  const apiTimeout = isRemoteApi
+    ? API_TIMEOUT_CONFIG.production
+    : API_TIMEOUT_CONFIG[env as keyof typeof API_TIMEOUT_CONFIG] || API_TIMEOUT_CONFIG.development;
+
   const config: EnvironmentConfig = {
     API_BASE_URL: apiBaseUrl,
-    API_TIMEOUT: API_TIMEOUT_CONFIG[env as keyof typeof API_TIMEOUT_CONFIG] || API_TIMEOUT_CONFIG.development,
+    API_TIMEOUT: apiTimeout,
     WS_URL: wsUrl,
     ENVIRONMENT: env as 'development' | 'staging' | 'production',
     DEBUG: env !== 'production',
     IS_EXPO_GO: Constants.appOwnership === 'expo',
   };
 
-  if (env === 'development') {
+  if (didPortDetection) {
     const stats = portManager.getDetectionStats();
     console.log(`📊 Port Detection Stats: ${stats.cached}/${stats.total} cached results`);
   }
@@ -270,10 +296,21 @@ export const getEnvironmentConfig = async (forceRefresh: boolean = false): Promi
   } catch (error) {
     console.error('❌ Failed to get environment config:', error);
     
+    // Prefer the configured URL even on the failure path — falling back to
+    // localhost when a real API is configured just swaps one failure for another.
+    const fallbackApiUrl =
+      process.env.EXPO_PUBLIC_API_BASE_URL || `http://localhost:${PORT_CONFIG.DEFAULT_API_PORT}`;
+
     const fallbackConfig: EnvironmentConfig = {
-      API_BASE_URL: `http://localhost:${PORT_CONFIG.DEFAULT_API_PORT}`,
-      API_TIMEOUT: API_TIMEOUT_CONFIG.development,
-      WS_URL: `ws://localhost:${PORT_CONFIG.DEFAULT_WS_PORT}`,
+      API_BASE_URL: fallbackApiUrl,
+      API_TIMEOUT: fallbackApiUrl.startsWith('https://')
+        ? API_TIMEOUT_CONFIG.production
+        : API_TIMEOUT_CONFIG.development,
+      WS_URL:
+        process.env.EXPO_PUBLIC_WS_URL ||
+        (process.env.EXPO_PUBLIC_API_BASE_URL
+          ? deriveWsUrl(fallbackApiUrl)
+          : `ws://localhost:${PORT_CONFIG.DEFAULT_WS_PORT}`),
       ENVIRONMENT: 'development',
       DEBUG: true,
       IS_EXPO_GO: Constants.appOwnership === 'expo',

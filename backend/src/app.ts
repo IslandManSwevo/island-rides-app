@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import { ZodError } from 'zod';
-import { env, isProd } from './config/env.js';
+import { appOrigins, isProd } from './config/env.js';
 import authPlugin from './plugins/auth.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { userRoutes } from './modules/users/routes.js';
@@ -22,7 +22,7 @@ export async function buildApp() {
       : { transport: undefined, level: 'info' },
   });
 
-  await app.register(cors, { origin: env.APP_ORIGIN, credentials: true });
+  await app.register(cors, { origin: appOrigins, credentials: true });
   await app.register(rateLimit, {
     max: 300,
     timeWindow: '1 minute',

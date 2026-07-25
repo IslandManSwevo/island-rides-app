@@ -3,7 +3,7 @@ import { Server as SocketServer, type Socket } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { Redis } from 'ioredis';
 import jwt from 'jsonwebtoken';
-import { env } from '../config/env.js';
+import { appOrigins, env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 import { sendToUser } from '../lib/push.js';
 import type { AccessTokenPayload } from '../plugins/auth.js';
@@ -31,7 +31,7 @@ async function isParticipant(user: SocketUser, conversationId: string): Promise<
 
 export function attachSocket(httpServer: HttpServer, log: (msg: string) => void): SocketServer {
   const io = new SocketServer(httpServer, {
-    cors: { origin: env.APP_ORIGIN, credentials: true },
+    cors: { origin: appOrigins, credentials: true },
     path: '/socket.io',
   });
 

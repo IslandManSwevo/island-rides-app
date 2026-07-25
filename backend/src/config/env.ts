@@ -35,3 +35,14 @@ export type Env = z.infer<typeof envSchema>;
 export const env: Env = envSchema.parse(process.env);
 
 export const isProd = env.NODE_ENV === 'production';
+
+/**
+ * Allowed browser origins for CORS, from APP_ORIGIN as a comma-separated list.
+ * A list is needed because the Expo dev server is reached under several origins
+ * (localhost, the LAN IP under `--host lan`, a Tailscale IP from another device),
+ * and a single value blocks every one but the first. Both @fastify/cors and
+ * Socket.IO accept an array here.
+ */
+export const appOrigins: string[] = env.APP_ORIGIN.split(',')
+  .map((origin) => origin.trim())
+  .filter((origin) => origin.length > 0);
