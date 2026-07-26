@@ -1,3 +1,0 @@
-// REMOVED: Firebase auth service moved to backup as part of auth system cleanup
-// JWT auth system is now the single authentication method
-// Original file moved to firebaseAuthService.ts.backup on cleanup

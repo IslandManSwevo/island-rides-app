@@ -19,13 +19,13 @@ const defaultScreenOptions = {
     fontWeight: '600' as const,
     fontSize: 18,
   },
-  headerBackTitleVisible: false,
+  headerBackButtonDisplayMode: 'minimal' as const,
   gestureEnabled: true,
 };
 
 export const InboxStack: React.FC = () => {
   return (
-    <Stack.Navigator screenOptions={defaultScreenOptions} initialRouteName={ROUTES.INBOX}>
+    <Stack.Navigator id={undefined} screenOptions={defaultScreenOptions} initialRouteName={ROUTES.INBOX}>
       <Stack.Screen
         name={ROUTES.INBOX}
         component={InboxScreen}

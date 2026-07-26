@@ -30,7 +30,7 @@ const defaultScreenOptions = {
 
 export const OnboardingNavigator: React.FC = () => {
   return (
-    <Stack.Navigator screenOptions={defaultScreenOptions} initialRouteName={ROUTES.ONBOARDING_WELCOME}>
+    <Stack.Navigator id={undefined} screenOptions={defaultScreenOptions} initialRouteName={ROUTES.ONBOARDING_WELCOME}>
       <Stack.Screen name={ROUTES.ONBOARDING_WELCOME} component={WelcomeScreen} />
       <Stack.Screen name={ROUTES.ONBOARDING_ISLAND_SELECTION} component={OnboardingIslandScreen} />
       <Stack.Screen name={ROUTES.ONBOARDING_PERMISSIONS} component={PermissionsScreen} />

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Host Fleet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+</head>
+<body>
+<nav class="mock-nav"><a href="14-onboarding.html">&larr; Onboarding</a><a href="16-night-drive.html">Next: Night Drive &rarr;</a></nav>
+<div class="phone"><div class="screen">
+  <div class="statusbar"><span>9:41</span><span>&#x1d5a0;</span><span>&#x2301; &#x25ae;</span></div>
+
+  <div style="padding: 8px 20px 0;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h1 class="display">Fleet</h1>
+        <div class="small muted" style="font-size:12px;">3 vehicles &middot; <span style="color:var(--teal);">2 on trip</span></div>
+      </div>
+      <span class="chip" style="background:var(--coral); color:#fff; border:none; font-size:12px;">+ Add vehicle</span>
+    </div>
+
+    <!-- Bulk action mode trigger -->
+    <div style="display:flex; align-items:center; gap:8px; margin-top:12px;">
+      <span class="label">Edit rates &middot; Block dates &middot; Share storefront</span>
+    </div>
+  </div>
+
+  <div style="padding:14px 20px 0; flex:1; overflow:hidden; display:flex; flex-direction:column; gap:14px;">
+
+    <!-- Vehicle 1 — on trip (active) -->
+    <div class="card" style="overflow:hidden; border-radius:var(--r-hero);">
+      <div style="background:var(--teal); color:#fff; font-size:11px; font-weight:700; padding:6px 16px; display:flex; justify-content:space-between;">
+        <span>&#x25cf; ON TRIP</span><span>Returns Mon 10:00</span>
+      </div>
+      <div style="padding:14px 16px; display:flex; gap:12px; align-items:center;">
+        <div class="vph" style="width:80px; height:60px;"><svg viewBox="0 0 200 70"><path d="M18 52h164c0-7-5-11-16-13l-14-2-16-13c-5-4-10-6-17-6H86c-9 0-16 3-22 9l-13 10-20 4c-8 2-13 6-13 11z" fill="#F2EFE9" opacity=".92"/><circle cx="56" cy="52" r="9" fill="#141C24" stroke="#F2EFE9" stroke-width="3"/><circle cx="148" cy="52" r="9" fill="#141C24" stroke="#F2EFE9" stroke-width="3"/></svg></div>
+        <div style="flex:1;">
+          <div class="display" style="font-size:16px;">Toyota RAV4 2024</div>
+          <div class="small muted" style="font-size:12px;">Marcus B. &middot; LPIA &middot; &#x2708; AA1043</div>
+          <div style="display:flex; gap:12px; margin-top:6px; font-size:12px;">
+            <span><b class="display" style="color:var(--coral);">$74</b><span class="muted">/day</span></span>
+            <span class="muted">22 trips &middot; &#x2605; 4.8</span>
+            <span class="muted">62% occupied</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vehicle 2 — available -->
+    <div class="card" style="overflow:hidden; border-radius:var(--r-hero);">
+      <div style="padding:14px 16px; display:flex; gap:12px; align-items:center;">
+        <div class="vph sun" style="width:80px; height:60px;"><svg viewBox="0 0 200 70"><path d="M22 50h156c0-5-3-8-11-10l-19-4-14-12c-4-4-9-5-14-5H88c-7 0-13 2-18 7l-14 12-22 3c-8 1-12 5-12 9z" fill="#141C24" opacity=".85"/><circle cx="58" cy="50" r="9" fill="#F2EFE9" stroke="#141C24" stroke-width="3"/><circle cx="144" cy="50" r="9" fill="#F2EFE9" stroke="#141C24" stroke-width="3"/></svg></div>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <div class="display" style="font-size:16px;">Honda CR-V 2022</div>
+            <span class="badge badge-teal">&#x26a1; Instant Book</span>
+          </div>
+          <div class="small muted" style="font-size:12px;">Next available &middot; Aug 12&ndash;24 open</div>
+          <div style="display:flex; gap:12px; margin-top:6px; font-size:12px;">
+            <span><b class="display" style="color:var(--coral);">$62</b><span class="muted">/day</span></span>
+            <span class="muted">29 trips &middot; &#x2605; 4.7</span>
+            <span class="muted">48% occupied</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; padding:0 16px 14px;">
+        <span class="chip" style="flex:1; justify-content:center; font-size:12px;">Edit listing</span>
+        <span class="chip" style="flex:1; justify-content:center; font-size:12px;">Block dates</span>
+        <span class="chip" style="flex:1; justify-content:center; font-size:12px;">Share</span>
+      </div>
+    </div>
+
+    <!-- Vehicle 3 — pending maintenance flag -->
+    <div class="card" style="overflow:hidden; border-radius:var(--r-hero); opacity:.85;">
+      <div style="padding:14px 16px; display:flex; gap:12px; align-items:center;">
+        <div class="vph dusk" style="width:80px; height:60px;"><svg viewBox="0 0 200 70"><path d="M20 52h160c0-6-4-10-14-12l-16-3-18-14c-4-3-9-5-15-5H84c-8 0-15 3-21 8L48 37l-18 4c-7 2-10 6-10 11z" fill="#F2EFE9" opacity=".9"/></svg></div>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <div class="display" style="font-size:16px;">Jeep Wrangler 2023</div>
+            <span class="badge badge-gold">&#x26a0; Insurance expires in 12 days</span>
+          </div>
+          <div class="small muted" style="font-size:12px;">Blocked until documents renewed</div>
+          <div style="display:flex; gap:12px; margin-top:6px; font-size:12px;">
+            <span><b class="display" style="color:var(--coral);">$89</b><span class="muted">/day</span></span>
+            <span class="muted">37 trips &middot; &#x2605; 4.9</span>
+            <span class="muted">71% occupied</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding:0 16px 14px;">
+        <span class="chip" style="color:var(--error); border-color:rgba(214,69,61,.3); font-size:12px;">&#x25b2; Renew insurance to unblock availability</span>
+      </div>
+    </div>
+
+    <!-- Empty state (new host) -->
+    <div style="text-align:center; padding:40px 20px;">
+      <span class="badge" style="background:var(--sand-soft); color:var(--stone); font-weight:500;">Empty state: Fraunces "List your first car" + subtext "Your driveway could be earning &mdash; hosts in Nassau average $400&ndash;$800/month per car" + Coral "Add a vehicle" CTA. Vehicle cards replaced by a single inline primer card.</span>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab"><span class="ico">&#x2600;</span>Today</div>
+    <div class="tab active"><span class="ico">&#x229e;</span>Fleet</div>
+    <div class="tab"><span class="ico">&#x25eb;</span>Bookings</div>
+    <div class="tab"><span class="ico">&#x25d4;</span>Earnings</div>
+  </div>
+</div></div>
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Host Fleet.</strong> Three vehicle states in one scroll: active trip (Teal banner, guest + flight info), available (dates + edit/block/share actions), and blocked (insurance flag with Gold warning badge). Each card shows rate, trip count, rating, and occupancy %. Bulk actions (edit rates, block dates, share storefront) live above the list. Empty state replaces the list with a zero-state primer using the "Your driveway could be earning" voice. Host tab bar shows Today / Fleet / Bookings / Earnings.</p>
+</body>
+</html>

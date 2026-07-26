@@ -4,7 +4,13 @@
  * screen-by-screen as each surface moves onto it.
  */
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+/**
+ * Single source of truth for the API origin. `src/config/environment.ts` (the
+ * legacy axios path) keeps its port defaults aligned with this — 3000 is what
+ * backend/src/config/env.ts listens on by default.
+ */
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+const BASE_URL = API_BASE_URL;
 
 export interface ApiIsland {
   id: string;
@@ -147,6 +153,60 @@ export interface ApiBooking {
   vehicle?: ApiVehicle;
 }
 
+/** GET /v1/bookings/:id — everything Trip Detail renders. */
+export interface ApiBookingDetail extends ApiBooking {
+  guestId: string;
+  vehicleId: string;
+  pickupAddress?: string | null;
+  nightlyRateCents: number;
+  nights: number;
+  durationDiscountCents: number;
+  extrasCents: number;
+  deliveryCents: number;
+  youngDriverCents: number;
+  protectionCents: number;
+  serviceFeeCents: number;
+  hostEarningsCents: number;
+  requestMessage?: string | null;
+  declineReason?: string | null;
+  cancelledBy?: string | null;
+  cancellationRefundCents?: number | null;
+  vehicle: ApiVehicle & { pickupInstructions?: string | null; island?: ApiIsland };
+  protectionPlan: ApiProtectionPlan;
+  extras: { id: string; priceCentsSnapshot: number; extra: { id: string; name: string } }[];
+  conversation?: { id: string } | null;
+}
+
+export interface ApiBookingDetailResponse {
+  booking: ApiBookingDetail;
+  viewerRole: 'guest' | 'host';
+  freeCancelUntil: string;
+  inspectionState: {
+    checkInGuest: boolean;
+    checkInHost: boolean;
+    checkOutGuest: boolean;
+    checkOutHost: boolean;
+  };
+  viewerHasReviewed: boolean;
+}
+
+/** GET /v1/conversations — one Inbox row (design/mockups/12-inbox.html). */
+export interface ApiConversationSummary {
+  id: string;
+  bookingId?: string | null;
+  vehicleId?: string | null;
+  counterparty: { name: string; avatarKey?: string | null };
+  lastMessage: { body: string; createdAt: string; mine: boolean } | null;
+  unreadCount: number;
+  booking: {
+    id: string;
+    status: ApiBookingStatus;
+    startAt: string;
+    endAt: string;
+    vehicleLabel: string;
+  } | null;
+}
+
 export interface ApiReview {
   id: string;
   rating: number;
@@ -171,6 +231,20 @@ export interface ApiVerificationItem {
   insurance: { id: string; status: string; expiresAt?: string | null; url: string } | null;
 }
 
+/** GET /v1/users/me — the signed-in account, as the API sees it. */
+export interface ApiMe {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'user' | 'host' | 'admin';
+  phoneNumber?: string | null;
+  avatarKey?: string | null;
+  preferredIslandId?: string | null;
+  verificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected';
+  createdAt: string;
+}
+
 export interface ApiProtectionPlan {
   id: string;
   name: string;
@@ -182,6 +256,16 @@ export const keyloApi = {
   islands: () => request<{ islands: ApiIsland[] }>('/v1/islands'),
 
   protectionPlans: () => request<{ plans: ApiProtectionPlan[] }>('/v1/protection-plans'),
+
+  me: (accessToken: string) =>
+    request<{ user: ApiMe }>('/v1/users/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  favorites: (accessToken: string) =>
+    request<{ vehicleIds: string[] }>('/v1/users/me/favorites', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
 
   searchVehicles: (params: VehicleSearchParams = {}) => {
     const query = new URLSearchParams(
@@ -236,6 +320,11 @@ export const keyloApi = {
 
   myBookings: (accessToken: string, role: 'guest' | 'host' = 'guest') =>
     request<{ bookings: ApiBooking[] }>(`/v1/bookings?role=${role}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  booking: (bookingId: string, accessToken: string) =>
+    request<ApiBookingDetailResponse>(`/v1/bookings/${bookingId}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
 
@@ -306,6 +395,17 @@ export const keyloApi = {
 
   storefront: (handle: string, source?: string) =>
     request<{ storefront: ApiStorefront }>(`/v1/hosts/@${handle}${source ? `?source=${source}` : ''}`),
+
+  conversations: (accessToken: string) =>
+    request<{ conversations: ApiConversationSummary[] }>('/v1/conversations', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  markConversationRead: (conversationId: string, accessToken: string) =>
+    request<{ marked: number }>(`/v1/conversations/${conversationId}/read`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
 
   conversationMessages: (conversationId: string, accessToken: string) =>
     request<{ messages: { id: string; conversationId: string; senderId: string; body: string; readAt?: string | null; createdAt: string }[] }>(

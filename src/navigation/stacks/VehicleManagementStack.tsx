@@ -38,6 +38,7 @@ const CompareVehiclesScreen = createLazyScreen(
   'Compare Vehicles'
 );
 import { ListVehicleScreen } from '../../screens/ListVehicleScreen';
+import { VehicleManagerScreen } from '../../screens/VehicleManagerScreen';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { ROUTES } from '../routes';
 import { VehicleManagementStackParamList } from '../types';
@@ -56,13 +57,14 @@ const defaultScreenOptions = {
     fontWeight: '600' as const,
     fontSize: 18,
   },
-  headerBackTitleVisible: false,
+  headerBackButtonDisplayMode: 'minimal' as const,
   gestureEnabled: true,
 };
 
 export const VehicleManagementStack: React.FC = () => {
   return (
     <Stack.Navigator
+      id={undefined}
       screenOptions={defaultScreenOptions}
       initialRouteName={ROUTES.FLEET_MANAGEMENT}
     >
@@ -80,6 +82,14 @@ export const VehicleManagementStack: React.FC = () => {
         )}
       </Stack.Screen>
       
+      {/* Hub for a single car — the Vehicle Manager of design/03-screen-inventory.md */}
+      <Stack.Screen
+        name={ROUTES.VEHICLE_MANAGER}
+        options={{ title: 'Manage car', headerShown: true }}
+      >
+        {(props) => <VehicleManagerScreen {...(props as any)} />}
+      </Stack.Screen>
+
       <Stack.Screen
         name={ROUTES.LIST_VEHICLE}
         options={{ title: 'List a car', headerShown: true }}
@@ -123,7 +133,7 @@ export const VehicleManagementStack: React.FC = () => {
       >
         {(props) => (
           <ProtectedRoute requiredRole={['host', 'owner']}>
-            <VehicleDocumentManagementScreen {...props} />
+            <VehicleDocumentManagementScreen {...(props as any)} />
           </ProtectedRoute>
         )}
       </Stack.Screen>

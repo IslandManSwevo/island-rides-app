@@ -58,6 +58,7 @@ const getTabBarIcon = (routeName: string, focused: boolean, color: string, size:
 export const HostTabNavigator: React.FC = () => {
   return (
     <Tab.Navigator
+      id={undefined}
       screenOptions={({ route }: any) => ({
         tabBarIcon: ({ focused, color, size }: any) =>
           getTabBarIcon(route.name, focused, color, size),

@@ -19,12 +19,11 @@ export const ROUTES = {
   ONBOARDING_PERMISSIONS: 'OnboardingPermissions',
   ONBOARDING_COMPLETE: 'OnboardingComplete',
 
-  // Main app routes
+  // Main app routes.
+  // SEARCH is Explore — SearchResults, Map and the old RoleBasedDashboard were
+  // merged or cut per design/03-screen-inventory.md.
   ISLAND_SELECTION: 'IslandSelection',
-  ROLE_BASED_DASHBOARD: 'RoleBasedDashboard',
-  SEARCH_RESULTS: 'SearchResults',
   SEARCH: 'Search',
-  MAP: 'Map',
   VEHICLE_DETAIL: 'VehicleDetail',
   CHECKOUT: 'Checkout',
   BOOKING_CONFIRMED: 'BookingConfirmed',
@@ -41,7 +40,11 @@ export const ROUTES = {
   // Inbox
   INBOX: 'Inbox',
 
+  // Host vehicle hub
+  VEHICLE_MANAGER: 'VehicleManager',
+
   // Trip lifecycle
+  TRIP_DETAIL: 'TripDetail',
   TRIP_CHECK_IN: 'TripCheckIn',
 
   // Host Tab Routes
@@ -107,23 +110,8 @@ export type RootStackParamList = {
   [ROUTES.LOGIN]: undefined;
   [ROUTES.REGISTRATION]: undefined;
   [ROUTES.ISLAND_SELECTION]: undefined;
-  [ROUTES.ROLE_BASED_DASHBOARD]: undefined;
-  [ROUTES.SEARCH_RESULTS]: {
-    island: string;
-    vehicles: VehicleRecommendation[];
-  };
   [ROUTES.SEARCH]: {
-    filters?: SearchFilters; // SearchFilters type
-  } | undefined;
-  [ROUTES.MAP]: {
-    island?: Island;
-    vehicles?: VehicleRecommendation[];
-    initialRegion?: {
-      latitude: number;
-      longitude: number;
-      latitudeDelta: number;
-      longitudeDelta: number;
-    };
+    filters?: SearchFilters;
   } | undefined;
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
@@ -135,21 +123,16 @@ export type RootStackParamList = {
     endDate: string;
   };
   [ROUTES.BOOKING_CONFIRMED]: {
-    booking: BookingInfo & {
-      status: string;
-      total_amount: number;
-      vehicle: BookingVehicle & {
-        location: string;
-        daily_rate: number;
-      };
-    };
-    vehicle: Vehicle;
+    bookingId: string;
   };
   [ROUTES.PROFILE]: undefined;
   [ROUTES.PUBLIC_USER_PROFILE]: {
     userId: number;
   };
   [ROUTES.MY_BOOKINGS]: undefined;
+  [ROUTES.TRIP_DETAIL]: {
+    bookingId: string;
+  };
   [ROUTES.HOST_STOREFRONT]: {
     hostId?: number;
     handle?: string;

@@ -326,7 +326,10 @@ export class UnifiedAuthService extends BaseService {
     }
 
     try {
-      const response = await apiService.postWithoutAuth<{ token: string; refreshToken: string }>('/api/auth/refresh', {
+      // /v1/auth/*, matching login/register/logout above. This was '/api/auth/refresh',
+      // a path the backend never registered (backend/src/app.ts:51), so every
+      // refresh 404'd and silently logged the user out.
+      const response = await apiService.postWithoutAuth<{ token: string; refreshToken: string }>('/v1/auth/refresh', {
         refreshToken: this.authState.refreshToken,
       });
 

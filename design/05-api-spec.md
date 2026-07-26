@@ -58,7 +58,7 @@ REST, JSON, versioned under `/v1`. Auth = Bearer access token (see 04). Routers 
 | POST | `/bookings/quote` | 🌐 | dates + pickup option + protection tier + extras → itemized price breakdown (the checkout math, server-authoritative) |
 | POST | `/bookings` | 🔑 | idempotent; creates `pending` (request) or `confirmed` (Instant Book) with a PayPal order; accepts optional `flightNumber` when pickup is `airport` |
 | GET | `/bookings` | 🔑 | own bookings; `role=guest|host`, `status` filters |
-| GET | `/bookings/:id` | 🔑 | full detail: state, payments, check-ins, modifications |
+| GET | `/bookings/:id` | 🔑 | full detail: state, payments, check-ins, modifications. Readable by the booking's guest **or** the vehicle's host; 403 otherwise. Also returns `viewerRole`, `freeCancelUntil`, `inspectionState` (which party still owes check-in/out evidence) and `viewerHasReviewed` — Trip Detail branches on these |
 | POST | `/bookings/:id/approve` · `/decline` | 🚗 | request-to-book responses; approve captures payment |
 | POST | `/bookings/:id/cancel` | 🔑 | policy-based refund computed server-side; `reason` |
 | POST | `/bookings/:id/check-in` | 🔑 | odometer, fuel, photo manifest; both parties → `active`. **Offline-tolerant:** metadata may arrive first with photo keys attached later via PATCH as queued uploads sync |
@@ -97,9 +97,12 @@ State transitions are validated server-side against the machine in 02; illegal t
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/conversations` | 🔑 | inbox list with unread counts |
+| GET | `/conversations` | 🔑 | inbox list. Flat summaries, not raw rows: `counterparty` (name + avatar, resolved from whichever side the viewer isn't), `lastMessage`, `unreadCount`, and the booking badge (`vehicleLabel`, dates, status). Sorted most-recent-first |
 | POST | `/conversations` | 🔑 | open (scoped to a booking or listing inquiry) |
 | GET/POST | `/conversations/:id/messages` | 🔑 | history / send (REST fallback; live via socket) |
+| POST | `/conversations/:id/read` | 🔑 | mark the counterparty's messages read — clears the Inbox unread dot |
+
+Vehicles gained one field alongside these: `Vehicle.pickupInstructions` (nullable, host-authored, `PATCH /vehicles/:id`). Trip Detail renders it once a booking exists — lockbox codes, which lot, drive-side reminders. Migration: `20260725000000_vehicle_pickup_instructions`.
 
 Socket.IO namespaces: `/chat` (message, typing, read receipts), `/bookings` (state transitions pushed to both parties).
 

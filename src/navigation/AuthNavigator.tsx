@@ -28,6 +28,7 @@ const defaultScreenOptions = {
 export const AuthNavigator: React.FC = () => {
   return (
     <Stack.Navigator
+      id={undefined}
       screenOptions={defaultScreenOptions}
       initialRouteName={ROUTES.LOGIN}
     >

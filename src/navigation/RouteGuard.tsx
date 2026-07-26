@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
-    padding: spacing.large,
+    padding: spacing.lg,
   },
   accessDeniedContent: {
     alignItems: 'center',
@@ -267,32 +267,32 @@ const styles = StyleSheet.create({
   },
   accessDeniedIcon: {
     fontSize: 64,
-    marginBottom: spacing.medium,
+    marginBottom: spacing.md,
   },
   accessDeniedTitle: {
-    ...typography.h2,
+    ...typography.heading2,
     color: colors.text,
-    marginBottom: spacing.small,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   accessDeniedMessage: {
     ...typography.body,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: spacing.medium,
+    marginBottom: spacing.md,
   },
   accessDeniedHint: {
     ...typography.caption,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: spacing.large,
+    marginBottom: spacing.lg,
     fontStyle: 'italic',
   },
   backButton: {
-    marginTop: spacing.medium,
+    marginTop: spacing.md,
   },
   loginButton: {
-    marginTop: spacing.medium,
+    marginTop: spacing.md,
   },
   loadingContainer: {
     flex: 1,

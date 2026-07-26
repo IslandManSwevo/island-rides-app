@@ -1,7 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ExploreScreen } from '../../screens/ExploreScreen';
-import { SearchResultsScreen } from '../../screens/SearchResultsScreen';
 import { VehicleDetailScreen } from '../../screens/VehicleDetailScreen';
 import { ROUTES } from '../routes';
 import { SearchStackParamList } from '../types';
@@ -20,28 +19,23 @@ const defaultScreenOptions = {
     fontWeight: '600' as const,
     fontSize: 18,
   },
-  headerBackTitleVisible: false,
+  headerBackButtonDisplayMode: 'minimal' as const,
   gestureEnabled: true,
 };
 
 export const SearchStack: React.FC = () => {
   return (
     <Stack.Navigator
+      id={undefined}
       screenOptions={defaultScreenOptions}
       initialRouteName={ROUTES.SEARCH}
     >
+      {/* Search, SearchResults and Map all merged into Explore
+          (design/03-screen-inventory.md) — one screen, filters in a sheet. */}
       <Stack.Screen
         name={ROUTES.SEARCH}
         component={ExploreScreen as never}
         options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name={ROUTES.SEARCH_RESULTS}
-        component={SearchResultsScreen}
-        options={{
-          title: 'Search Results',
-          headerShown: true,
-        }}
       />
       <Stack.Screen
         name={ROUTES.VEHICLE_DETAIL}

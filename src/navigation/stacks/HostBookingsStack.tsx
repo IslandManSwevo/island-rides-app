@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { MyBookingsScreen } from '../../screens/MyBookingsScreen';
 import { VehicleDetailScreen } from '../../screens/VehicleDetailScreen';
 import ChatConversationScreen from '../../screens/ChatConversationScreen';
+import { TripDetailScreen } from '../../screens/TripDetailScreen';
 import { ROUTES } from '../routes';
 import { HostBookingsStackParamList } from '../types';
 import { colors } from '../../styles/theme';
@@ -20,24 +21,28 @@ const defaultScreenOptions = {
     fontWeight: '600' as const,
     fontSize: 18,
   },
-  headerBackTitleVisible: false,
+  headerBackButtonDisplayMode: 'minimal' as const,
   gestureEnabled: true,
 };
 
 export const HostBookingsStack: React.FC = () => {
   return (
     <Stack.Navigator
+      id={undefined}
       screenOptions={defaultScreenOptions}
       initialRouteName={ROUTES.MY_BOOKINGS}
     >
+      {/* role="host" — without it this renders the host's own rentals rather
+          than the reservations on their fleet (backend supports ?role=host). */}
+      <Stack.Screen name={ROUTES.MY_BOOKINGS} options={{ headerShown: false }}>
+        {(props) => <MyBookingsScreen {...(props as any)} role="host" />}
+      </Stack.Screen>
       <Stack.Screen
-        name={ROUTES.MY_BOOKINGS}
-        component={MyBookingsScreen}
-        options={{
-          title: 'Host Bookings',
-          headerShown: true,
-        }}
-      />
+        name={ROUTES.TRIP_DETAIL}
+        options={{ title: 'Booking', headerShown: true }}
+      >
+        {(props) => <TripDetailScreen {...(props as any)} />}
+      </Stack.Screen>
       <Stack.Screen
         name={ROUTES.VEHICLE_DETAIL}
         component={VehicleDetailScreen}

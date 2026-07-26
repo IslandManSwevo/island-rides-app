@@ -1,16 +1,12 @@
 declare var __DEV__: boolean;
 
-declare module 'react-native' {
-  export * from 'react-native/types';
-}
-
-declare module '@react-navigation/stack' {
-  export * from '@react-navigation/stack/lib/typescript/src';
-}
-
-declare module '@react-navigation/native' {
-  export * from '@react-navigation/native/lib/typescript/src';
-}
+// NOTE: there were hand-written `declare module` shims here for 'react-native',
+// '@react-navigation/stack' and '@react-navigation/native' that re-exported from
+// deep `lib/typescript/src` paths. Those paths stopped resolving under React
+// Navigation 7's package `exports` map, and because a `declare module` shadows
+// the package's real types, *every* import from them resolved to an empty
+// module — `NavigationContainer`, `createStackNavigator` and `RouteProp` all
+// appeared to not exist. All three packages ship their own types; no shim needed.
 
 declare module '@react-native-async-storage/async-storage' {
   const AsyncStorage: any;

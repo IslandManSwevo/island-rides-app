@@ -20,7 +20,7 @@ export const defaultStackScreenOptions: StackNavigationOptions = {
     fontWeight: '600' as const,
     fontSize: 18,
   },
-  headerBackTitleVisible: false,
+  headerBackButtonDisplayMode: 'minimal' as const,
   gestureEnabled: true,
 };
 
@@ -30,8 +30,13 @@ export const defaultStackScreenOptions: StackNavigationOptions = {
 export const modalScreenOptions: StackNavigationOptions = {
   ...defaultStackScreenOptions,
   presentation: 'modal' as const,
+  // headerStyle is typed as StyleProp, which can be an array or a falsy value —
+  // spread it only when it's a plain object.
   headerStyle: {
-    ...(defaultStackScreenOptions.headerStyle || {}),
+    ...(typeof defaultStackScreenOptions.headerStyle === 'object' &&
+    !Array.isArray(defaultStackScreenOptions.headerStyle)
+      ? defaultStackScreenOptions.headerStyle
+      : {}),
     backgroundColor: colors.background,
   },
 };

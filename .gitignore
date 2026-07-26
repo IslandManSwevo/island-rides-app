@@ -42,3 +42,11 @@ yarn-error.*
 backend/node_modules/
 backend/dist/
 backend/.env
+
+# expo export verification output
+.expo-verify*/
+
+# Claude Code local state — launch.json is shared, the rest is per-machine
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+

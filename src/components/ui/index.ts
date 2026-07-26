@@ -13,3 +13,4 @@ export { Field } from './Field';
 export { VehicleImage } from './VehicleImage';
 export { Stars } from './Stars';
 export { PickupMap } from './PickupMap';
+export { Sheet } from './Sheet';

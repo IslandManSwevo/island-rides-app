@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Booking Confirmed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+</head>
+<body>
+<nav class="mock-nav"><a href="04-checkout.html">&larr; Checkout</a><a href="11-trip-detail.html">Next: Trip Detail &rarr;</a></nav>
+<div class="phone"><div class="screen">
+  <div class="statusbar"><span>9:41</span><span>&#x1d5a0;</span><span>&#x2301; &#x25ae;</span></div>
+
+  <div style="padding: 32px 20px 0; display:flex; flex-direction:column; align-items:center; text-align:center;">
+    <!-- Coral confirmation circle — the one celebratory spring moment -->
+    <div style="width:88px; height:88px; border-radius:999px; background:var(--coral); display:flex; align-items:center; justify-content:center; box-shadow:0 12px 32px rgba(255,90,60,.28);">
+      <span style="font-size:36px; color:#fff; font-weight:700;">&#x2713;</span>
+    </div>
+
+    <h1 class="display" style="margin-top:20px; font-size:28px;">You&rsquo;ve got the keys.</h1>
+    <p class="small muted" style="margin-top:8px; max-width:28ch; line-height:1.6;">Your trip starts Friday. Danielle will message you with pickup details.</p>
+  </div>
+
+  <!-- Trip summary card -->
+  <div style="padding:24px 20px 0;">
+    <span class="label">Trip details</span>
+    <div class="card" style="margin-top:8px; padding:16px; border-radius:var(--r-hero);">
+      <div style="display:flex; gap:12px; align-items:center; margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--sand);">
+        <div class="vph" style="width:72px; height:54px;"><svg viewBox="0 0 200 70"><path d="M18 52h164c0-7-5-11-16-13l-14-2-16-13c-5-4-10-6-17-6H86c-9 0-16 3-22 9l-13 10-20 4c-8 2-13 6-13 11z" fill="#F2EFE9" opacity=".92"/><circle cx="56" cy="52" r="9" fill="#141C24" stroke="#F2EFE9" stroke-width="3"/><circle cx="148" cy="52" r="9" fill="#141C24" stroke="#F2EFE9" stroke-width="3"/></svg></div>
+        <div>
+          <div class="display" style="font-size:17px;">Toyota RAV4 2024</div>
+          <div class="small muted" style="font-size:12px;">Hosted by Danielle &middot; &#x2605; 4.8</div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px; font-size:14px;">
+        <div style="display:flex; gap:10px;">
+          <span style="color:var(--coral); min-width:20px; text-align:center;">&#x25cf;</span>
+          <div>
+            <div style="font-weight:700;">Pickup &mdash; Fri, Aug 7, 10:00</div>
+            <div class="small muted" style="font-size:12px;">Nassau Airport (LPIA) &middot; &#x2708; AA1043</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <span style="color:var(--teal); min-width:20px; text-align:center;">&#x25cf;</span>
+          <div>
+            <div style="font-weight:700;">Return &mdash; Mon, Aug 10, 10:00</div>
+            <div class="small muted" style="font-size:12px;">Danielle&rsquo;s location &middot; Paradise Island</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; margin-top:14px; padding-top:14px; border-top:1px solid var(--sand); font-size:14px;">
+        <span class="muted">Total paid (USD)</span>
+        <span class="display" style="color:var(--coral);">$325.60</span>
+      </div>
+      <div class="small muted" style="font-size:11px; margin-top:4px;">+ $500 refundable deposit hold &middot; Free cancellation until Aug 6, 10:00</div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div style="padding:20px;">
+    <div style="display:flex; gap:10px;">
+      <span class="chip" style="flex:1; justify-content:center; padding:12px;">&#x1f4c5; Add to calendar</span>
+      <span class="chip" style="flex:1; justify-content:center; padding:12px;">&#x1f4a1; Directions</span>
+      <span class="chip" style="flex:1; justify-content:center; padding:12px;">&#x2709; Message host</span>
+    </div>
+
+    <!-- What's next primer -->
+    <div class="card" style="margin-top:20px; padding:14px 16px; background:var(--sand-soft); border:none;">
+      <div style="font-weight:700; font-size:14px; margin-bottom:4px;">What&rsquo;s next</div>
+      <div class="small muted" style="font-size:12px; line-height:1.6;">Danielle will confirm pickup time the night before. When you arrive, open the Trips tab and tap <b>Check in</b> to photograph the car before you drive. Same at return. Both of you get protected that way.</div>
+    </div>
+
+    <a class="btn btn-primary" href="05-trips.html" style="margin-top:16px; text-align:center; text-decoration:none;">Go to my trips</a>
+  </div>
+
+</div></div>
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Booking Confirmed.</strong> The one celebratory Coral moment: circle springs 0&rarr;1, headline fades at 150ms, trip summary slides up 16px with 100ms stagger. Quick actions (calendar / directions / message) and a plain-language "what's next" primer that teaches the check-in flow. No tab bar &mdash; this is a stack screen pushed from Checkout.</p>
+</body>
+</html>
