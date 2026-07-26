@@ -64,6 +64,30 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:root {
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--coral) 40%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 body {
   font-family: var(--font-ui);
   background: #DDD6CB;
@@ -77,23 +101,29 @@ body {
 body.night { background: #060A0E; }
 
 .mock-nav {
-  width: 390px; display: flex; justify-content: space-between;
+  width: 393px; display: flex; justify-content: space-between;
   margin-bottom: 16px; font-size: 13px;
 }
 .mock-nav a { color: #5A5348; text-decoration: none; font-weight: 600; }
 body.night .mock-nav a { color: #94A0AD; }
 
 .phone {
-  width: 390px; background: var(--paper); border-radius: 44px;
+  width: 393px; background: var(--paper); border-radius: 55px;
   box-shadow: 0 24px 64px rgba(0,0,0,.28); overflow: hidden;
-  border: 8px solid #0B0F14;
+  border: 7px solid #1B1D1F;
   color: var(--ink);
 }
-.screen { min-height: 780px; display: flex; flex-direction: column; position: relative; }
+.screen { min-height: 852px; display: flex; flex-direction: column; position: relative; }
+
+.screen::before {
+  content: ""; position: absolute; top: 11px; left: 50%; translate: -50% 0;
+  width: 126px; height: 37px; background: #000; border-radius: 19px;
+  z-index: 20; pointer-events: none;
+}
 
 .statusbar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 24px 6px; font-size: 13px; font-weight: 600;
+  padding: 18px 28px 6px; font-size: 13px; font-weight: 600;
 }
 
 /* Typography helpers */
@@ -121,12 +151,14 @@ h2.display { font-size: 21px; }
   border-radius: var(--r-lg); box-shadow: var(--shadow-1);
 }
 
-/* Chips */
+/* Chips — minimum 44px touch target (WCAG 2.5.5) */
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  min-height: 44px; padding: 10px 16px; border-radius: 999px;
+  font-size: 13px; font-weight: 600;
   border: 1px solid var(--sand); background: var(--surface); color: var(--ink);
   white-space: nowrap;
+  cursor: default;
 }
 .chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
@@ -140,14 +172,24 @@ h2.display { font-size: 21px; }
 .badge-coral { background: color-mix(in srgb, var(--coral) 12%, transparent); color: var(--coral-deep); }
 .night .badge-gold { color: var(--gold); }
 
-/* Tab bar */
+/* Tab bar — minimum 44px touch targets (WCAG 2.5.5) */
 .tabbar {
   margin-top: auto; display: flex; border-top: 1px solid var(--sand);
-  background: var(--surface); padding: 10px 8px 26px;
+  background: var(--surface); padding: 6px 8px 26px;
 }
-.tab { flex: 1; text-align: center; font-size: 10.5px; font-weight: 600; color: var(--stone); }
+.tab {
+  flex: 1; text-align: center; font-size: 11px; font-weight: 600;
+  color: var(--stone);
+  min-height: 44px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  transition: background 0.15s;
+  user-select: none;
+}
+.tab:active { background: var(--sand-soft); }
 .tab.active { color: var(--ink); }
-.tab .ico { font-size: 21px; display: block; margin-bottom: 3px; }
+.tab .ico { font-size: 22px; line-height: 1; display: block; margin-bottom: 2px; }
 .tab.active .ico { filter: none; }
 
 /* Rating stars */
@@ -162,3 +204,6 @@ h2.display { font-size: 21px; }
 .vph svg { width: 62%; opacity: .92; }
 .vph.sun { background: linear-gradient(135deg, #C7BBA6 0%, #8C8578 55%, #5A5348 100%); }
 .vph.dusk { background: linear-gradient(135deg, #1A2733 0%, #33261F 70%, #59301F 100%); }
+
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }

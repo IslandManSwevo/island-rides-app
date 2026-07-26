@@ -27,13 +27,14 @@ export const linking: LinkingOptions<RootStackParamList> = {
           [ROUTES.EXPLORE_TAB]: {
             screens: {
               [ROUTES.SEARCH]: 'explore',
-              [ROUTES.SEARCH_RESULTS]: 'explore/results',
               [ROUTES.VEHICLE_DETAIL]: 'explore/vehicle/:vehicleId',
             },
           },
           [ROUTES.TRIPS_TAB]: {
             screens: {
               [ROUTES.MY_BOOKINGS]: 'trips',
+              [ROUTES.TRIP_DETAIL]: 'trips/:bookingId',
+              [ROUTES.TRIP_CHECK_IN]: 'trips/:bookingId/check-in',
               [ROUTES.VEHICLE_DETAIL]: 'trips/vehicle/:vehicleId',
               [ROUTES.WRITE_REVIEW]: 'review/:bookingId',
             },

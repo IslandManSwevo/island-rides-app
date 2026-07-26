@@ -6,7 +6,9 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "jsx": "react-native",
-    "lib": ["esnext"],
+    "lib": [
+      "esnext"
+    ],
     "moduleResolution": "bundler",
     "noEmit": true,
     "strict": false,
@@ -14,13 +16,19 @@
     "target": "esnext",
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "typeRoots": ["./node_modules/@types", "./types"],
-    "types": ["jest"]
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
+    "types": [
+      "jest"
+    ]
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "types/**/*.d.ts"
+    "types/**/*.d.ts",
+    "nativewind-env.d.ts"
   ],
   "exclude": [
     "node_modules",

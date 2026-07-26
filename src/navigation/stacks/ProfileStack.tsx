@@ -24,7 +24,7 @@ const defaultScreenOptions = {
     fontWeight: '600' as const,
     fontSize: 18,
   },
-  headerBackTitleVisible: false,
+  headerBackButtonDisplayMode: 'minimal' as const,
   gestureEnabled: true,
 };
 
@@ -40,6 +40,7 @@ const modalScreenOptions = {
 export const ProfileStack: React.FC = () => {
   return (
     <Stack.Navigator
+      id={undefined}
       screenOptions={defaultScreenOptions}
       initialRouteName={ROUTES.PROFILE}
     >

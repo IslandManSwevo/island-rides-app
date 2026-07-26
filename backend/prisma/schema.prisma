@@ -164,6 +164,9 @@ model Vehicle {
   youngDriverFeeCents  Int @default(0)
 
   address           String?
+  // Host-authored, shown on Trip Detail once a booking exists — lockbox codes,
+  // which lot, drive-side reminder (design/mockups/11-trip-detail.html).
+  pickupInstructions String?
   latitude          Float?
   longitude         Float?
   deliveryAvailable Boolean @default(false)

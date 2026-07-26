@@ -7,7 +7,6 @@ import { Vehicle } from '../types';
 import { FavoriteButton } from './FavoriteButton';
 import { vehicleFeatureService } from '../services/vehicleFeatureService';
 import { StandardCard } from './templates/StandardCard';
-import { GluestackCard } from './templates/GluestackCard';
 import { AnimatedButton } from './AnimatedButton';
 
 interface VehicleCardProps {
@@ -113,7 +112,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
       hapticType="light"
       style={[styles.cardContainer, animatedCardStyle]}
     >
-      <GluestackCard
+      <StandardCard
         variant="elevated"
         padding="none"
         margin="none"
@@ -330,7 +329,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
           <Ionicons name="chevron-forward" size={20} color={colors.primary} />
         </View>
       </View>
-    </GluestackCard>
+    </StandardCard>
     </AnimatedButton>
   );
 });

@@ -104,24 +104,10 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation, rout
         // PayPal approval sheet (in-app browser); the webhook confirms capture.
         await Linking.openURL(result.approveUrl);
       }
-      navigation.navigate(ROUTES.BOOKING_CONFIRMED, {
-        booking: {
-          id: Number(result.booking.id) || 0,
-          start_date: startDate,
-          end_date: endDate,
-          status: result.booking.status,
-          total_amount: (quote?.totalCents ?? 0) / 100,
-          vehicle: {
-            id: Number(vehicle.id) || 0,
-            make: vehicle.make,
-            model: vehicle.model,
-            year: vehicle.year,
-            location: vehicle.location,
-            daily_rate: vehicle.dailyRate,
-          },
-        },
-        vehicle,
-      });
+      // Confirmation reads the booking back from the API rather than carrying a
+      // hand-assembled copy through navigation params — the server owns the
+      // final numbers (and the status, which PayPal's webhook may still change).
+      navigation.navigate(ROUTES.BOOKING_CONFIRMED, { bookingId: result.booking.id });
     } catch (e) {
       const message = e instanceof KeyloApiError ? e.message : 'Something went wrong — you were not charged.';
       notificationService.error(message, { title: 'Booking failed' });

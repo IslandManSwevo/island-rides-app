@@ -1,6 +1,6 @@
 /**
  * Unified Button Component
- * Consolidates Button.tsx, StandardButton.tsx, and GluestackButton.tsx
+ * Consolidates Button.tsx and StandardButton.tsx
  * Provides a single, comprehensive button implementation with all features
  */
 

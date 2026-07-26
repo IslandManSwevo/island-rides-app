@@ -12,11 +12,12 @@ A complete reimagining of KeyLo (peer-to-peer car rental for the Bahamas) that k
 | [04 · Backend architecture](04-backend-architecture.md) | Railway topology (Fastify + Postgres + Redis + R2), auth, PayPal payments, jobs |
 | [05 · API spec](05-api-spec.md) | REST surface by domain, mirrors the app's existing service layer |
 | [06 · Data model](06-data-model.md) | ER diagram + Prisma schema sketch |
-| [mockups/index.html](mockups/index.html) | 9 HTML mockups on the shared token sheet — **start here** |
+| [07 · Prototype plan](07-prototype-plan.md) | Motion vocabulary, state matrix, copy rules, build order for mockups 10–16 |
+| [mockups/index.html](mockups/index.html) | 16 HTML mockups on the shared token sheet — **start here** |
 
 ## How to review
 
-Open `design/mockups/index.html` in any browser (no build, no dependencies — Google Fonts load when online, system fonts otherwise). Click through 01→08; each mockup has a caption explaining what it demonstrates. Then read the docs in order.
+Open `design/mockups/index.html` in any browser (no build, no dependencies — Google Fonts load when online, system fonts otherwise). Click through 01→16; each mockup has a caption explaining what it demonstrates. Then read the docs in order.
 
 ## Decision log
 
@@ -46,3 +47,5 @@ Flagged now so they're decided deliberately, not discovered in production:
 ## What happens after approval
 
 Code phase, in order: (1) new theme tokens replace `src/styles/theme.ts` / `gluestackTheme.ts`; (2) navigation collapses to the new IA, deleting duplicate navigators/auth systems; (3) backend scaffold on Railway per docs 04–06; (4) screens rebuilt against the real API. Each step is its own PR.
+
+Steps 1–3 have landed. Step 4 is in progress: the surfaces specified by mockups 10–15 (Booking Confirmed, Trip Detail, Inbox, Profile, Host Fleet) are the remaining rebuilds. Mockup 16 (Night Drive) stays gated until the legacy StyleSheet screens are gone — `app.json` still pins `userInterfaceStyle: "light"`.

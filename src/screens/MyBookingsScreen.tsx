@@ -12,6 +12,11 @@ type MyBookingsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'M
 
 interface MyBookingsScreenProps {
   navigation: MyBookingsScreenNavigationProp;
+  /**
+   * Which side of the marketplace is looking. The host Bookings tab passes
+   * 'host' so it shows inbound reservations rather than the host's own rentals.
+   */
+  role?: 'guest' | 'host';
 }
 
 type TripFilter = 'upcoming' | 'active' | 'past';
@@ -37,11 +42,12 @@ const hoursLeft = (deadline: string) =>
   Math.max(0, Math.round((new Date(deadline).getTime() - Date.now()) / (60 * 60 * 1000)));
 
 /** Trips — design/mockups/05-trips.html. The booking lifecycle made visible. */
-export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }) => {
+export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation, role = 'guest' }) => {
   const [filter, setFilter] = useState<TripFilter>('upcoming');
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [signedOut, setSignedOut] = useState(false);
+  const isHostView = role === 'host';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,7 +58,7 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
         setBookings([]);
         return;
       }
-      const res = await keyloApi.myBookings(token);
+      const res = await keyloApi.myBookings(token, role);
       setBookings(res.bookings);
       setSignedOut(false);
     } catch {
@@ -60,7 +66,7 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', load);
@@ -72,6 +78,11 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
   const renderBooking = ({ item }: { item: ApiBooking }) => {
     const vehicleName = item.vehicle ? `${item.vehicle.make} ${item.vehicle.model}` : 'Vehicle';
     const isActive = item.status === 'active';
+
+    const openDetail = () =>
+      (navigation as { navigate: (r: string, p: object) => void }).navigate(ROUTES.TRIP_DETAIL, {
+        bookingId: item.id,
+      });
 
     return (
       <Card
@@ -86,7 +97,12 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
             </Text>
           </View>
         )}
-        <View className="flex-row items-center gap-3 p-card-pad">
+        <Pressable
+          onPress={openDetail}
+          accessibilityRole="button"
+          accessibilityLabel={`Open trip detail for ${vehicleName}`}
+          className="flex-row items-center gap-3 p-card-pad"
+        >
           <VehicleImage url={primaryPhotoUrl(item.vehicle ?? {})} iconSize={30} className="h-14 w-[72px] rounded-field" />
           <View className="flex-1">
             <DisplayText size="title" numberOfLines={1}>
@@ -117,26 +133,21 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
               </Pressable>
             )}
             {item.status === 'cancelled' && <Badge label="Cancelled" tone="danger" className="mt-1.5" />}
-            {item.status === 'declined' && <Badge label="Declined by host" tone="danger" className="mt-1.5" />}
+            {item.status === 'declined' && (
+              <Badge label={isHostView ? 'You declined' : 'Declined by host'} tone="danger" className="mt-1.5" />
+            )}
           </View>
-        </View>
+          <Ionicons name="chevron-forward" size={18} color="#8C8578" />
+        </Pressable>
         {(isActive || item.status === 'confirmed') && (
           <View className="flex-row gap-2 px-card-pad pb-card-pad">
+            {/* Check-in now lives in a sheet on Trip Detail (mockup 11) — the
+                card action opens the trip rather than pushing the capture flow. */}
             <Chip
               label={isActive ? 'Check out' : 'Check in'}
               active
               className="flex-1 justify-center"
-              onPress={() =>
-                (navigation as { navigate: (route: string, params: object) => void }).navigate(
-                  ROUTES.TRIP_CHECK_IN,
-                  {
-                    bookingId: item.id,
-                    phase: isActive ? 'check_out' : 'check_in',
-                    vehicleName,
-                    driveSide: item.vehicle?.driveSide ?? 'LHD',
-                  }
-                )
-              }
+              onPress={openDetail}
             />
           </View>
         )}
@@ -147,7 +158,7 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
   return (
     <SafeAreaView className="flex-1 bg-paper dark:bg-night" edges={['top']}>
       <View className="px-gutter pt-2">
-        <DisplayText size="headline">Trips</DisplayText>
+        <DisplayText size="headline">{isHostView ? 'Bookings' : 'Trips'}</DisplayText>
         <View className="mt-3.5 flex-row gap-2">
           {FILTERS.map((f) => (
             <Chip key={f.id} label={f.label} active={filter === f.id} onPress={() => setFilter(f.id)} />
@@ -165,14 +176,20 @@ export const MyBookingsScreen: React.FC<MyBookingsScreenProps> = ({ navigation }
           loading ? null : (
             <Card className="items-center p-8">
               <Text className="font-display text-title text-ink dark:text-night-text">
-                {signedOut ? 'Sign in to see your trips' : 'No trips here yet'}
+                {signedOut
+                  ? `Sign in to see your ${isHostView ? 'bookings' : 'trips'}`
+                  : isHostView
+                    ? 'No bookings here yet'
+                    : 'No trips here yet'}
               </Text>
               <Text className="mt-2 text-center font-ui text-body text-stone dark:text-night-muted">
                 {signedOut
                   ? 'Your bookings live here once you sign in.'
-                  : 'When you book a car, your trip shows up here with check-in, receipts, and reviews.'}
+                  : isHostView
+                    ? 'Reservations on your cars show up here — approve requests from Today.'
+                    : 'When you book a car, your trip shows up here with check-in, receipts, and reviews.'}
               </Text>
-              {!signedOut && (
+              {!signedOut && !isHostView && (
                 <Pressable onPress={() => navigation.navigate('CustomerApp' as never)} className="mt-4">
                   <Badge label="Explore cars →" tone="coral" />
                 </Pressable>

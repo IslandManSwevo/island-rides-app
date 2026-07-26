@@ -16,8 +16,7 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 import { notificationService } from './src/services/notificationService';
 import { navigationRef } from './src/navigation/navigationRef';
 import Constants from 'expo-constants';
-import { GluestackUIProvider } from '@gluestack-ui/themed';
-import { gluestackUIConfig } from './src/config/gluestackTheme';
+import { ThemeProvider } from './src/context/ThemeContext';
 import { useFonts } from 'expo-font';
 import { Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import {
@@ -209,7 +208,11 @@ const App: React.FC = () => {
 
   return (
     <SafeAreaProvider>
-      <GluestackUIProvider config={gluestackUIConfig}>
+      {/* ThemeProvider drives the legacy StyleSheet templates (StandardButton,
+          StandardCard, …). It was never mounted, so every useTheme() call threw
+          the moment one of those rendered. New surfaces use NativeWind and
+          don't depend on it. */}
+      <ThemeProvider>
         <ReduxProvider>
           <ErrorBoundary onError={handleError}>
             {!isInitialized || !fontsLoaded ? (
@@ -244,7 +247,7 @@ const App: React.FC = () => {
             )}
           </ErrorBoundary>
         </ReduxProvider>
-      </GluestackUIProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 };

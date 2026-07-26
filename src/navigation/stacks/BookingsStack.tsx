@@ -5,6 +5,7 @@ import { VehicleDetailScreen } from '../../screens/VehicleDetailScreen';
 import ChatConversationScreen from '../../screens/ChatConversationScreen';
 import { WriteReviewScreen } from '../../screens/WriteReviewScreen';
 import { TripCheckInScreen } from '../../screens/TripCheckInScreen';
+import { TripDetailScreen } from '../../screens/TripDetailScreen';
 import { ROUTES } from '../routes';
 import { BookingsStackParamList } from '../types';
 import { colors } from '../../styles/theme';
@@ -22,13 +23,14 @@ const defaultScreenOptions = {
     fontWeight: '600' as const,
     fontSize: 18,
   },
-  headerBackTitleVisible: false,
+  headerBackButtonDisplayMode: 'minimal' as const,
   gestureEnabled: true,
 };
 
 export const BookingsStack: React.FC = () => {
   return (
     <Stack.Navigator
+      id={undefined}
       screenOptions={defaultScreenOptions}
       initialRouteName={ROUTES.MY_BOOKINGS}
     >
@@ -37,6 +39,12 @@ export const BookingsStack: React.FC = () => {
         component={MyBookingsScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name={ROUTES.TRIP_DETAIL}
+        options={{ title: 'Trip', headerShown: true }}
+      >
+        {(props) => <TripDetailScreen {...(props as any)} />}
+      </Stack.Screen>
       <Stack.Screen
         name={ROUTES.TRIP_CHECK_IN}
         options={{ title: 'Check-in', headerShown: true }}

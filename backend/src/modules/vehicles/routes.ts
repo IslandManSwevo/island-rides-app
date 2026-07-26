@@ -227,6 +227,7 @@ export async function vehicleRoutes(app: FastifyInstance) {
         securityDepositCents: z.number().int().min(0).optional(),
         youngDriverFeeCents: z.number().int().min(0).optional(),
         address: z.string().optional(),
+        pickupInstructions: z.string().max(1000).optional(),
         latitude: z.number().optional(),
         longitude: z.number().optional(),
         deliveryAvailable: z.boolean().optional(),

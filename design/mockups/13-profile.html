@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+</head>
+<body>
+<nav class="mock-nav"><a href="12-inbox.html">&larr; Inbox</a><a href="14-onboarding.html">Next: Onboarding &rarr;</a></nav>
+<div class="phone"><div class="screen">
+  <div class="statusbar"><span>9:41</span><span>&#x1d5a0;</span><span>&#x2301; &#x25ae;</span></div>
+
+  <div style="padding: 8px 20px 0;">
+    <h1 class="display">Profile</h1>
+
+    <!-- Identity card -->
+    <div class="card" style="margin-top:16px; padding:18px 16px; display:flex; gap:14px; align-items:center;">
+      <div style="width:56px; height:56px; border-radius:999px; background:var(--ink); color:var(--paper); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px;">MB</div>
+      <div style="flex:1;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="display" style="font-size:18px;">Marcus B.</span>
+          <span class="badge badge-teal">&check; KeyLo verified</span>
+        </div>
+        <div class="small muted" style="font-size:12px; margin-top:2px;">Nassau &middot; New Providence &middot; Joined 2024</div>
+        <div class="small" style="font-size:12px; margin-top:3px;"><span class="stars">&starf;</span> 4.9 &middot; 8 trips &middot; 2 hosts you book with regularly</div>
+      </div>
+      <span style="color:var(--stone); font-size:14px;">&rsaquo;</span>
+    </div>
+  </div>
+
+  <div style="padding:20px 20px 0; flex:1; overflow:hidden; display:flex; flex-direction:column; gap:14px;">
+
+    <!-- Switch to hosting card -->
+    <div class="card" style="padding:16px; background:var(--ink); color:var(--paper); border:none; border-radius:var(--r-hero);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:15px;">Your driveway could be earning.</div>
+          <div class="small" style="font-size:12px; color:#94A0AD; margin-top:4px; line-height:1.5;">Hosts in Nassau with one car earn roughly $400&ndash;$800 a month. You set the calendar &mdash; block off days you need your car, rent it the rest.</div>
+        </div>
+      </div>
+      <span class="chip" style="margin-top:12px; display:inline-flex; background:var(--coral); color:#fff; border:none; font-size:13px;">Become a host</span>
+    </div>
+
+    <!-- Settings list -->
+    <div class="card" style="padding:4px 16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--sand);">
+        <span style="font-weight:600; font-size:14px;">&#x2661; Favorites</span><span class="small muted">4 cars saved</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--sand);">
+        <span style="font-weight:600; font-size:14px;">&#x1f50d; Saved searches</span><span class="small muted">2</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--sand);">
+        <span style="font-weight:600; font-size:14px;">&#x1f4cb; Verification</span><span class="badge badge-teal">Complete</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--sand);">
+        <span style="font-weight:600; font-size:14px;">&#x1f514; Notifications</span><span class="small muted">Push &middot; SMS &middot; Email</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--sand);">
+        <span style="font-weight:600; font-size:14px;">&#x1f4b3; Payment</span><span class="small muted">PayPal &middot; &middot;&middot;&middot;&middot; 4231</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0;">
+        <span style="font-weight:600; font-size:14px;">&#x2753; Help &amp; legal</span><span style="color:var(--stone);">&rsaquo;</span>
+      </div>
+    </div>
+
+    <!-- State tags -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <span class="badge" style="background:var(--sand-soft); color:var(--stone); font-weight:500;">Host mode: Identity card flips to host stats (earnings, fleet, rating) + tab bar becomes Today / Fleet / Bookings / Earnings</span>
+      <span class="badge" style="background:var(--sand-soft); color:var(--stone); font-weight:500;">First-time: "Become a host" card is prominent; settings list is shorter (no Favorites / Saved searches yet)</span>
+      <span class="badge" style="background:var(--sand-soft); color:var(--stone); font-weight:500;">Public profile: Remove Become a Host card, show review history + join date + verified badge prominently</span>
+    </div>
+
+    <div class="small muted" style="text-align:center; padding:8px 0 0; font-size:11px;">KeyLo v1 &middot; Terms &middot; Privacy &middot; Licences</div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab"><span class="ico">&#x2315;</span>Explore</div>
+    <div class="tab"><span class="ico">&#x25eb;</span>Trips</div>
+    <div class="tab"><span class="ico">&#x2709;</span>Inbox</div>
+    <div class="tab active"><span class="ico">&#x25ef;</span>Profile</div>
+  </div>
+</div></div>
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Profile.</strong> Identity card with avatar, verified badge, rating, trip count, and regular-host relationship callout. "Become a host" card uses the brand zero-state voice ("Your driveway could be earning") with a Coral chip CTA. Settings rows follow the same list pattern as Trip Detail &mdash; Sand hairline dividers, muted secondary values. Role switch flips identity + tab bar (Today / Fleet / Bookings / Earnings). Public profile view removes the host card and settings, showing review history instead.</p>
+</body>
+</html>

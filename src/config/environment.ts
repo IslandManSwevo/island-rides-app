@@ -2,13 +2,18 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { ENV_CONFIG_CACHE_DURATION_MS, PORT_DETECTION_CACHE_DURATION_MS } from './constants';
 
+// Port defaults track the API's own default (backend/src/config/env.ts: PORT
+// defaults to 3000) and the fallback in src/services/keyloApi.ts. These three
+// used to disagree — this file scanned to 3003 while keyloApi assumed 3000, so
+// the rebuilt and legacy halves of the app talked to different ports whenever
+// EXPO_PUBLIC_API_BASE_URL wasn't set.
 const PORT_CONFIG = {
   DETECTION_TIMEOUT: 1000, // Reduced to 1 second for faster fallback
-  COMMON_API_PORTS: [3003, 3000, 3001, 3005, 3006, 3007, 3008, 8000, 8001, 8080, 8081],
-  COMMON_WS_PORTS: [3003, 3000, 3001, 3005, 3006, 3007, 3008, 8000, 8001, 8080, 8081], // Use same ports as API since Socket.io runs on same server
-  HEALTH_ENDPOINTS: ['/api/health', '/health', '/api/status', '/status'],
-  DEFAULT_API_PORT: 3003,
-  DEFAULT_WS_PORT: 3003, // Changed to match API port since Socket.io runs on same server
+  COMMON_API_PORTS: [3000, 3003, 3001, 3005, 3006, 3007, 3008, 8000, 8001, 8080, 8081],
+  COMMON_WS_PORTS: [3000, 3003, 3001, 3005, 3006, 3007, 3008, 8000, 8001, 8080, 8081], // Use same ports as API since Socket.io runs on same server
+  HEALTH_ENDPOINTS: ['/health', '/api/health', '/api/status', '/status'],
+  DEFAULT_API_PORT: 3000,
+  DEFAULT_WS_PORT: 3000, // Socket.io runs on the same server as the API
   PORT_STATUS_TIMEOUT: 1000, // Reduced timeout
   MAX_CONCURRENT_CHECKS: 3, // Limit concurrent port checks
 };

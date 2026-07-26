@@ -176,6 +176,62 @@ export async function bookingRoutes(app: FastifyInstance) {
     return { bookings };
   });
 
+  // 🔑 GET /v1/bookings/:id — one booking, everything Trip Detail renders
+  // (design/mockups/11-trip-detail.html). Readable by the guest on the booking
+  // or by the host who owns the vehicle — nobody else.
+  app.get('/:id', { preHandler: [app.requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const userId = request.auth!.sub;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        vehicle: {
+          include: {
+            photos: { orderBy: { position: 'asc' } },
+            island: true,
+            host: { include: { user: { select: { firstName: true, lastName: true, avatarKey: true } } } },
+          },
+        },
+        protectionPlan: true,
+        extras: { include: { extra: true } },
+        payments: true,
+        inspections: true,
+        reviews: { select: { id: true, authorId: true } },
+        conversation: { select: { id: true } },
+      },
+    });
+    if (!booking) {
+      return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Booking not found' } });
+    }
+
+    // Same host resolution as the role=host branch above.
+    const host = await prisma.hostProfile.findUnique({ where: { userId } });
+    const isGuest = booking.guestId === userId;
+    const isHost = !!host && booking.vehicle.hostId === host.id;
+    if (!isGuest && !isHost) {
+      return reply.code(403).send({ error: { code: 'FORBIDDEN', message: 'Not your booking' } });
+    }
+
+    // Platform-standard policy (design/02-user-flows.md): free until 24h before start.
+    const freeCancelUntil = new Date(booking.startAt.getTime() - 24 * 60 * 60 * 1000);
+
+    return {
+      booking,
+      viewerRole: isGuest ? 'guest' : 'host',
+      freeCancelUntil,
+      // Check-in/out gate the active/completed transitions — the screen needs to
+      // know whose evidence is still outstanding, not just that photos exist.
+      inspectionState: {
+        checkInGuest: booking.inspections.some((i) => i.phase === 'check_in' && i.party === 'guest'),
+        checkInHost: booking.inspections.some((i) => i.phase === 'check_in' && i.party === 'host'),
+        checkOutGuest: booking.inspections.some((i) => i.phase === 'check_out' && i.party === 'guest'),
+        checkOutHost: booking.inspections.some((i) => i.phase === 'check_out' && i.party === 'host'),
+      },
+      viewerHasReviewed: booking.reviews.some((r) => r.authorId === userId),
+    };
+  });
+
   // 🚗 POST /v1/bookings/:id/approve — capture payment, confirm
   app.post('/:id/approve', { preHandler: [app.requireHost] }, async (request, reply) => {
     const { id } = z.object({ id: z.string() }).parse(request.params);

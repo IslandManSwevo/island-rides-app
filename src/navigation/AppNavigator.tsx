@@ -86,6 +86,7 @@ const AppNavigator: React.FC = () => {
         }}
       >
         <Stack.Navigator
+      id={undefined}
           screenOptions={defaultScreenOptions}
           initialRouteName={getUserNavigator()}
         >

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Trip Detail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .sheet-overlay {
+    position: absolute; inset: 0; z-index: 100; display: none;
+    flex-direction: column; justify-content: flex-end;
+    background: rgba(10,16,22,.55);
+    transition: opacity .28s ease;
+  }
+  .sheet-overlay.open { display: flex; }
+  .sheet-overlay.animating { opacity: 0; }
+  .sheet {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    max-height: 88vh; overflow-y: auto; padding: 0 20px 32px;
+    transform: translateY(100%);
+    transition: transform .28s cubic-bezier(.32,.72,0,1);
+  }
+  .sheet-overlay.open .sheet { transform: translateY(0); }
+  .sheet-overlay.animating .sheet { transform: translateY(100%); }
+  .sheet-handle {
+    width: 36px; height: 5px; border-radius: 3px;
+    background: var(--sand); margin: 12px auto 16px;
+  }
+</style>
+</head>
+<body>
+<nav class="mock-nav"><a href="10-booking-confirmed.html">&larr; Confirmed</a><a href="12-inbox.html">Next: Inbox &rarr;</a></nav>
+<div class="phone"><div class="screen">
+
+  <!-- Active state (default for this mockup — check-in is relevant during an active trip) -->
+  <div class="statusbar"><span>9:41</span><span>&#x1d5a0;</span><span>&#x2301; &#x25ae;</span></div>
+
+  <div style="padding:8px 20px 0;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+      <a href="05-trips.html" style="color:var(--ink); text-decoration:none; font-size:18px;">&larr;</a>
+      <h1 class="display" style="font-size:21px;">Trip detail</h1>
+      <span class="badge badge-teal" style="margin-left:auto;">Active &middot; returns Mon 10:00</span>
+    </div>
+  </div>
+
+  <div style="padding:0 20px 0; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:14px;">
+
+    <!-- Vehicle + host card -->
+    <div class="card" style="padding:14px 16px; display:flex; gap:12px; align-items:center;">
+      <div class="vph sun" style="width:64px; height:48px; flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div class="display" style="font-size:17px;">Toyota RAV4 2024</div>
+        <div class="small muted" style="font-size:12px;">Danielle &middot; &#x2605; 4.8 &middot; 52 trips</div>
+      </div>
+      <span class="chip" style="padding:6px 10px; font-size:12px;">Message</span>
+    </div>
+
+    <!-- Trip details -->
+    <div class="card" style="padding:4px 16px;">
+      <div style="display:flex; justify-content:space-between; padding:10px 0; font-size:14px;">
+        <span class="muted">Pickup</span><span>Fri, Aug 7 &middot; 10:00</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-top:1px solid var(--sand); font-size:14px;">
+        <span class="muted">Return</span><span>Mon, Aug 10 &middot; 10:00</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-top:1px solid var(--sand); font-size:14px;">
+        <span class="muted">Pickup location</span><span>Nassau Airport (LPIA) &middot; $25</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-top:1px solid var(--sand); font-size:14px;">
+        <span class="muted">Flight</span><span>&#x2708; AA1043</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-top:1px solid var(--sand); font-size:14px;">
+        <span class="muted">Protection</span><span>Standard &middot; $500 deductible</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-top:1px solid var(--sand); font-size:14px;">
+        <span class="muted">Extras</span><span>Child seat &middot; $15</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-top:1px solid var(--sand); font-size:14px;">
+        <span class="muted">Cancellation</span><span style="color:var(--teal);">Free until Aug 6, 10:00</span>
+      </div>
+    </div>
+
+    <!-- Pickup instructions -->
+    <div>
+      <span class="label">Pickup instructions from Danielle</span>
+      <div class="card" style="margin-top:8px; padding:12px 16px; font-size:13px; line-height:1.6;">
+        Parked in short-term lot B, row 4. Key is in a lockbox on the driver-side door handle &mdash; I'll message you the code the night before. Left-hand drive, keep left on the road. Call me on WhatsApp if you get lost.
+      </div>
+    </div>
+
+    <!-- Price summary -->
+    <div class="card" style="padding:12px 16px; display:flex; justify-content:space-between; align-items:center; font-size:14px;">
+      <span class="muted">Total paid</span>
+      <span class="display" style="font-size:18px; color:var(--coral);">$325.60</span>
+    </div>
+
+    <!-- State tags -->
+    <div style="margin-top:4px; display:flex; gap:8px; flex-wrap:wrap;">
+      <span class="badge" style="background:var(--sand-soft); color:var(--stone); font-weight:500;">Upcoming state: Ink countdown replaces Teal header &mdash; "2 days 8 hours 22 minutes"</span>
+      <span class="badge" style="background:var(--sand-soft); color:var(--stone); font-weight:500;">Active (shown): Teal header + check-in/out + extend actions</span>
+      <span class="badge" style="background:var(--sand-soft); color:var(--stone); font-weight:500;">Completed: Muted card + review prompt replaces everything</span>
+      <span class="badge" style="background:var(--sand-soft); color:var(--stone); font-weight:500;">Check-in is a bottom sheet, not a full push</span>
+    </div>
+  </div>
+
+  <!-- Bottom actions (active trip state) -->
+  <div style="border-top:1px solid var(--sand); background:var(--surface); padding:14px 20px 28px; display:flex; gap:10px;">
+    <button onclick="openCheckinSheet()" class="btn btn-primary" style="flex:1; padding:14px;">&#x1F4F7; Start check-in</button>
+    <span class="btn btn-ghost" style="flex:1; padding:14px;">Message host</span>
+  </div>
+
+  <!-- ================================================================
+       CHECK-IN BOTTOM SHEET
+       ================================================================ -->
+  <div class="sheet-overlay" id="checkin-sheet" onclick="closeCheckinSheet(event)" role="dialog" aria-label="Trip check-in" aria-modal="true">
+    <div class="sheet" onclick="event.stopPropagation()" role="document">
+      <div class="sheet-handle" aria-hidden="true"></div>
+
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <div style="flex:1;">
+          <h2 class="display" style="font-size:20px;">Trip check-in</h2>
+          <div class="small muted" style="font-size:12px;">Toyota RAV4 &middot; with Danielle</div>
+        </div>
+        <span class="badge badge-teal">Step 2 of 3</span>
+      </div>
+
+      <!-- Progress -->
+      <div style="display:flex; gap:6px; margin:12px 0;">
+        <div style="flex:1; height:4px; border-radius:2px; background:var(--teal);"></div>
+        <div style="flex:1; height:4px; border-radius:2px; background:var(--coral);"></div>
+        <div style="flex:1; height:4px; border-radius:2px; background:var(--sand);"></div>
+      </div>
+
+      <!-- Drive-side primer -->
+      <div style="background:var(--ink); color:var(--paper); border-radius:var(--r-md); padding:12px 14px; display:flex; gap:10px; align-items:center; margin-bottom:14px;">
+        <span style="font-size:20px;" aria-hidden="true">&#x1F1E7;&#x1F1F8;</span>
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:13px;">We drive on the <span style="color:var(--gold);">left</span> in the Bahamas</div>
+          <div class="small" style="font-size:11.5px; color:#94A0AD;">This car is LHD &mdash; driver sits on the left, keep left at roundabouts.</div>
+        </div>
+        <button style="background:none; border:none; color:#94A0AD; font-size:15px; cursor:pointer;" aria-label="Dismiss">&times;</button>
+      </div>
+
+      <span class="label">Condition photos &middot; 3 of 6</span>
+      <div class="small muted" style="margin-top:6px; line-height:1.5;">Walk around the car and capture each angle. These photos protect both you and Danielle if anything is disputed later.</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:14px;">
+        <div class="vph" style="aspect-ratio:1; position:relative;"><span class="badge badge-teal" style="position:absolute; bottom:6px; left:6px;">&check; Front</span></div>
+        <div class="vph sun" style="aspect-ratio:1; position:relative;"><span class="badge badge-teal" style="position:absolute; bottom:6px; left:6px;">&check; Driver side</span></div>
+        <div class="vph dusk" style="aspect-ratio:1; position:relative;"><span class="badge badge-teal" style="position:absolute; bottom:6px; left:6px;">&check; Rear</span></div>
+        <button style="aspect-ratio:1; border:2px dashed var(--coral); border-radius:var(--r-md); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:var(--coral-deep); font-weight:700; font-size:12px; background:var(--surface); cursor:pointer; font-family:var(--font-ui);" aria-label="Capture passenger side"><span style="font-size:22px;" aria-hidden="true">&#x1F4F7;</span>Passenger side</button>
+        <button style="aspect-ratio:1; border:2px dashed var(--sand); border-radius:var(--r-md); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:var(--stone); font-weight:600; font-size:12px; background:var(--surface); cursor:pointer; font-family:var(--font-ui);" aria-label="Capture odometer"><span style="font-size:22px;" aria-hidden="true">&#x1F4F7;</span>Odometer</button>
+        <button style="aspect-ratio:1; border:2px dashed var(--sand); border-radius:var(--r-md); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:var(--stone); font-weight:600; font-size:12px; background:var(--surface); cursor:pointer; font-family:var(--font-ui);" aria-label="Capture fuel level"><span style="font-size:22px;" aria-hidden="true">&#x1F4F7;</span>Fuel level</button>
+      </div>
+
+      <!-- Odometer / fuel inputs -->
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <div class="card" style="flex:1; padding:12px 14px;">
+          <div class="label" style="font-size:10px;">Odometer (mi)</div>
+          <div style="font-weight:700; font-size:17px; margin-top:2px;">24,318</div>
+        </div>
+        <div class="card" style="flex:1; padding:12px 14px;">
+          <div class="label" style="font-size:10px;">Fuel</div>
+          <div style="font-weight:700; font-size:17px; margin-top:2px;">&#x25AE;&#x25AE;&#x25AE;&#x25AE;&#x25AF; &frac34;</div>
+        </div>
+      </div>
+
+      <div class="small muted" style="margin-top:14px; display:flex; gap:8px; align-items:center;">
+        <span class="badge badge-gold" aria-hidden="true">&#x24D8;</span> Danielle completed her check-in at 9:54. Your trip starts when yours is done.
+      </div>
+
+      <button class="btn btn-primary" style="width:100%; margin-top:16px; padding:16px; opacity:.5;" disabled>Add 3 more photos to start trip</button>
+    </div>
+  </div>
+
+</div></div>
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Trip Detail (active state + check-in sheet).</strong> Default view shows the active trip with a Teal header instead of the upcoming countdown. "Start check-in" opens a bottom sheet with the full photo capture grid (6 angles, 3 done, 3 remaining), odometer and fuel inputs, and a left-side primer for first-time guests. The check-in no longer requires a full push to a separate screen.</p>
+
+<script>
+  function openCheckinSheet() {
+    var s = document.getElementById('checkin-sheet');
+    s.classList.add('animating');
+    s.classList.add('open');
+    requestAnimationFrame(function() { s.classList.remove('animating'); });
+  }
+  function closeCheckinSheet(e) {
+    if (e && e.target !== e.currentTarget) return;
+    var s = document.getElementById('checkin-sheet');
+    s.classList.add('animating');
+    s.classList.remove('open');
+    setTimeout(function(){ s.classList.remove('animating'); }, 280);
+  }
+</script>
+</body>
+</html>

@@ -20,13 +20,14 @@ const defaultScreenOptions = {
     fontWeight: '600' as const,
     fontSize: 18,
   },
-  headerBackTitleVisible: false,
+  headerBackButtonDisplayMode: 'minimal' as const,
   gestureEnabled: true,
 };
 
 export const HostDashboardStack: React.FC = () => {
   return (
     <Stack.Navigator
+      id={undefined}
       screenOptions={defaultScreenOptions}
       initialRouteName={ROUTES.HOST_DASHBOARD}
     >

@@ -1,6 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { render as rtlRender, screen, fireEvent } from '@testing-library/react-native';
 import { VehicleCard } from '../VehicleCard';
+import { ThemeProvider } from '../../context/ThemeContext';
 import { Vehicle } from '../../types';
 
 // Mock dependencies
@@ -8,6 +9,11 @@ jest.mock('../../services/notificationService');
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons'
 }));
+
+// VehicleCard renders StandardCard, which calls useTheme(). App.tsx mounts
+// ThemeProvider for real; tests have to supply it too or every render throws.
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(<ThemeProvider>{ui}</ThemeProvider>, options);
 
 describe('VehicleCard', () => {
   const mockVehicle: Vehicle = {

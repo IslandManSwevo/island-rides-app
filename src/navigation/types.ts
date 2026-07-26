@@ -99,10 +99,6 @@ export type SearchStackParamList = {
   [ROUTES.SEARCH]: {
     filters?: SearchFilters;
   } | undefined;
-  [ROUTES.SEARCH_RESULTS]: {
-    island: string;
-    vehicles: VehicleRecommendation[];
-  };
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
     vehicleId?: number | string;
@@ -111,13 +107,16 @@ export type SearchStackParamList = {
 
 export type BookingsStackParamList = {
   [ROUTES.MY_BOOKINGS]: undefined;
+  [ROUTES.TRIP_DETAIL]: {
+    bookingId: string;
+  };
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
     vehicleId?: number | string;
   };
   [ROUTES.CHAT]: {
     conversationId: string;
-    recipientId: number;
+    recipientId?: number;
     recipientName: string;
   };
   [ROUTES.WRITE_REVIEW]: {
@@ -129,6 +128,8 @@ export type BookingsStackParamList = {
     phase: 'check_in' | 'check_out';
     vehicleName: string;
     driveSide: 'LHD' | 'RHD';
+    hostName?: string;
+    otherPartyDone?: boolean;
   };
 };
 
@@ -166,20 +167,26 @@ export type HostDashboardStackParamList = {
   };
 };
 
+// vehicleId is `number | string` because the KeyLo API issues string cuids while
+// the legacy management screens were written against numeric ids (see the note
+// on `User.id` in src/types/index.ts — a full string-id migration is separate).
 export type VehicleManagementStackParamList = {
   [ROUTES.FLEET_MANAGEMENT]: undefined;
   [ROUTES.LIST_VEHICLE]: { vehicleId?: string } | undefined;
+  [ROUTES.VEHICLE_MANAGER]: {
+    vehicleId: string;
+  };
   [ROUTES.VEHICLE_CONDITION_TRACKER]: {
-    vehicleId: number;
+    vehicleId: number | string;
   };
   [ROUTES.VEHICLE_PHOTO_UPLOAD]: {
-    vehicleId: number;
+    vehicleId: number | string;
   };
   [ROUTES.VEHICLE_AVAILABILITY]: {
-    vehicleId: number;
+    vehicleId: number | string;
   };
   [ROUTES.VEHICLE_DOCUMENT_MANAGEMENT]: {
-    vehicleId: number;
+    vehicleId: number | string;
   };
   [ROUTES.BULK_RATE_UPDATE]: {
     vehicleIds: number[];
@@ -191,13 +198,16 @@ export type VehicleManagementStackParamList = {
 
 export type HostBookingsStackParamList = {
   [ROUTES.MY_BOOKINGS]: undefined;
+  [ROUTES.TRIP_DETAIL]: {
+    bookingId: string;
+  };
   [ROUTES.VEHICLE_DETAIL]: {
     vehicle?: Vehicle;
     vehicleId?: number | string;
   };
   [ROUTES.CHAT]: {
     conversationId: string;
-    recipientId: number;
+    recipientId?: number;
     recipientName: string;
   };
 };

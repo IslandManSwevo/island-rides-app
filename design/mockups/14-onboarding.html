@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyLo — Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+</head>
+<body>
+<nav class="mock-nav"><a href="13-profile.html">&larr; Profile</a><a href="15-host-fleet.html">Next: Host Fleet &rarr;</a></nav>
+
+<!-- Step 1: Welcome & Login -->
+<div class="phone"><div class="screen" style="justify-content:center; text-align:center; padding:0 28px;">
+  <div>
+    <div class="display" style="font-size:38px; margin-bottom:8px;">Key<span style="color:var(--coral)">Lo</span></div>
+    <p class="muted" style="font-size:15px; line-height:1.5; max-width:28ch; margin:0 auto;">The Bahamas&rsquo; car rental marketplace. Rent from locals, or share your own wheels when you&rsquo;re not driving.</p>
+  </div>
+
+  <div style="margin-top:32px; display:flex; flex-direction:column; gap:12px;">
+    <div class="card" style="padding:12px 16px; text-align:left;">
+      <div class="label">Email</div>
+      <div style="margin-top:4px; font-size:15px; color:var(--stone);">marcusb@gmail.com</div>
+    </div>
+    <span class="btn btn-primary">Continue with email</span>
+    <span class="btn btn-ghost">Browse as guest</span>
+  </div>
+
+  <div class="small muted" style="margin-top:20px; font-size:11px;">By continuing, you agree to KeyLo&rsquo;s Terms and Privacy Policy.</div>
+
+  <!-- Step indicator -->
+  <div style="display:flex; justify-content:center; gap:8px; margin-top:36px;">
+    <span style="width:8px; height:8px; border-radius:999px; background:var(--coral);"></span>
+    <span style="width:8px; height:8px; border-radius:999px; background:var(--sand);"></span>
+    <span style="width:8px; height:8px; border-radius:999px; background:var(--sand);"></span>
+  </div>
+  <div class="small muted" style="margin-top:8px; font-size:11px;">Step 1 of 3 &middot; <span style="color:var(--teal);">Skip for now</span></div>
+</div></div>
+
+<!-- Step 2: Island picker -->
+<div class="phone" style="margin-top:24px;"><div class="screen" style="justify-content:center; text-align:center; padding:0 28px;">
+  <div class="display" style="font-size:28px;">Where are you<br>based?</div>
+  <p class="small muted" style="margin-top:8px; max-width:28ch; margin-left:auto; margin-right:auto; line-height:1.5;">This sets your default island for search &mdash; you can always browse other islands from Explore.</p>
+
+  <div style="margin-top:28px; display:flex; flex-direction:column; gap:10px; text-align:left;">
+    <div class="card" style="padding:16px; border:2px solid var(--coral); box-shadow:var(--shadow-2);">
+      <div style="font-weight:700; font-size:15px;">Nassau &middot; New Providence</div>
+      <div class="small muted" style="font-size:12px;">142 cars available</div>
+    </div>
+    <div class="card" style="padding:16px;">
+      <div style="font-weight:700; font-size:15px;">Freeport &middot; Grand Bahama</div>
+      <div class="small muted" style="font-size:12px;">58 cars available</div>
+    </div>
+    <div class="card" style="padding:16px;">
+      <div style="font-weight:700; font-size:15px;">Exuma &middot; Great Exuma</div>
+      <div class="small muted" style="font-size:12px;">21 cars available</div>
+    </div>
+    <div class="card" style="padding:16px;">
+      <div style="font-weight:700; font-size:15px;">Abaco &middot; Marsh Harbour</div>
+      <div class="small muted" style="font-size:12px;">14 cars available</div>
+    </div>
+  </div>
+
+  <span class="btn btn-primary" style="margin-top:24px;">Set as default island</span>
+
+  <div style="display:flex; justify-content:center; gap:8px; margin-top:28px;">
+    <span style="width:8px; height:8px; border-radius:999px; background:var(--sand);"></span>
+    <span style="width:8px; height:8px; border-radius:999px; background:var(--coral);"></span>
+    <span style="width:8px; height:8px; border-radius:999px; background:var(--sand);"></span>
+  </div>
+  <div class="small muted" style="margin-top:8px; font-size:11px;">Step 2 of 3 &middot; <span style="color:var(--teal);">Skip for now</span></div>
+</div></div>
+
+<!-- Step 3: Notifications -->
+<div class="phone" style="margin-top:24px;"><div class="screen" style="justify-content:center; text-align:center; padding:0 28px;">
+  <div class="display" style="font-size:28px;">Stay in the loop</div>
+  <p class="small muted" style="margin-top:8px; max-width:30ch; margin-left:auto; margin-right:auto; line-height:1.5;">We&rsquo;ll let you know when a host replies, when your trip is coming up, and if there&rsquo;s a problem. Never marketing.</p>
+
+  <div style="margin-top:28px; text-align:left; display:flex; flex-direction:column; gap:12px;">
+    <div class="card" style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-weight:700; font-size:14px;">Push notifications</div>
+        <div class="small muted" style="font-size:12px;">Booking updates, messages, reminders</div>
+      </div>
+      <span class="chip active" style="padding:6px 14px;">On</span>
+    </div>
+    <div class="card" style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-weight:700; font-size:14px;">SMS alerts</div>
+        <div class="small muted" style="font-size:12px;">Trip-critical only &mdash; pickup in 2h, host cancelled</div>
+      </div>
+      <span class="chip" style="padding:6px 14px;">Off</span>
+    </div>
+    <div class="card" style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-weight:700; font-size:14px;">Email</div>
+        <div class="small muted" style="font-size:12px;">Receipts, monthly recap, host tips</div>
+      </div>
+      <span class="chip active" style="padding:6px 14px;">On</span>
+    </div>
+  </div>
+
+  <span class="btn btn-primary" style="margin-top:28px; width:100%;">Finish &amp; start exploring</span>
+
+  <div style="display:flex; justify-content:center; gap:8px; margin-top:28px;">
+    <span style="width:8px; height:8px; border-radius:999px; background:var(--sand);"></span>
+    <span style="width:8px; height:8px; border-radius:999px; background:var(--sand);"></span>
+    <span style="width:8px; height:8px; border-radius:999px; background:var(--coral);"></span>
+  </div>
+  <div class="small muted" style="margin-top:8px; font-size:11px;">Step 3 of 3</div>
+</div></div>
+
+<p style="width:390px; margin-top:16px; font-size:13px; color:#5A5348; line-height:1.5;"><strong>Onboarding (3 steps).</strong> Step 1: Logo + tagline + email input with "Browse as guest" fallback (guests can discover without auth &mdash; auth triggers at booking). Step 2: Island picker with car counts &mdash; no island gate, just a default filter preference. Step 3: Notification toggles with plain-language "never marketing" reassurance. Every step has "Skip for now" in Teal. Steps are shown on three phone frames stacked vertically so the whole flow is reviewable on one page. No tab bar on any step.</p>
+</body>
+</html>
