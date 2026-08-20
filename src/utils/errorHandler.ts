@@ -63,6 +63,10 @@ type ApiErrorLike = {
 };
 
 export function parseApiError(error: unknown, context?: string): AppError {
+  if (typeof error === 'string') {
+    return createError(ErrorType.UNKNOWN, error, { context });
+  }
+
   const e = error as ApiErrorLike | null | undefined;
 
   // Network error

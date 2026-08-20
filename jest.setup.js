@@ -14,6 +14,29 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
+// errorHandler's ErrorAnalytics uses localStorage, which the react-native jest
+// preset doesn't provide.
+const localStorageMock = (() => {
+  let store = {};
+  return {
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (i) => Object.keys(store)[i] ?? null,
+    getItem: (k) => (k in store ? store[k] : null),
+    setItem: (k, v) => {
+      store[k] = String(v);
+    },
+    removeItem: (k) => {
+      delete store[k];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+})();
+global.localStorage = localStorageMock;
+
 // Mock expo modules
 jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn(),

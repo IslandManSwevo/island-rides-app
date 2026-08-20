@@ -190,7 +190,7 @@ describe('Error Handler', () => {
           context: 'TestContext',
           shouldRetry: () => false
         })
-      ).rejects.toThrow();
+      ).rejects.toMatchObject({ message: 'Validation error' });
 
       expect(operation).toHaveBeenCalledTimes(1);
     });
@@ -204,7 +204,7 @@ describe('Error Handler', () => {
       const startTime = Date.now();
       
       await withRetry(operation, {
-        maxRetries: 2,
+        maxRetries: 3,
         delay: 100,
         backoffMultiplier: 2,
         context: 'TestContext',
@@ -261,7 +261,10 @@ describe('Error Handler', () => {
       // Next request should fail immediately
       await expect(
         globalCircuitBreaker.execute(operation, 'TestContext')
-      ).rejects.toThrow('Service temporarily unavailable');
+      ).rejects.toMatchObject({
+        message: 'Service temporarily unavailable',
+        code: 'CIRCUIT_BREAKER_OPEN',
+      });
     });
 
     it('should transition to half-open after timeout', async () => {
