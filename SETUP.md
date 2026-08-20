@@ -17,6 +17,10 @@ cd backend
 cp .env.example .env
 # .env works as-is for local dev — DATABASE_URL already points at the docker Postgres.
 # Set JWT_SECRET and JWT_REFRESH_SECRET to any 16+ char strings.
+# Note: Postgres is exposed on host port 5433 (not 5432) to avoid colliding
+# with a native Postgres already bound to 5432 on many dev machines.
+# Tip: on npm >= 11.17, run `npm approve-scripts --all && npm rebuild` after
+# install so the prisma/argon2/esbuild lifecycle scripts actually run.
 
 npm install
 npm run db:up        # starts Postgres + Redis (docker compose)

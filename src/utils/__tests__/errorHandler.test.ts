@@ -13,7 +13,7 @@ import {
 } from '../errorHandler';
 
 // Mock dependencies
-jest.mock('../../../services/LoggingService', () => ({
+jest.mock('../../services/LoggingService', () => ({
   loggingService: {
     error: jest.fn(),
     warn: jest.fn(),

@@ -25,13 +25,10 @@ config.resolver.sourceExts = [
 
 // Configure web fallbacks for React Native modules that don't work on web
 config.resolver.alias = {
-  'react-native-maps': require.resolve('./src/components/MapView.web.tsx'),
   'react-native-pdf': false,
   'react-native-gesture-handler': 'react-native-web',
   // Note: react-native-reanimated should work on web, removing alias
   'react-native-keyboard-controller': false,
-  '@react-native-firebase/app': false,
-  '@react-native-firebase/auth': false,
 };
 
 // Add resolver configuration for web platform

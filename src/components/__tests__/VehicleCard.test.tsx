@@ -460,7 +460,7 @@ describe('VehicleCard', () => {
           ...mockVehicle,
           dailyRate: 75 + i
         };
-        rerender(<VehicleCard vehicle={updatedVehicle} onPress={mockOnPress} />);
+        rerender(<ThemeProvider><VehicleCard vehicle={updatedVehicle} onPress={mockOnPress} /></ThemeProvider>);
       }
 
       expect(screen.getByText('$84/day')).toBeTruthy();
