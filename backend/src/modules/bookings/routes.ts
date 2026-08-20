@@ -120,19 +120,48 @@ export async function bookingRoutes(app: FastifyInstance) {
     });
 
     // Request-to-book authorizes; Instant Book captures immediately.
-    const order = await paypalGateway.createOrder(
-      breakdown.totalCents,
-      instant ? 'CAPTURE' : 'AUTHORIZE',
-      booking.id
-    );
-    await prisma.payment.create({
-      data: {
-        bookingId: booking.id,
-        amountCents: breakdown.totalCents,
-        status: 'requires_payment',
-        gatewayRef: order.gatewayRef,
-      },
-    });
+    // The PayPal order must succeed before we persist the payment row, and if
+    // it can't we delete the booking we just created — otherwise a failed
+    // checkout leaves a phantom confirmed/pending booking with no payment.
+    let order: { gatewayRef: string; approveUrl: string };
+    try {
+      order = await paypalGateway.createOrder(
+        breakdown.totalCents,
+        instant ? 'CAPTURE' : 'AUTHORIZE',
+        booking.id
+      );
+    } catch (error) {
+      await prisma.booking.delete({ where: { id: booking.id } }).catch(() => undefined);
+      const message = error instanceof Error ? error.message : String(error);
+      const notConfigured = message.startsWith('PayPal is not configured');
+      return reply.code(notConfigured ? 503 : 502).send({
+        error: {
+          code: 'PAYMENT_UNAVAILABLE',
+          message: notConfigured
+            ? 'Payments are not configured (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET)'
+            : `Payment could not be started: ${message}`,
+        },
+      });
+    }
+
+    try {
+      await prisma.payment.create({
+        data: {
+          bookingId: booking.id,
+          amountCents: breakdown.totalCents,
+          status: 'requires_payment',
+          gatewayRef: order.gatewayRef,
+        },
+      });
+    } catch (error) {
+      // Never leave a booking without a payment row: void the authorization
+      // and remove the booking, then surface the failure.
+      if (!instant) {
+        await paypalGateway.voidAuthorization(order.gatewayRef).catch(() => undefined);
+      }
+      await prisma.booking.delete({ where: { id: booking.id } }).catch(() => undefined);
+      throw error;
+    }
 
     // Schedule the lifecycle jobs (no-op without Redis).
     if (instant) {
