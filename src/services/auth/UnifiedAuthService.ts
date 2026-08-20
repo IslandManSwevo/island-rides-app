@@ -10,7 +10,7 @@ import { loggingService } from '../LoggingService';
 import { AuthResponse, LoginRequest, RegisterRequest, User, UserRole } from '../../types';
 import { BusinessLogicError } from '../errors/BusinessLogicError';
 import { BaseService } from '../base/BaseService';
-import jwtDecode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 export interface TokenPayload {
   userId: number;
@@ -55,8 +55,8 @@ interface RateLimitEntry {
 }
 
 export class UnifiedAuthService extends BaseService {
-  private static instance: UnifiedAuthService;
-  
+  private static instance: UnifiedAuthService | null = null;
+
   // Storage keys
   private readonly TOKEN_KEY = '@keylo_auth_token';
   private readonly REFRESH_TOKEN_KEY = '@keylo_refresh_token';
@@ -93,11 +93,11 @@ export class UnifiedAuthService extends BaseService {
     super();
   }
 
-  static getInstance(): UnifiedAuthService {
+  static getInstance<T extends BaseService>(this: { new(): T }): T {
     if (!UnifiedAuthService.instance) {
-      UnifiedAuthService.instance = new UnifiedAuthService();
+      UnifiedAuthService.instance = new this() as unknown as UnifiedAuthService;
     }
-    return UnifiedAuthService.instance;
+    return UnifiedAuthService.instance as unknown as T;
   }
 
   protected override async onInit(): Promise<void> {
@@ -626,7 +626,7 @@ export class UnifiedAuthService extends BaseService {
     }
 
     if (error instanceof BusinessLogicError) {
-      return new AuthError(error.message, error.code, error.statusCode);
+      return new AuthError(error.message, error.code);
     }
 
     if (error instanceof Error) {

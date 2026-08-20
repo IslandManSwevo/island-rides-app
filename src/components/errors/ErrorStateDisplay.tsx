@@ -269,8 +269,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   errorTitle: {
-    fontSize: typography.subtitle.fontSize,
-    fontWeight: typography.subtitle.fontWeight,
+    fontSize: typography.heading3.fontSize,
+    fontWeight: typography.heading3.fontWeight,
   },
   errorCode: {
     fontSize: typography.caption.fontSize,

@@ -54,16 +54,26 @@ export function createError(
 /**
  * Parse API error response into AppError
  */
-export function parseApiError(error: Error | unknown, context?: string): AppError {
+type ApiErrorLike = {
+  response?: {
+    status: number;
+    data?: { message?: string; error?: string; code?: string; details?: Record<string, unknown> };
+  };
+  message?: string;
+};
+
+export function parseApiError(error: unknown, context?: string): AppError {
+  const e = error as ApiErrorLike | null | undefined;
+
   // Network error
-  if (!error.response) {
+  if (!e?.response) {
     return createError(ErrorType.NETWORK, 'Network connection failed', {
       context,
-      details: { originalError: error.message }
+      details: { originalError: e?.message ?? String(error) }
     });
   }
 
-  const { status, data } = error.response;
+  const { status, data } = e.response;
 
   // Parse error type based on status code
   let type: ErrorType;
@@ -229,7 +239,7 @@ export async function withRetry<T>(
       loggingService.error(`${context}.retry: Retry attempt ${attempt}/${maxRetries}: ${errorMessage}`, error instanceof Error ? error : new Error(errorMessage));
 
       // Wait before retry with exponential backoff
-      await new Promise(resolve => setTimeout(resolve, currentDelay));
+      await new Promise<void>(resolve => setTimeout(() => resolve(), currentDelay));
       currentDelay *= backoffMultiplier;
     }
   }
@@ -240,26 +250,28 @@ export async function withRetry<T>(
 /**
  * Check if error is retryable
  */
-export function isRetryableError(error: Error | unknown): boolean {
+export function isRetryableError(error: unknown): boolean {
   if (!error) return false;
 
+  const e = error as { code?: string; response?: { status?: number } };
+
   // Network errors are retryable
-  if (error.code === 'NETWORK_ERROR' || !error.response) {
+  if (e.code === 'NETWORK_ERROR' || !e.response) {
     return true;
   }
 
   // Server errors (5xx) are retryable
-  if (error.response?.status >= 500) {
+  if (typeof e.response.status === 'number' && e.response.status >= 500) {
     return true;
   }
 
   // Rate limit errors are retryable
-  if (error.response?.status === 429) {
+  if (e.response.status === 429) {
     return true;
   }
 
   // Timeout errors are retryable
-  if (error.code === 'ECONNABORTED' || error.code === 'TIMEOUT') {
+  if (e.code === 'ECONNABORTED' || e.code === 'TIMEOUT') {
     return true;
   }
 

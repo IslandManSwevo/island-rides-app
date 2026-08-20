@@ -105,37 +105,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, navigation 
         duration: 5000
       });
       
-      // Transform booking to match BookingConfirmed route expectations
-      const transformedBooking = {
-        id: booking.id,
-        start_date: booking.startDate,
-        end_date: booking.endDate,
-        status: booking.status,
-        total_amount: booking.totalAmount,
-        vehicle: {
-          id: booking.vehicle.id,
-          make: booking.vehicle.make,
-          model: booking.vehicle.model,
-          year: booking.vehicle.year,
-          location: booking.vehicle.location,
-          daily_rate: booking.vehicle.dailyRate
-        }
-      };
-      
-      navigation.navigate('BookingConfirmed', { 
-        booking: transformedBooking,
-        vehicle: {
-          id: booking.vehicle.id,
-          make: booking.vehicle.make,
-          model: booking.vehicle.model,
-          year: booking.vehicle.year,
-          ownerId: 0, // Default value as it's not available in booking.vehicle
-          location: booking.vehicle.location,
-          dailyRate: booking.vehicle.dailyRate,
-          available: true, // Default value
-          driveSide: 'LHD' as const, // Default value
-          createdAt: new Date().toISOString() // Default value
-        }
+      // BookingConfirmed only needs the id — it re-fetches the booking via keyloApi
+      navigation.navigate('BookingConfirmed', {
+        bookingId: String(booking.id),
       });
     } else if (navState.url.includes('/checkout') && navState.canGoBack) {
       setPaymentUrl(null);

@@ -84,12 +84,34 @@ export const createErrorStateReducers = <T extends StandardErrorState>() => ({
 /**
  * Standardized async thunk error handling
  */
-export const handleAsyncThunkError = (error: Error | unknown): ErrorState => {
+type ApiLikeError = {
+  response?: { status: number; data?: { error?: { message?: string; code?: string }; message?: string } };
+  request?: unknown;
+  userMessage?: string;
+  code?: string;
+  type?: ErrorState['type'];
+  retryable?: boolean;
+  message?: string;
+};
+
+export const handleAsyncThunkError = (error: unknown): ErrorState => {
+  if (typeof error === 'string') {
+    return {
+      message: error,
+      code: 'UNKNOWN_ERROR',
+      type: 'unknown',
+      retryable: true,
+      timestamp: Date.now(),
+    };
+  }
+
+  const e = error as ApiLikeError | null | undefined;
+
   // Handle different error types
-  if (error?.response) {
+  if (e?.response) {
     // API error with response
-    const status = error.response.status;
-    const data = error.response.data;
+    const status = e.response.status;
+    const data = e.response.data;
 
     return {
       message: data?.error?.message || data?.message || 'An error occurred',
@@ -100,7 +122,7 @@ export const handleAsyncThunkError = (error: Error | unknown): ErrorState => {
     };
   }
 
-  if (error?.request) {
+  if (e?.request) {
     // Network error
     return {
       message: 'Network error. Please check your connection.',
@@ -111,20 +133,20 @@ export const handleAsyncThunkError = (error: Error | unknown): ErrorState => {
     };
   }
 
-  if (error?.userMessage) {
+  if (e?.userMessage) {
     // Handled error from ErrorHandlingService
     return {
-      message: error.userMessage,
-      code: error.code || 'HANDLED_ERROR',
-      type: error.type || 'unknown',
-      retryable: error.retryable !== false,
+      message: e.userMessage,
+      code: e.code || 'HANDLED_ERROR',
+      type: e.type || 'unknown',
+      retryable: e.retryable !== false,
       timestamp: Date.now(),
     };
   }
 
   // Generic error
   return {
-    message: error?.message || 'An unexpected error occurred',
+    message: e?.message || 'An unexpected error occurred',
     code: 'UNKNOWN_ERROR',
     type: 'unknown',
     retryable: true,

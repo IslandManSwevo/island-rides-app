@@ -228,7 +228,7 @@ const userSlice = createSlice({
       })
       .addCase(fetchUserProfile.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = handleAsyncThunkError(action.payload ?? action.error);
       });
 
     // Update profile
@@ -245,7 +245,7 @@ const userSlice = createSlice({
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = handleAsyncThunkError(action.payload ?? action.error);
       });
 
     // Upload profile image
@@ -264,7 +264,7 @@ const userSlice = createSlice({
       })
       .addCase(uploadProfileImage.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = handleAsyncThunkError(action.payload ?? action.error);
       });
 
     // Update preferences

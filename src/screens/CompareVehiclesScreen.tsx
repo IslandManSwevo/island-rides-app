@@ -1,4 +1,5 @@
 import React from 'react';
+import type { NavigationProp } from '@react-navigation/native';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../styles/theme';
