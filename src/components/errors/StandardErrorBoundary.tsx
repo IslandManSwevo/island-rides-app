@@ -61,10 +61,7 @@ export class StandardErrorBoundary extends Component<Props, State> {
     const appError = ErrorHandlingService.handleApiError(error);
     
     // Log error with context
-    ErrorHandlingService.logError(appError, context, {
-      componentStack: errorInfo.componentStack,
-      retryCount: this.state.retryCount,
-    });
+    ErrorHandlingService.logError(appError, context);
 
     // Log to logging service
     loggingService.error(`Error boundary caught error in ${context}`, error, {

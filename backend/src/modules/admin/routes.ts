@@ -85,4 +85,35 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     return { vehicle: { id, verificationStatus: 'rejected' }, note };
   });
+
+  // 🛡 POST /v1/admin/users/:id/verification — approve or reject driver verification
+  // Guests submit license/selfie/DOB via /v1/users/me/verification, which sets
+  // them to 'pending'. Booking requires 'verified', so without this admin path a
+  // guest could never actually book. A person with an admin account reviews the
+  // uploads and approves or rejects here.
+  app.post('/users/:id/verification', { preHandler: [app.requireAdmin] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const { decision, note } = z
+      .object({ decision: z.enum(['approve', 'reject']), note: z.string().max(500).optional() })
+      .parse(request.body);
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'User not found' } });
+
+    if (decision === 'approve') {
+      await prisma.user.update({ where: { id }, data: { verificationStatus: 'verified' } });
+      await sendToUser(id, {
+        title: 'Driver verification approved ✅',
+        body: 'You can now book vehicles on KeyLo.',
+      });
+      return { user: { id, verificationStatus: 'verified' } };
+    }
+
+    await prisma.user.update({ where: { id }, data: { verificationStatus: 'rejected' } });
+    await sendToUser(id, {
+      title: 'Verification needs another look',
+      body: note?.trim() || 'Please re-submit your driver verification.',
+    });
+    return { user: { id, verificationStatus: 'rejected' }, note };
+  });
 }

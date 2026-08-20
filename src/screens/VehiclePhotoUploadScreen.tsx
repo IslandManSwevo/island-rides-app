@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { NavigationProp } from '@react-navigation/native';
 import {
   View,
   Text,

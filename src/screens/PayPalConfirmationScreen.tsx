@@ -41,36 +41,9 @@ export const PayPalConfirmationScreen: React.FC<PayPalConfirmationScreenProps> =
         
         // Navigate to booking confirmation after a short delay
         setTimeout(() => {
-          const transformedBooking = {
-            id: booking.id,
-            start_date: booking.startDate,
-            end_date: booking.endDate,
-            status: 'confirmed',
-            total_amount: booking.totalAmount,
-            vehicle: {
-              id: booking.vehicle.id,
-              make: booking.vehicle.make,
-              model: booking.vehicle.model,
-              year: booking.vehicle.year,
-              location: booking.vehicle.location,
-              daily_rate: booking.vehicle.dailyRate
-            }
-          };
-          
-          navigation.replace('BookingConfirmed', { 
-            booking: transformedBooking,
-            vehicle: {
-              id: booking.vehicle.id,
-              make: booking.vehicle.make,
-              model: booking.vehicle.model,
-              year: booking.vehicle.year,
-              ownerId: 0,
-              location: booking.vehicle.location,
-              dailyRate: booking.vehicle.dailyRate,
-              available: true,
-              driveSide: 'LHD' as const,
-              createdAt: new Date().toISOString()
-            }
+          // BookingConfirmed only needs the id — it re-fetches via keyloApi
+          navigation.replace('BookingConfirmed', {
+            bookingId: String(booking.id),
           });
         }, 2000);
       } else {

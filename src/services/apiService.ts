@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { BaseService } from './base/BaseService';
 import { storageService } from './storageService';
 import { getEnvironmentConfig } from '../config/environment';
@@ -156,6 +156,12 @@ export class ApiService extends BaseService {
 
   public isAxiosError(error: unknown): error is AxiosError<ApiErrorResponse> {
     return axios.isAxiosError(error);
+  }
+
+  public addRequestInterceptor(
+    onFulfilled: (config: InternalAxiosRequestConfig) => InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig>
+  ): number {
+    return this.axiosInstance.interceptors.request.use(onFulfilled);
   }
 
   async get<T>(endpoint: string, params?: object): Promise<T> {
